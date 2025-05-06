@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="../assets/img/HandinHandLogo.png"
+    />
+    <link rel="icon" type="image/png" href="../assets/img/HandinHandLogo.png" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/static/login.css" />
+    <title>Auth Page</title>
+  </head>
+
+  <body>
+    <div class="container" id="container">
+      <div class="form-container sign-up">
+        <div class="container-signup">
+          <h1>Sign <span class="UP">Up</span></h1>
+        </div>
+        <form action="/signup" method="post" id="formsignup">
+          <div class="NamesForm">
+            <div class="FirstName">
+              <h3>First Name</h3>
+              <input
+                type="text"
+                id="firstname"
+                placeholder="First Name"
+                name="First_name"
+                value="{{ prefill.first_name if prefill else '' }}"
+                required
+              />
+            </div>
+            <div class="LastName">
+              <h3>Last Name</h3>
+              <input
+                type="text"
+                id="lastname"
+                placeholder="Last Name"
+                name="Last_name"
+                value="{{ prefill.last_name if prefill else '' }}"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="EmailForm">
+            <h3>Email Address</h3>
+          </div>
+          <input
+            type="email"
+            id="email"
+            placeholder="Email"
+            name="Email"
+            value="{{ prefill.email if prefill else '' }}"
+            required
+          />
+
+          <div class="UserName">
+            <h3>Create Username</h3>
+          </div>
+          <input
+            type="text"
+            id="username"
+            placeholder="Username"
+            name="Username"
+            required
+          />
+
+          <div class="PassForm">
+            <div class="Enter">
+              <h3>Enter Password</h3>
+              <input
+                type="password"
+                id="passwordsignup"
+                placeholder="Enter Password"
+                name="Password"
+                minlength="8"
+                required
+              />
+            </div>
+            <div class="Confirm">
+              <h3>Re-enter Password</h3>
+              <input
+                type="password"
+                id="confirmpasswordsignup"
+                placeholder="Confirm Password"
+                name="Confirm_Password"
+                minlength="8"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            class="button signup"
+            type="submit"
+            value="register"
+            name="submit_login"
+          >
+            Sign <span class="UP">Up</span>
+          </button>
+
+          <div
+            id="msg-error"
+            style="color: red; display: none; font-size: 15px"
+          ></div>
+        </form>
+
+        <div class="btn-center">
+          <p>Already Have an Account?</p>
+          <button class="Sgin-in" id="login2">Sign In</button>
+        </div>
+        <div class="Login-gulugulu">
+          <div class="divider2">
+            <hr />
+            <h4>Or</h4>
+            <hr />
+          </div>
+          <a href="/auth/google" class="btn-gulugulu">
+            <img src="/static/Assets/img/Google_logo.webp" alt="" />
+            <h4>Continue With <span id="Google">Google</span></h4>
+          </a>
+        </div>
+      </div>
+      <div class="form-container sign-in">
+        <div class="container-signin">
+          <h1>Sign <span class="IN">In</span></h1>
+        </div>
+        <form action="/login" method="post" id="formsignin">
+          <div class="EmailForm">
+            <h3>Email Address</h3>
+          </div>
+          <input
+            type="email"
+            id="email"
+            placeholder="Email"
+            name="Email"
+            required
+          />
+
+          <div class="PassForm">
+            <h3>Password</h3>
+          </div>
+          <input
+            input
+            type="password"
+            id="password"
+            placeholder="Password"
+            name="Password"
+            required
+          />
+          <button
+            href=""
+            class="button"
+            type="submit"
+            value="register"
+            name="submit_login"
+          >
+            Sign <span class="IN">In</span>
+          </button>
+        </form>
+        <div class="btn-center">
+          <p>Don't Have an Account?</p>
+          <button class="Sgin-up" id="register2">Sign Up</button>
+        </div>
+
+        <div class="Login-gulugulu">
+          <div class="divider2">
+            <hr />
+            <h4>Or</h4>
+            <hr />
+          </div>
+          <a href="/auth/google" class="btn-gulugulu">
+            <img src="/static/Assets/img/Google_logo.webp" alt="" />
+            <h4>Continue With <span id="Google">Google</span></h4>
+          </a>
+        </div>
+      </div>
+      <div class="toggle-container">
+        <div class="toggle" id="tooogle">
+          <div class="toggle-panel toggle-left">
+            <div class="container-baru">
+              <div class="divider">
+                <div class="text-big-right">
+                  <h1>
+                    Stay Informed, Stay Ahead—Bringing You the News That
+                    Matters.
+                  </h1>
+                </div>
+                <div class="text-mid-right">
+                  <p>Welcome, Sign Up to Access the Website Full Feature</p>
+                </div>
+              </div>
+              <div class="btn-right">
+                <p
+                  style="text-align: right; color: white; margin-bottom: 0.5rem"
+                >
+                  Already Have an Account?
+                </p>
+                <button class="Sgin-in" id="login">Sign In</button>
+              </div>
+            </div>
+          </div>
+          <div class="toggle-panel toggle-right">
+            <div class="container-baru">
+              <div class="divider">
+                <div class="text-big-left">
+                  <h1>
+                    Stay Informed, Stay Ahead—Bringing You the News That
+                    Matters.
+                  </h1>
+                </div>
+                <div class="text-mid-left">
+                  <p>Welcome, Sign In to Access the Website Full Feature</p>
+                </div>
+              </div>
+              <div class="btn-left">
+                <p
+                  style="text-align: left; color: white; margin-bottom: 0.5rem"
+                >
+                  Don't Have an Account?
+                </p>
+                <button class="Sgin-up" id="register">Sign Up</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const container = document.getElementById("container");
+        const toggle = document.getElementById("tooogle");
+        const urlget = new URLSearchParams(window.location.search);
+        const token = urlget.get("token");
+
+        if (token) {
+          container.classList.add("active");
+          toggle.classList.add("active");
+        }
+      });
+    </script>
+    <script src="/static/login_signup.js"></script>
+  </body>
+</html>

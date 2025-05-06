@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Waduh News - Stay Informed, Stay Ahead, Bringing You the News That Matters
+    </title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="navbar d-flex justify-content-between align-center">
+      <a
+        href="#"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#sidebardesktop"
+        id="sidebarbtn"
+      >
+        <span class="menu material-symbols-outlined"> menu </span>
+      </a>
+
+      <a href="/" style="text-decoration: none"
+        ><h3>
+          Waduh<span style="color: #dc0000d3; font-weight: 600">News</span>
+        </h3></a
+      >
+
+      <div
+        class="conttainer d-flex justify-content-evenly align-items-center flex-row"
+      >
+        <div class="acc-dropdown">
+          <a
+            href="javascript:;"
+            class="d-flex align-items-center"
+            id="profileDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {% if Logged_in %}
+            <img
+              class="rounded-circle object-fit-cover"
+              src="/{{ user.ProfilePhoto if user.ProfilePhoto else 'static/Assets/ProfileImg/default.jpg' }}"
+              width="40"
+              height="40"
+            />
+            {% else %}
+            <img
+              class="rounded-circle object-fit-cover"
+              src="/static/Assets/ProfileImg/default.jpg"
+              width="40"
+              height="40"
+            />
+            {% endif %}
+            <span class="material-symbols-outlined"> keyboard_arrow_down</span>
+          </a>
+          <ul
+            class="dropdown-menu dropdown-menu-end"
+            aria-labelledby="profileDropdown"
+          >
+            {% if Logged_in %}
+            <li>
+              <a class="dropdown-item" href="/index/profile">My Profile</a>
+            </li>
+            <li>
+              <a
+                class="dropdown-item"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#settingsModal"
+                >Settings</a
+              >
+            </li>
+            <li>
+              <a id="Logout" class="dropdown-item" href="/logout">Log out</a>
+            </li>
+            {% else %}
+            <li><a class="dropdown-item" href="/auth">Log in</a></li>
+            <li><a class="dropdown-item" href="/auth">Sign up</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      <div
+        class="offcanvas offcanvas-top px-5"
+        tabindex="-1"
+        id="sidebardesktop"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="offcanvasTopLabel">
+            More <span>Categories</span>
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div
+          class="offcanvas-body py-0 pb-4"
+          style="height: fit-content !important"
+        >
+          <table class="table mb-0" style="width: 100%">
+            <tbody
+              class="d-flex align-items-start justify-content-between flex-row"
+            >
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr
+                class="d-flex align-items-start justify-content-start flex-column"
+              >
+                <th>Sports</th>
+                <td><a class="" href="#">Lifestyle</a></td>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        class="offcanvas offcanvas-start pt-2 px-3"
+        tabindex="-1"
+        id="sidebarmobile"
+      >
+        <div class="offcanvas-header">
+          <h3>
+            Side<span style="color: #dc0000d3; font-weight: 600">Menu</span>
+          </h3>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="offcanvas-body">
+          <div>
+            Some text as placeholder. In real life you can have the elements you
+            have chosen. Like, text, images, lists, etc.
+          </div>
+          <div class="dropdown mt-3">
+            <button
+              class="btn btn-secondary dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              Dropdown button
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wlr justify-content-between align-items-center flex-row">
+      <ul class="nav justify-content-start">
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/news/category/sports"
+            >Sports</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/news/category/technology"
+            >Technology</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/news/category/health"
+            >Health</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/news/category/science"
+            >Science</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/news/category/entertainment">Entertainment</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/news/category/business"
+            >Business</a
+          >
+        </li>
+      </ul>
+      <form action="/news/search" method="get" class="input-search d-flex align-items-center me-3" id="container-search">
+        <span class="searchlogo material-symbols-outlined py-2 ps-2" id="icon-search">
+          search
+        </span>
+        <input
+          type="text"
+          class="search ps-1 pe-3"
+          placeholder="Search Posts..."
+          aria-label="Search"
+          name="q"
+          id="input-search"
+        />
+      </form>
+    </div>
+
+    <div class="content news-index mb-5">
+      <div class="todays-headline">
+        <div class="headline-title">
+          <h3 class="Headline-top"></h3>
+          <h2 class="Headline-bottom">Headline</h2>
+        </div>
+        <div class="top d-flex flex-row align-items-start"></div>
+      </div>
+      <div class="popular">
+        <div class="top d-flex flex-row align-items-start">
+          <div class="popular-mid">
+            <div class="post-mid d-flex flex-row justify-content-evenly mb-3">
+              <div class="post-content">
+                <a href="" class="container-img"
+                  ><img src="/static/Assets/img/default.jpeg" alt=""
+                /></a>
+
+                <a
+                  href="#"
+                  class="post-text d-flex justify-content-start align-items-start flex-column px-3 pt-3"
+                >
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center mb-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                  <span class="title-mid"></span
+                ></a>
+              </div>
+              <div class="post-analytics-mid">
+                <div
+                  class="views d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <span class="material-symbols-outlined"> visibility </span>
+                  <small>1.3K</small>
+                </div>
+                <div
+                  class="share d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <span class="material-symbols-outlined"> share </span>
+                  <small>1.3K</small>
+                </div>
+                <div
+                  class="likes d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <span class="material-symbols-outlined"> favorite </span>
+                  <small>1.3K</small>
+                </div>
+                <div
+                  class="bookmark d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <label class="bookmark-icon">
+                    <input type="checkbox" />
+                    <span class="material-symbols-outlined">bookmark</span>
+                  </label>
+                  <small>Bookmark</small>
+                </div>
+              </div>
+            </div>
+            <div class="post-mid d-flex flex-row justify-content-evenly mb-3">
+              <div class="post-content">
+                <a href="" class="container-img"
+                  ><img src="/static/Assets/img/default.jpeg" alt=""
+                /></a>
+
+                <a
+                  href="#"
+                  class="post-text d-flex justify-content-start align-items-start flex-column px-3 pt-3 px-3 pt-3"
+                >
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center mb-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                  <span class="title-mid"></span>
+                </a>
+              </div>
+              <div class="post-analytics-mid">
+                <div
+                  class="views d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <span class="material-symbols-outlined"> visibility </span>
+                  <small>1.3K</small>
+                </div>
+                <div
+                  class="share d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <span class="material-symbols-outlined"> share </span>
+                  <small>1.3K</small>
+                </div>
+                <div
+                  class="likes d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <span class="material-symbols-outlined"> favorite </span>
+                  <small>1.3K</small>
+                </div>
+                <div
+                  class="bookmark d-flex flex-column justify-content-center align-items-center mb-2"
+                >
+                  <label class="bookmark-icon">
+                    <input type="checkbox" />
+                    <span class="material-symbols-outlined">bookmark</span>
+                  </label>
+                  <small>Bookmark</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="post-big mt-2">
+            <a href="" class="container-img"
+              ><img src="/static/Assets/img/default.jpeg" alt=""
+            /></a>
+            <div
+              class="news-cat d-flex justify-content-center align-items-center mx-2 my-2"
+            >
+              <p class="px-1"></p>
+            </div>
+            <div
+              class="container-post-big d-flex flex-row justify-content-evenly align-items-center"
+            >
+              <div class="text-area-post-biog">
+                <a href="" class="post-text-big pe-2 ps-3"></a>
+                <p></p>
+              </div>
+              <div class="buttonandanalytics">
+                <div
+                  class="post-analytics-big d-flex flex-row justify-content-evenly align-items-center"
+                >
+                  <div
+                    class="views d-flex flex-row justify-content-center align-items-center mb-2"
+                  >
+                    <span class="material-symbols-outlined"> visibility </span>
+                    <small>1.3K</small>
+                  </div>
+                  <div
+                    class="share d-flex flex-row justify-content-center align-items-center mb-2"
+                  >
+                    <span class="material-symbols-outlined"> share </span>
+                    <small>1.3K</small>
+                  </div>
+                  <div
+                    class="likes d-flex flex-row justify-content-center align-items-center mb-2"
+                  >
+                    <span class="material-symbols-outlined"> favorite </span>
+                    <small>1.3K</small>
+                  </div>
+                </div>
+                <div
+                  class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3"
+                >
+                  <a
+                    href="#"
+                    class="bookmarkbtn btn d-flex justify-content-center"
+                    role="button"
+                    data-bs-toggle="button"
+                    ><span class="material-symbols-outlined me-2"
+                      >bookmark</span
+                    >
+                    Bookmark this post</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="recent mt-2">
+        <div
+          class="liked-top d-flex justify-content-between align-items-center flex-row mt-4"
+          style="width: 100%"
+        >
+          <div class="liked-posts-title">
+            <h3>Recent <span>Posts</span></h3>
+          </div>
+        </div>
+        <div
+          class="container-recent d-flex justify-content-between align-items-start flex-row"
+        >
+          <div
+            class="recent-posts-profile d-flex justify-content-between align-items-start flex-column mt-2 me-3"
+          >
+            <div
+              class="container-post d-flex justify-content-center align-items-start flex-column"
+            >
+              <div
+                class="post-long d-flex justify-content-start align-items-start flex-row p-1 mb-3"
+              >
+                <div class="post-image">
+                  <a href="" class="container-img"
+                    ><img src="/static/Assets/img/default.jpeg" alt=""
+                  /></a>
+                </div>
+                <div
+                  class="post-content d-flex justify-content-between align-items-start flex-column"
+                >
+                  <div
+                    class="text-area-post-long d-flex justify-content-start align-items-start flex-column"
+                  >
+                    <a href="" class="post-text-long"><h4></h4></a>
+                    <small class="news-long-upload-date"></small>
+                    <small class="news-long-reporter"><i></i></small>
+                    <div class="categories-long news-cat mt-2">
+                      <div class="cat-text px-1">
+                        <p class="px-1"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="post-long d-flex justify-content-start align-items-start flex-row p-1 mb-3"
+              >
+                <div class="post-image">
+                  <a href="" class="container-img"
+                    ><img src="/static/Assets/img/default.jpeg" alt=""
+                  /></a>
+                </div>
+                <div
+                  class="post-content d-flex justify-content-between align-items-start flex-column"
+                >
+                  <div
+                    class="text-area-post-long d-flex justify-content-start align-items-start flex-column"
+                  >
+                    <a href="" class="post-text-long"><h4></h4></a>
+                    <small class="news-long-upload-date"></small>
+                    <small class="news-long-reporter"><i></i></small>
+                    <div class="categories-long news-cat mt-2">
+                      <div class="cat-text px-1">
+                        <p class="px-1"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="post-long d-flex justify-content-start align-items-start flex-row p-1 mb-3"
+              >
+                <div class="post-image">
+                  <a href="" class="container-img"
+                    ><img src="/static/Assets/img/default.jpeg" alt=""
+                  /></a>
+                </div>
+                <div
+                  class="post-content d-flex justify-content-between align-items-start flex-column"
+                >
+                  <div
+                    class="text-area-post-long d-flex justify-content-start align-items-start flex-column"
+                  >
+                    <a href="" class="post-text-long"><h4></h4></a>
+                    <small class="news-long-upload-date"></small>
+                    <small class="news-long-reporter"><i></i></small>
+                    <div class="categories-long news-cat mt-2">
+                      <div class="cat-text px-1">
+                        <p class="px-1"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="post-long d-flex justify-content-start align-items-start flex-row p-1 mb-3"
+              >
+                <div class="post-image">
+                  <a href="" class="container-img"
+                    ><img src="/static/Assets/img/default.jpeg" alt=""
+                  /></a>
+                </div>
+                <div
+                  class="post-content d-flex justify-content-between align-items-start flex-column"
+                >
+                  <div
+                    class="text-area-post-long d-flex justify-content-start align-items-start flex-column"
+                  >
+                    <a href="" class="post-text-long"><h4></h4></a>
+                    <small class="news-long-upload-date"></small>
+                    <small class="news-long-reporter"><i></i></small>
+                    <div class="categories-long news-cat mt-2">
+                      <div class="cat-text px-1">
+                        <p class="px-1"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="post-long d-flex justify-content-start align-items-start flex-row p-1 mb-3"
+              >
+                <div class="post-image">
+                  <a href="" class="container-img"
+                    ><img src="/static/Assets/img/default.jpeg" alt=""
+                  /></a>
+                </div>
+                <div
+                  class="post-content d-flex justify-content-between align-items-start flex-column"
+                >
+                  <div
+                    class="text-area-post-long d-flex justify-content-start align-items-start flex-column"
+                  >
+                    <a href="" class="post-text-long"><h4></h4></a>
+                    <small class="news-long-upload-date"></small>
+                    <small class="news-long-reporter"><i></i></small>
+                    <div class="categories-long news-cat mt-2">
+                      <div class="cat-text px-1">
+                        <p class="px-1"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="d-flex justify-content-between align-items-center mt-4"
+              style="width: 100%"
+            >
+              <div
+                class="pagination-container d-flex justify-content-center flex-grow-1"
+              >
+                <nav>
+                  <ul class="pageination mb-0"></ul>
+                </nav>
+              </div>
+            </div>
+          </div>
+          <div
+            class="most-viewed justify-content-center align-items-start flex-column mt-2"
+          >
+            <h2 class="px-3 pt-3">Most Viewed</h2>
+            <div class="popular-island px-4 py-0">
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <div
+                class="news-container d-flex justify-content-start align-items-center flex-row mt-4"
+              >
+                <div class="number">
+                  <h2></h2>
+                </div>
+                <div class="news-content ms-4">
+                  <div class="title">
+                    <a href=""><h5></h5></a>
+                  </div>
+                  <div
+                    class="news-cat d-flex justify-content-center align-items-center my-2"
+                  >
+                    <p class="px-1"></p>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="settingsModal"
+      tabindex="-1"
+      aria-labelledby="settingsModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div
+              class="switch d-flex align-items-center justify-content-between flex-row"
+            >
+              <p style="margin-bottom: 0 !important">Dark Mode</p>
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input custom-switch"
+                  type="checkbox"
+                  role="switch"
+                  id="theme-toggle"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer py-3">
+      <div class="footer-top d-flex justify-content-between align-items-center">
+        <div class="socials d-flex flex-column justify-content-evenly">
+          <div class="text">Follow Us</div>
+        </div>
+        <div class="logos d-flex align-items-center">
+          <a href="http://facebook.com"
+            ><i class="fa-brands fa-facebook"></i
+          ></a>
+          <a href="http://youtube.com"><i class="fa-brands fa-youtube"></i></a>
+          <a href="http://x.com"><i class="fa-brands fa-x-twitter"></i></a>
+        </div>
+      </div>
+      <hr class="divider-footer mt-3 mb-2" />
+      <div class="footer-mid d-flex justify-content-between align-items-center">
+        <div class="title-footer">
+          <h2>Waduh</h2>
+          <h2>News</h2>
+          <p>Stay Informed, Stay Ahead—Bringing You the News That Matters.</p>
+        </div>
+        <div class="explore-footer">
+          <table class="table mx-2 mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Explore</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><a class="" href="#">Sports</a></th>
+                <td><a class="" href="#">Politics</a></td>
+                <td><a class="" href="#">Lifestyle</a></td>
+              </tr>
+              <tr>
+                <th>
+                  <a class="" href="#">Workout Tips</a>
+                </th>
+                <td>
+                  <a class="" href="#">International</a>
+                </td>
+                <td><a class="" href="#">Local</a></td>
+              </tr>
+              <tr>
+                <th>
+                  <a class="" href="#">Automobile</a>
+                </th>
+                <td><a class="" href="#">Techology</a></td>
+                <td>
+                  <a class="" href="#">Stock Market</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr class="divider-footer mt-3 mb-2" />
+      <div
+        class="footer-bottom d-flex justify-content-between align-items-start"
+      >
+        <div class="copyright mb-3">© Waduh News News 2025</div>
+        <div class="links-footer mb-3">
+          <a href="">Terms of Service</a>
+          <a href="">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+    <script>
+      function updateSidebarTarget() {
+        const sidebarBtn = document.getElementById("sidebarbtn");
+        if (window.innerWidth <= 700) {
+          sidebarBtn.setAttribute("data-bs-target", "#sidebarmobile");
+        } else {
+          sidebarBtn.setAttribute("data-bs-target", "#sidebardesktop");
+        }
+      }
+      window.addEventListener("DOMContentLoaded", updateSidebarTarget);
+      window.addEventListener("resize", updateSidebarTarget);
+    </script>
+    <script src="/static/script.js"></script>
+    <script src="/static/fetchnews(cat-page).js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
