@@ -49,7 +49,7 @@ def extract_keywords(texts):
 
     return Counter(words).most_common(10)
 
-app.add_middleware(SessionMiddleware, secret_key="a2Fsj13@!Jad8s9Dajklf293KLv81Dkf")
+app.add_middleware(SessionMiddleware, secret_key= os.getenv("SESSION_MIDDLEWARE_CLIENT_SECRET"))
 
 Base.metadata.create_all(bind=engine)
 
@@ -60,12 +60,13 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 
-newsapi = NewsApiClient(api_key="39a70accf1c64dbeb1139a0f1a1bbbdd")
+newsapi = NewsApiClient(api_key= os.getenv("NEWS_API_CLIENT_KEY"))
+newsapi_client_key = os.getenv("NEWS_API_CLIENT_KEY")
 
 def parse_date(date_str):
     try:
         dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        return dt.replace(tzinfo=None)  # ✅ bikin jadi naive
+        return dt.replace(tzinfo=None)  
     except Exception:
         raise ValueError(f"Invalid published date format: {date_str}")
 
@@ -707,7 +708,7 @@ async def newscat(request: Request, db: Session = Depends(get_db), q: str = Quer
 @app.get("/api/news/search/{query}")
 async def ambilnews(query: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
     try:
-        url = f"https://newsapi.org/v2/top-headlines?q={query}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+        url = f"https://newsapi.org/v2/top-headlines?q={query}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
             data = await client.get(url)
             response = data.json()
@@ -773,7 +774,7 @@ async def ambilnews(query: str, page: int = Query(1, ge=1), page_size: int = Que
 @app.get("/api/news/search/{query}/{cat}")
 async def ambilnews(query: str, cat: str = "general", page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50)):
     try:
-        url = f"https://newsapi.org/v2/top-headlines?q={query}&category={cat}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+        url = f"https://newsapi.org/v2/top-headlines?q={query}&category={cat}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
             data = await client.get(url)
             response = data.json()
@@ -845,7 +846,7 @@ async def ambilnews(
     page_size: int = Query(5, ge=1, le=50)
 ):
     try:
-        url = f"https://newsapi.org/v2/top-headlines?q={query}&category={cat}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+        url = f"https://newsapi.org/v2/top-headlines?q={query}&category={cat}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
             data = await client.get(url)
             response = data.json()
@@ -915,7 +916,7 @@ async def ambilnews(
 @app.get("/api/news/advsearch/{query}")
 async def ambilnews(query: str, from_date: str, to_date: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
     try:
-        url = f"https://newsapi.org/v2/top-headlines?q={query}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+        url = f"https://newsapi.org/v2/top-headlines?q={query}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
             data = await client.get(url)
             response = data.json()
@@ -994,7 +995,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
     decoded_title = urllib.parse.unquote(title)
 
     try:
-        url = f"https://newsapi.org/v2/top-headlines?q={decoded_title}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+        url = f"https://newsapi.org/v2/top-headlines?q={decoded_title}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
             data = await client.get(url)
             response = data.json()
@@ -1070,7 +1071,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 @app.get("/api/popular-keywords/{cat}")
 async def get_popular_keywords(cat: str):
     decoded_cat = urllib.parse.unquote(cat)
-    url = f"https://newsapi.org/v2/top-headlines?category={decoded_cat}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+    url = f"https://newsapi.org/v2/top-headlines?category={decoded_cat}&apiKey={newsapi_client_key}"
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -1109,7 +1110,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
     decoded_title = urllib.parse.unquote(title)
 
     try:
-        url = f"https://newsapi.org/v2/top-headlines?q={decoded_title}&category={decoded_query}&apiKey=39a70accf1c64dbeb1139a0f1a1bbbdd"
+        url = f"https://newsapi.org/v2/top-headlines?q={decoded_title}&category={decoded_query}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
             data = await client.get(url)
             response = data.json()
