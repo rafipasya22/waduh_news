@@ -1190,11 +1190,10 @@ def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Se
         raise HTTPException(status_code=401, detail="User not logged in")
 
     email = user_session.get("email")
-    titles = data.Titles  # list of titles
+    titles = data.Titles  
 
     print("Titles dari frontend:", data.Titles)
 
-    # Query untuk mencari judul bookmark milik user
     bookmarks = db.query(models.Bookmark.Title).filter(
         models.Bookmark.Bookmarked_by == email,
         models.Bookmark.Title.in_(titles)
