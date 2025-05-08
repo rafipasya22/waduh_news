@@ -1,48 +1,45 @@
-document.addEventListener("DOMContentLoaded", function () {
-    fetch("/api/ambil_news")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data); 
-  
-        if (data.error) {
-          console.error(data.error);
-          return;
-        }
-  
-        const articles = data.news;
-  
-        if (articles.length === 0) return;
-  
-        const bigPost = articles[0];
-        console.log(bigPost); 
-  
-        const postBigContainer = document.querySelector(".todays-headline .top .post-big");
-  
-        const postBigImgContainer = document.querySelector(".top .post-big .container-img");
-        const postBigImg = postBigContainer.querySelector(".container-img img");
-        const postBigText = postBigContainer.querySelector(".post-text-big");
-        const cat = postBigContainer.querySelector(".news-cat");
-        const catText = postBigContainer.querySelector(".news-cat p");
-        const capCatText = bigPost.category.charAt(0).toUpperCase() + bigPost.category.slice(1).toLowerCase();
-  
-  
-        if(cat) {
-          cat.classList.add(capCatText);
-          catText.innerHTML = capCatText;
-        }
-        if (postBigImg) postBigImg.src = bigPost.imageUrl || "../static/Assets/img/default.jpg";
-        if (postBigText) {
-          postBigText.innerHTML = bigPost.title;
-          postBigText.href = `/api/baca-news/headline/${encodeURIComponent(bigPost.category)}/${encodeURIComponent(bigPost.title)}`;
-          postBigImgContainer.href = `/api/baca-news/headline/${encodeURIComponent(bigPost.category)}/${encodeURIComponent(bigPost.title)}`;
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching news:", err);
-      });
-  });
+export async function loadHeadlineNews() {
+  try {
+    const res = await fetch("/api/ambil_news");
+    const data = await res.json();
 
-  
+    if (data.error) {
+      console.error(data.error);
+      return;
+    }
+
+    const articles = data.news;
+    if (articles.length === 0) return;
+
+    const bigPost = articles[0];
+
+    const postBigContainer = document.querySelector(".todays-headline .top .post-big");
+    const postBigImgContainer = document.querySelector(".top .post-big .container-img");
+    const postBigImg = postBigContainer.querySelector(".container-img img");
+    const postBigText = postBigContainer.querySelector(".post-text-big");
+    const cat = postBigContainer.querySelector(".news-cat");
+    const catText = postBigContainer.querySelector(".news-cat p");
+    const capCatText = bigPost.category.charAt(0).toUpperCase() + bigPost.category.slice(1).toLowerCase();
+
+    if (cat) {
+      cat.classList.add(capCatText);
+      catText.innerHTML = capCatText;
+    }
+
+    if (postBigImg) postBigImg.src = bigPost.imageUrl || "../static/Assets/img/default.jpg";
+    if (postBigText) {
+      postBigText.innerHTML = bigPost.title;
+      postBigText.href = `/api/baca-news/headline/${encodeURIComponent(bigPost.category)}/${encodeURIComponent(bigPost.title)}`;
+      postBigImgContainer.href = `/api/baca-news/headline/${encodeURIComponent(bigPost.category)}/${encodeURIComponent(bigPost.title)}`;
+    }
+
+    return bigPost.title; // misalnya kamu mau return title-nya
+  } catch (err) {
+    console.error("Error fetching news:", err);
+  }
+}
+
+/*
 document.addEventListener("DOMContentLoaded", function () {
     fetch("/api/ambil_news/sports")
       .then((res) => res.json())
@@ -159,3 +156,5 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching news:", err);
       });
   });
+
+  */

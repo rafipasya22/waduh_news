@@ -1,10 +1,94 @@
+import { loadHeadlineNews } from "./fetchnews(home).js";
+
+document.addEventListener("DOMContentLoaded", function () {
+  const bookmarkBtns = document.querySelectorAll(".bookmarkbtn");
+
+  bookmarkBtns.forEach(async function (btn) {
+
+    await loadHeadlineNews();
+
+    const postContainer = btn.closest(".post-big");
+    const titleContainer = postContainer?.querySelector(".post-text-big");
+    const title = titleContainer?.textContent?.trim();
+
+    try {
+      const res = await fetch("/api/check-bookmark", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ Title: title }),
+      });
+
+      if (res.ok) {
+        btn.classList.add("bookmarked");
+      } else {
+        btn.classList.remove("bookmarked");
+      }
+      updateText();
+    } catch (err) {
+      console.error("Gagal memeriksa bookmark:", err);
+    }
+
+    function updateText() {
+      if (btn.classList.contains("bookmarked")) {
+        btn.innerHTML = `
+          <span class="material-symbols-outlined me-2">bookmark_added</span>
+          Post Bookmarked
+        `;
+      } else {
+        btn.innerHTML = `
+          <span class="material-symbols-outlined me-2">bookmark</span>
+          Bookmark this post
+        `;
+      }
+    }
+
+    btn.addEventListener("click", async function (e) {
+      e.preventDefault();
+      const isBookmarked = btn.classList.contains("bookmarked");
+      const newStatus = isBookmarked;
+
+      try {
+        const res = await fetch(newStatus ? "/api/bookmark" : "/api/remove-bookmark", {
+          method: newStatus ? "POST" : "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ Title: title }),
+        });
+
+        if (!res.ok) {
+          alert("Gagal menyimpan atau menghapus bookmark.");
+          return;
+        }
+
+        if (newStatus) {
+          btn.classList.add("bookmarked");
+        } else {
+          btn.classList.remove("bookmarked");
+        }
+
+        updateText();
+        alert(newStatus ? "Bookmark berhasil disimpan!" : "Bookmark berhasil dihapus!");
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Terjadi kesalahan saat menyimpan atau menghapus bookmark.");
+      }
+    });
+  });
+});
+
+
+/*
 const catcontainer = document.querySelectorAll(".keyword-links");
 catcontainer.forEach((cat) => {
   const category = cat.textContent.trim();
   console.log(category);
   fetchTopKeywords(category);
 });
-
+*/
+/*
 async function fetchTopKeywords(cat) {
   try {
     const response = await fetch(
@@ -32,7 +116,9 @@ async function fetchTopKeywords(cat) {
             item.word.charAt(0).toUpperCase() +
             item.word.slice(1).toLowerCase();
           link.textContent = capItem;
-          link.href = `/news/more-categories/search?query=${encodeURIComponent(item.word)}&category=${encodeURIComponent(cat.toLowerCase())}`;
+          link.href = `/news/more-categories/search?query=${encodeURIComponent(
+            item.word
+          )}&category=${encodeURIComponent(cat.toLowerCase())}`;
           td.appendChild(link);
           tr.appendChild(td);
         });
@@ -44,26 +130,41 @@ async function fetchTopKeywords(cat) {
     console.error("Failed to fetch top keywords:", error);
   }
 }
+*/
 
 document.addEventListener("DOMContentLoaded", function () {
   const bookmarkBtn = document.querySelectorAll(".bookmarkbtn");
 
   bookmarkBtn.forEach(function (btn) {
     function updateText() {
-      const isPressed = btn.getAttribute("aria-pressed") === "true";
-      btn.innerHTML = `
-    <span class="material-symbols-outlined me-2">
-      ${isPressed ? "bookmark_added" : "bookmark"}
-    </span>
-    ${isPressed ? "Post Bookmarked" : "Bookmark this post"}
-    `;
+      if (btn.classList.contains("bookmarked")) {
+        btn.innerHTML = `
+        <span class="material-symbols-outlined me-2">
+          bookmark_added
+        </span>
+        Post Bookmarked
+        `;
+        btn.addEventListener("click", function () {
+          btn.classList.remove("bookmarked");
+          setTimeout(updateText, 10);
+        });
+      }else{
+        btn.innerHTML= `  
+        <span class="material-symbols-outlined me-2">
+          bookmark
+        </span>
+          Bookmark this post
+        `;
+        btn.addEventListener("click", function () {
+          btn.classList.add("bookmarked");
+          setTimeout(updateText, 10);
+        });
+      }
     }
 
     updateText();
 
-    btn.addEventListener("click", function () {
-      setTimeout(updateText, 10);
-    });
+    
   });
 });
 
@@ -347,7 +448,14 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const preferredTopics = data.preferred_topics;
-      const allTopics = ["Sports", "Science", "Technology", "Health", "Business", "Entertainment"];
+      const allTopics = [
+        "Sports",
+        "Science",
+        "Technology",
+        "Health",
+        "Business",
+        "Entertainment",
+      ];
 
       const availableTopicsContainer =
         document.querySelector("#available-topics");

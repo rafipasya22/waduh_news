@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table
+from datetime import datetime
+from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -40,3 +41,11 @@ class Topics(Base):
     Topic_Name = Column(String(255), nullable=False)
 
     users = relationship("Akun", secondary=user_preferences, back_populates="topics")
+
+class Bookmark(Base):
+    __tablename__ = "bookmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    Bookmarked_by = Column(String(100))
+    Title = Column(String(255))
+    Created_at = Column(String(255), nullable=True)

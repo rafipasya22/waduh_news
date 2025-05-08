@@ -3,6 +3,9 @@ from typing import List
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
+class BookmarkRequest(BaseModel):
+    Title: str
+
 class ItemBase(BaseModel):
     name: str
     description: str | None = None

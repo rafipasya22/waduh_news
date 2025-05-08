@@ -1182,3 +1182,65 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
         })
 
     raise HTTPException(status_code=404, detail="No complete article found")
+
+@app.post("/api/check-bookmark")
+def check_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    bookmark = db.query(models.Bookmark).filter(
+        models.Bookmark.Bookmarked_by == email,
+        models.Bookmark.Title == data.Title
+    ).first()
+
+    if not bookmark:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+    
+    return {"message": "Bookmark found"}
+
+@app.post("/api/bookmark")
+def save_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/auth", status_code=303)
+    
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+    
+    bookmark = models.Bookmark(
+        Bookmarked_by=email,
+        Title=data.Title,
+        Created_at=datetime.now().strftime("%d %B %Y %H:%M")
+    )
+    db.add(bookmark)
+    db.commit()
+    return {"message": "Bookmark saved"}
+
+@app.delete("/api/remove-bookmark")
+async def remove_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    bookmark = db.query(models.Bookmark).filter(
+        models.Bookmark.Bookmarked_by == email,
+        models.Bookmark.Title == data.Title
+    ).first()
+
+    if not bookmark:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    db.delete(bookmark)
+    db.commit()
+
+    return {"status": "Bookmark removed"}

@@ -542,7 +542,7 @@ tr {
   background-color: #b50000d3 !important;
 }
 
-.bookmarkbtn[aria-pressed="true"] {
+.bookmarkbtn.bookmarked {
   background-color: rgb(104, 223, 104) !important;
   border-color: rgb(5, 136, 0) !important;
   color: rgb(0, 142, 7) !important;
