@@ -33,7 +33,7 @@ async function loadHeadlineNews() {
       postBigImgContainer.href = `/api/baca-news/headline/${encodeURIComponent(bigPost.category)}/${encodeURIComponent(bigPost.title)}`;
     }
 
-    return bigPost.title; // misalnya kamu mau return title-nya
+    return bigPost.title;
   } catch (err) {
     console.error("Error fetching news:", err);
   }
@@ -162,103 +162,155 @@ async function loadPopularNews() {
 }
 
 
-  document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", async function () {
+  await loadHeadlineNews();
+  await loadPopularNews();
 
-    await loadHeadlineNews();
-    await loadPopularNews();
+  const postBigContainers = document.querySelectorAll(".post-big");
+  const postMidContainers = document.querySelectorAll(".post-mid");
 
-    const postContainers = document.querySelectorAll(".post-big");
-    console.log("Jumlah post:", postContainers.length);
-    const titleList = [];
-  
-    postContainers.forEach(post => {
-      const titleElement = post.querySelector(".post-text-big");
-      if (titleElement) {
-        const title = titleElement.textContent.trim();
-        if (title) {
-          titleList.push(title);
-        }
-      }
-    });
-  
-    console.log("Daftar judul:", titleList);
-  
-    try {
-      const res = await fetch("/api/check-bookmarks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ Titles: titleList }),
-      });
-  
-      const result = await res.json();
-      const bookmarkedTitles = result.bookmarked || [];
-  
-      postContainers.forEach(post => {
-        const btn = post.querySelector(".bookmarkbtn");
-        const titleElement = post.querySelector(".post-text-big");
-        const title = titleElement?.textContent.trim();
-  
-        if (!btn || !title) return;
-  
-        const isBookmarked = bookmarkedTitles.includes(title);
-        if (isBookmarked) {
-          btn.classList.add("bookmarked");
-        } else {
-          btn.classList.remove("bookmarked");
-        }
-  
-        updateText(btn);
-  
-        btn.addEventListener("click", async function (e) {
-          e.preventDefault();
-          const newStatus = btn.classList.contains("bookmarked");
-  
-          try {
-            const res = await fetch(newStatus ? "/api/bookmark" : "/api/remove-bookmark", {
-              method: newStatus ? "POST" : "DELETE",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ Title: title }),
-            });
-  
-            if (!res.ok) {
-              alert("Cannot add or delete bookmark");
-              return;
-            }
-  
-            if (newStatus) {
-              btn.classList.add("bookmarked");
-            } else {
-              btn.classList.remove("bookmarked");
-            }
-  
-            updateText(btn);
-            alert(newStatus ? "Post Bookmarked!" : "Bookmark deleted!");
-          } catch (err) {
-            console.error("Error:", err);
-            alert("Cannot add or delete bookmark");
-          }
-        });
-      });
-  
-    } catch (err) {
-      console.error("Checking Bookmarks Failed:", err);
-    }
-  
-    function updateText(btn) {
-      if (btn.classList.contains("bookmarked")) {
-        btn.innerHTML = `
-          <span class="material-symbols-outlined me-2">bookmark_added</span>
-          Post Bookmarked
-        `;
-      } else {
-        btn.innerHTML = `
-          <span class="material-symbols-outlined me-2">bookmark</span>
-          Bookmark this post
-        `;
+  const titleList = [];
+
+  postBigContainers.forEach(post => {
+    const titleElement = post.querySelector(".post-text-big");
+    if (titleElement) {
+      const title = titleElement.textContent.trim();
+      if (title) {
+        titleList.push(title);
       }
     }
   });
+
+  postMidContainers.forEach(post => {
+    const titleElement = post.querySelector(".title-mid");
+    if (titleElement) {
+      const title = titleElement.textContent.trim();
+      if (title) {
+        titleList.push(title);
+      }
+    }
+  });
+
+  try {
+    const res = await fetch("/api/check-bookmarks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ Titles: titleList }),
+    });
+
+    const result = await res.json();
+    const bookmarkedTitles = result.bookmarked || [];
+
+    postBigContainers.forEach(post => {
+      handleBookmark(post, ".post-text-big", ".bookmarkbtn", bookmarkedTitles, false);
+    });
+
+    postMidContainers.forEach(post => {
+      handleBookmark(post, ".title-mid", ".bookmark-icon", bookmarkedTitles, true);
+    });
+
+  } catch (err) {
+    console.error("Checking Bookmarks Failed:", err);
+  }
+
+  function handleBookmark(post, titleSelector, btnSelector, bookmarkedTitles, isCheckbox) {
+    const titleElement = post.querySelector(titleSelector);
+    const title = titleElement?.textContent.trim();
+    if (!title) return;
+
+    if (isCheckbox) {
+      const label = post.querySelector(btnSelector);
+      const checkbox = label?.querySelector("input[type='checkbox']");
+      const icon = label?.querySelector("span.material-symbols-outlined");
+      const bookmarkText = post.querySelector(".post-analytics-mid .bookmark small")
+      if (!label || !checkbox || !icon || !bookmarkText) return;
+
+      const isBookmarked = bookmarkedTitles.includes(title);
+      checkbox.checked = isBookmarked;
+      updateIcon(icon, isBookmarked, bookmarkText);
+
+      checkbox.addEventListener("change", async function () {
+        const checked = checkbox.checked;
+        try {
+          const res = await fetch(checked ? "/api/bookmark" : "/api/remove-bookmark", {
+            method: checked ? "POST" : "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ Title: title }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot add or delete bookmark");
+            checkbox.checked = !checked; 
+            return;
+          }
+
+          updateIcon(icon, checked, bookmarkText);
+          alert(checked ? "Post Bookmarked!" : "Bookmark deleted!");
+        } catch (err) {
+          console.error("Error:", err);
+          checkbox.checked = !checked; 
+          alert("Cannot add or delete bookmark");
+        }
+      });
+
+    } else {
+      const btn = post.querySelector(btnSelector);
+      if (!btn) return;
+
+      const isBookmarked = bookmarkedTitles.includes(title);
+      btn.classList.toggle("bookmarked", isBookmarked);
+      updateText(btn);
+
+      btn.addEventListener("click", async function (e) {
+        e.preventDefault();
+        const newStatus = btn.classList.contains("bookmarked");
+
+        try {
+          const res = await fetch(newStatus ? "/api/bookmark" : "/api/remove-bookmark", {
+            method: newStatus ? "POST" : "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ Title: title }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot add or delete bookmark");
+            return;
+          }
+
+          btn.classList.toggle("bookmarked", newStatus);
+          updateText(btn);
+          alert(newStatus ? "Post Bookmarked!" : "Bookmark deleted!");
+        } catch (err) {
+          console.error("Error:", err);
+          alert("Cannot add or delete bookmark");
+        }
+      });
+    }
+  }
+
+  function updateText(btn) {
+    if (btn.classList.contains("bookmarked")) {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined me-2">bookmark_added</span>
+        Post Bookmarked
+      `;
+    } else {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined me-2">bookmark</span>
+        Bookmark this post
+      `;
+    }
+  }
+
+  function updateIcon(iconElement, isBookmarked, textElement) {
+    iconElement.textContent = isBookmarked ? "bookmark_added" : "bookmark";
+    textElement.textContent = isBookmarked ? "Saved" : "Bookmark";
+  }
+});
+
