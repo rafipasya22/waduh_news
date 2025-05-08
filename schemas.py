@@ -58,3 +58,6 @@ class AkunResponse(AkunBase):
 
 class UserPreferenceRequest(BaseModel):
     topics: List[str]
+
+class BookmarkBatchRequest(BaseModel):
+    Titles: List[str]

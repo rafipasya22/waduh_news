@@ -1183,22 +1183,26 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
     raise HTTPException(status_code=404, detail="No complete article found")
 
-@app.post("/api/check-bookmark")
-def check_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
+@app.post("/api/check-bookmarks")
+def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
     if not user_session:
         raise HTTPException(status_code=401, detail="User not logged in")
 
     email = user_session.get("email")
-    bookmark = db.query(models.Bookmark).filter(
-        models.Bookmark.Bookmarked_by == email,
-        models.Bookmark.Title == data.Title
-    ).first()
+    titles = data.Titles  # list of titles
 
-    if not bookmark:
-        raise HTTPException(status_code=404, detail="Bookmark not found")
-    
-    return {"message": "Bookmark found"}
+    print("Titles dari frontend:", data.Titles)
+
+    # Query untuk mencari judul bookmark milik user
+    bookmarks = db.query(models.Bookmark.Title).filter(
+        models.Bookmark.Bookmarked_by == email,
+        models.Bookmark.Title.in_(titles)
+    ).all()
+
+    bookmarked_titles = [b.Title for b in bookmarks]
+
+    return {"bookmarked": bookmarked_titles}
 
 @app.post("/api/bookmark")
 def save_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
