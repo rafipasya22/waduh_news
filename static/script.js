@@ -51,41 +51,7 @@ async function fetchTopKeywords(cat) {
 }
 */
 
-document.addEventListener("DOMContentLoaded", function () {
-  const bookmarkBtn = document.querySelectorAll(".bookmarkbtn");
 
-  bookmarkBtn.forEach(function (btn) {
-    function updateText() {
-      if (btn.classList.contains("bookmarked")) {
-        btn.innerHTML = `
-        <span class="material-symbols-outlined me-2">
-          bookmark_added
-        </span>
-        Post Bookmarked
-        `;
-        btn.addEventListener("click", function () {
-          btn.classList.remove("bookmarked");
-          setTimeout(updateText, 10);
-        });
-      }else{
-        btn.innerHTML= `  
-        <span class="material-symbols-outlined me-2">
-          bookmark
-        </span>
-          Bookmark this post
-        `;
-        btn.addEventListener("click", function () {
-          btn.classList.add("bookmarked");
-          setTimeout(updateText, 10);
-        });
-      }
-    }
-
-    updateText();
-
-    
-  });
-});
 
 document.addEventListener("DOMContentLoaded", function () {
   const likeBtnContainer = document.querySelector(".likebutton");
@@ -125,30 +91,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const bookmarkBtnContainer = document.querySelectorAll(".bookmark");
-  bookmarkBtnContainer.forEach(function (btn_mid) {
-    function updateTextMid() {
-      const bookmarkBtn_mid = btn_mid.querySelector(".bookmark-icon");
-      const bookmarkInput = bookmarkBtn_mid.querySelector("input");
-      const bookmarkBtnText = btn_mid.querySelector("small");
-      const bookmarkBtnIcon = bookmarkBtn_mid.querySelector("span");
-      const isChecked = bookmarkInput.checked;
-      if (isChecked) {
-        bookmarkBtnText.innerHTML = "Saved";
-        bookmarkBtnIcon.innerHTML = "bookmark_added";
-      } else {
-        bookmarkBtnText.innerHTML = "Bookmark";
-        bookmarkBtnIcon.innerHTML = "bookmark";
-      }
-    }
-    updateTextMid();
-
-    btn_mid.addEventListener("click", function () {
-      setTimeout(updateTextMid, 10);
-    });
-  });
-});
 
 const navbar = document.querySelector(".navbar");
 const wlr = document.querySelector(".wlr");

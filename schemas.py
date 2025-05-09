@@ -5,6 +5,16 @@ from pydantic import BaseModel, Field
 
 class BookmarkRequest(BaseModel):
     Title: str
+    Author: str
+    Category: str
+    Published_at: str
+    Image_url: str
+    Content: str
+    Source_url: str
+    Source_name: str
+
+class DeleteBookmarkRequest(BaseModel):
+    Title: str
 
 class ItemBase(BaseModel):
     name: str

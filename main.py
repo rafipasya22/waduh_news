@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, Form, HTTPException, Query, Request, UploadFile, File, requests
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
@@ -24,6 +24,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import string
+from sqlalchemy.exc import IntegrityError
 
         
 load_dotenv()
@@ -450,6 +451,150 @@ async def ambilnews(category: str = 'general'):
             news_list.append(news_item)
 
     return {"news": news_list}
+
+@app.get("/api/ambil-news2/{query}/{title}", response_class=JSONResponse)
+async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
+    decoded_query = urllib.parse.unquote(query)
+    decoded_title = urllib.parse.unquote(title)
+
+    try:
+        response = newsapi.get_everything(
+            qintitle=decoded_title,
+            language="en",
+            sort_by="publishedAt",
+            page_size=10
+        )
+    except Exception as e:
+        print("Fetching news failed:", e)
+        raise HTTPException(status_code=503, detail=str(e))
+
+    user_session = request.session.get("user")
+    if not user_session:
+        return JSONResponse(status_code=401, content={"error": "User not logged in"})
+
+    email = user_session.get("email")
+    news_list = []
+
+    for article in response.get("articles", []):
+        if not article.get("title") or not article.get("url") or not article.get("content") or not article.get("urlToImage"):
+            print("Skipping article with missing data:", article.get("title"))
+            continue
+
+        try:
+            article_url = article["url"]
+            article_title = article["title"]
+            image_url = article["urlToImage"].strip()
+
+            news_article = Article(article_url)
+            news_article.download()
+            news_article.parse()
+            full_text = news_article.text or article.get("content") or article.get("description") or article.get("title")
+
+            date = article["publishedAt"]
+            date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
+            article_date = date_format.strftime("%d %B %Y")
+
+        except Exception as e:
+            print(f"Failed Parsing Article: {e}")
+            full_text = article.get("content") or "Unable to load content"
+            article_date = article.get("publishedAt", "")
+
+        news_item = {
+            "title": article_title,
+            "author": article.get("author"),
+            "category": decoded_query,
+            "published_at": article_date,
+            "image_url": image_url,
+            "content": full_text,
+            "source_url": article_url,
+            "source_name": article.get("source", {}).get("name", ""),
+            "Bookmarked_by": email  
+        }
+
+        existing = db.query(models.Bookmark).filter_by(
+            title=news_item["title"],
+            Bookmarked_by=email
+        ).first()
+
+        if not existing:
+            new_article = models.Bookmark(**news_item)
+            db.add(new_article)
+
+        news_list.append(news_item)
+
+    db.commit()
+    return JSONResponse(content={"news": news_list})
+
+@app.get("/api/ambil-news2/headline/{query}/{title}", response_class=JSONResponse)
+async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
+    decoded_query = urllib.parse.unquote(query)
+    decoded_title = urllib.parse.unquote(title)
+
+    try:
+        response = newsapi.get_top_headlines(
+            q=decoded_title,
+            category = decoded_query
+        )
+    except Exception as e:
+        print("Fetching news failed:", e)
+        raise HTTPException(status_code=503, detail=str(e))
+
+    user_session = request.session.get("user")
+    if not user_session:
+        return JSONResponse(status_code=401, content={"error": "User not logged in"})
+
+    email = user_session.get("email")
+    news_list = []
+
+    for article in response.get("articles", []):
+        if not article.get("title") or not article.get("url") or not article.get("content") or not article.get("urlToImage"):
+            print("Skipping article with missing data:", article.get("title"))
+            continue
+
+        try:
+            article_url = article["url"]
+            article_title = article["title"]
+            image_url = article["urlToImage"].strip()
+
+            news_article = Article(article_url)
+            news_article.download()
+            news_article.parse()
+            full_text = news_article.text or article.get("content") or article.get("description") or article.get("title")
+
+            date = article["publishedAt"]
+            date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
+            article_date = date_format.strftime("%d %B %Y")
+
+        except Exception as e:
+            print(f"Failed Parsing Article: {e}")
+            full_text = article.get("content") or "Unable to load content"
+            article_date = article.get("publishedAt", "")
+
+        news_item = {
+            "title": article_title,
+            "author": article.get("author"),
+            "category": decoded_query,
+            "published_at": article_date,
+            "image_url": image_url,
+            "content": full_text,
+            "source_url": article_url,
+            "source_name": article.get("source", {}).get("name", ""),
+            "Bookmarked_by": email 
+        }
+
+        existing = db.query(models.Bookmark).filter_by(
+            title=news_item["title"],
+            Bookmarked_by=email
+        ).first()
+
+        if not existing:
+            new_article = models.Bookmark(**news_item)
+            db.add(new_article)
+
+        news_list.append(news_item)
+
+    db.commit()
+    return JSONResponse(content={"news": news_list})
 
 @app.get("/api/baca-news/{query}/{title}", response_class=HTMLResponse)
 async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
@@ -1185,6 +1330,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
 @app.post("/api/check-bookmarks")
 def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Session = Depends(get_db)):
+    print("test")
     user_session = request.session.get("user")
     if not user_session:
         raise HTTPException(status_code=401, detail="User not logged in")
@@ -1194,40 +1340,57 @@ def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Se
 
     print("Titles dari frontend:", data.Titles)
 
-    bookmarks = db.query(models.Bookmark.Title).filter(
+    bookmarks = db.query(models.Bookmark.title).filter(
         models.Bookmark.Bookmarked_by == email,
-        models.Bookmark.Title.in_(titles)
+        models.Bookmark.title.in_(titles)
     ).all()
 
-    bookmarked_titles = [b.Title for b in bookmarks]
+    bookmarked_titles = [b.title for b in bookmarks]
 
     return {"bookmarked": bookmarked_titles}
 
 @app.post("/api/bookmark")
 def save_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
+    print(f"Received data: {data.model_dump()}")
     user_session = request.session.get("user")
     if not user_session:
         return RedirectResponse(url="/auth", status_code=303)
-    
+
     email = user_session.get("email")
     if not email:
         return {"error": "Email not found in session."}
-    
+
     user = db.query(models.Akun).filter(models.Akun.Email == email).first()
     if not user:
         return {"error": "User not found."}
-    
+
     bookmark = models.Bookmark(
         Bookmarked_by=email,
-        Title=data.Title,
-        Created_at=datetime.now().strftime("%d %B %Y %H:%M")
+        title=data.Title,
+        author=data.Author,
+        category=data.Category,
+        published_at=data.Published_at,
+        image_url=data.Image_url,
+        content=data.Content,
+        source_url=data.Source_url,
+        source_name=data.Source_name
     )
+
+    isExist = db.query(models.Bookmark).filter(
+    models.Bookmark.Bookmarked_by == email,
+    models.Bookmark.title == data.Title
+    ).first()
+
+    if isExist:
+        return {"error": "Bookmark already exists."}
+
     db.add(bookmark)
     db.commit()
     return {"message": "Bookmark saved"}
+    
 
 @app.delete("/api/remove-bookmark")
-async def remove_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(get_db)):
+async def remove_bookmark(request: Request, data: schemas.DeleteBookmarkRequest, db=Depends(get_db)):
     user_session = request.session.get("user")
     if not user_session:
         raise HTTPException(status_code=401, detail="User not logged in")
@@ -1237,7 +1400,7 @@ async def remove_bookmark(request: Request, data: schemas.BookmarkRequest, db=De
         return {"error": "Email not found in session."}
     bookmark = db.query(models.Bookmark).filter(
         models.Bookmark.Bookmarked_by == email,
-        models.Bookmark.Title == data.Title
+        models.Bookmark.title == data.Title
     ).first()
 
     if not bookmark:
@@ -1247,3 +1410,83 @@ async def remove_bookmark(request: Request, data: schemas.BookmarkRequest, db=De
     db.commit()
 
     return {"status": "Bookmark removed"}
+
+@app.get("/api/user-bookmarks")
+async def get_user_bookmarks(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user") 
+    if not user_session:
+        return {"error": "User not logged in"}
+    
+    email = user_session["email"]
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    
+    if not user:
+        return {"error": "User not found"}
+    
+    bookmarks = db.query(models.Bookmark.title).filter(
+        models.Bookmark.Bookmarked_by == email
+    ).all()
+
+    return {"Bookmarked Titles: ": [b.title for b in bookmarks]}
+
+@app.get("/api/get/user-bookmarks/{query}")
+async def get_user_bookmarked_news(query: str, request: Request, db: Session = Depends(get_db)):
+
+    decode_title = urllib.parse.unquote(query)
+    print(query);
+    user_session = request.session.get("user") 
+    if not user_session:
+        return {"error": "User not logged in"}
+    
+    email = user_session["email"]
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    
+    if not user:
+        return {"error": "User not found"}
+    try:
+        url = f"https://newsapi.org/v2/everything?qInTitle={decode_title}&apiKey={newsapi_client_key}"
+        async with httpx.AsyncClient() as client:
+            data = await client.get(url)
+            response = data.json()
+        
+    except Exception as e:
+        return {"error": f"Error fetching news: {str(e)}"}
+
+    if response['status'] != 'ok':
+        return {"error": "Failed to fetch news"}
+
+    news_list = []
+
+    for article in response.get('articles', []):
+        try:
+            published_date = parse_date(article["publishedAt"])
+        except ValueError:
+            print(f"Skipping article with invalid date: {article}")
+            continue
+
+        if not article.get("title") or not article.get("url"):
+            print(f"Skipping article due to missing title or url: {article}")
+            continue
+        if not article.get("content"):
+            print(f"Skipping article due to missing content: {article}")
+            continue
+
+        if not article.get("urlToImage"):
+            print(f"Skipping article due to missing news image: {article}")
+            continue
+        
+
+        news_list.append({
+            "title": article.get("title"),
+            "publishedAt": article.get("publishedAt"),
+            "publishedAt_dt": published_date,
+            "author": article.get("author"),
+            "source_name": article.get("source", {}).get("name"),
+            "imageUrl": article.get("urlToImage"),
+            "content": article.get("content"),
+            "url": article.get("url")
+        })
+
+    print("News List Length:", len(news_list))
+
+    return {"news": news_list}

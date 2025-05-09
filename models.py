@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey, Table
+from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -47,5 +47,11 @@ class Bookmark(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     Bookmarked_by = Column(String(100))
-    Title = Column(String(255))
-    Created_at = Column(String(255), nullable=True)
+    title = Column(String, index=True)
+    author = Column(String, nullable=True)
+    category = Column(String, nullable=True)
+    published_at = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)
+    content = Column(Text, nullable=True)
+    source_url = Column(String, nullable=True)
+    source_name = Column(String, nullable=True)
