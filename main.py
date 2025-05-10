@@ -582,14 +582,6 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             "Bookmarked_by": email 
         }
 
-        existing = db.query(models.Bookmark).filter_by(
-            title=news_item["title"],
-            Bookmarked_by=email
-        ).first()
-
-        if not existing:
-            new_article = models.Bookmark(**news_item)
-            db.add(new_article)
 
         news_list.append(news_item)
 

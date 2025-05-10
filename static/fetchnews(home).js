@@ -261,6 +261,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     postMidContainers.forEach((post) => {
+      const title = post.querySelector(".title-mid")?.textContent.trim();
       handleBookmark(
         post,
         ".title-mid",
@@ -320,59 +321,68 @@ document.addEventListener("DOMContentLoaded", async function () {
       checkbox.checked = isBookmarked;
       updateIcon(icon, isBookmarked, bookmarkText);
 
-      checkbox.addEventListener("change", async function () {
-        const checked = checkbox.checked;
-        try {
-          const articleData = await fetchArticle(title);
-          const postData = articleData.news?.[0];
+      if (!checkbox.dataset.listenerAttached) {
+        checkbox.addEventListener("change", async function () {
+          console.log("Bookmarking checkbox triggered for title:", title);
+          console.log("Bookmarking checkbox triggered for title:", title);
+          const checked = checkbox.checked;
+          try {
+            const articleData = await fetchArticle(title);
+            const postData = articleData.news?.find(
+              (article) => article.title === title
+            );
+            console.log("Title clicked:", title);
+            console.log("Title matched:", postData?.title);
 
-          console.log("Post data to send:", postData);
+            console.log("Post data to send:", postData);
 
-          if (!postData) throw new Error("Article data not found");
+            if (!postData) throw new Error("Article data not found");
 
-          const bookmarkExists = bookmarkedTitles.includes(title);
-          if (checked && bookmarkExists) {
-            alert("This post is already bookmarked.");
-            checkbox.checked = false;
-            return;
-          }
-
-          const res = await fetch(
-            checked ? "/api/bookmark" : "/api/remove-bookmark",
-            {
-              method: checked ? "POST" : "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(
-                checked
-                  ? {
-                      Title: postData.title,
-                      Author: postData.author,
-                      Category: postData.category,
-                      Published_at: postData.published_at,
-                      Image_url: postData.image_url,
-                      Content: postData.content,
-                      Source_url: postData.source_url,
-                      Source_name: postData.source_name,
-                    }
-                  : { Title: title }
-              ),
+            const bookmarkExists = bookmarkedTitles.includes(title);
+            if (checked && bookmarkExists) {
+              alert("This post is already bookmarked.");
+              checkbox.checked = false;
+              return;
             }
-          );
 
-          if (!res.ok) {
-            alert("Cannot add or delete bookmark");
+            const res = await fetch(
+              checked ? "/api/bookmark" : "/api/remove-bookmark",
+              {
+                method: checked ? "POST" : "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(
+                  checked
+                    ? {
+                        Title: postData.title,
+                        Author: postData.author,
+                        Category: postData.category,
+                        Published_at: postData.published_at,
+                        Image_url: postData.image_url,
+                        Content: postData.content,
+                        Source_url: postData.source_url,
+                        Source_name: postData.source_name,
+                      }
+                    : { Title: title }
+                ),
+              }
+            );
+
+            if (!res.ok) {
+              alert("Cannot add or delete bookmark");
+              checkbox.checked = !checked;
+              return;
+            }
+
+            updateIcon(icon, checked, bookmarkText);
+            alert(checked ? "Post Bookmarked!" : "Bookmark deleted!");
+          } catch (err) {
+            console.error("Error:", err);
             checkbox.checked = !checked;
-            return;
+            alert("Cannot add or delete bookmark");
           }
-
-          updateIcon(icon, checked, bookmarkText);
-          alert(checked ? "Post Bookmarked!" : "Bookmark deleted!");
-        } catch (err) {
-          console.error("Error:", err);
-          checkbox.checked = !checked;
-          alert("Cannot add or delete bookmark");
-        }
-      });
+        });
+        checkbox.dataset.listenerAttached = "true";
+      }
     } else {
       const btn = post.querySelector(btnSelector);
       if (!btn) return;
