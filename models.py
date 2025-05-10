@@ -55,3 +55,6 @@ class Bookmark(Base):
     content = Column(Text, nullable=True)
     source_url = Column(String, nullable=True)
     source_name = Column(String, nullable=True)
+    __table_args__ = (
+        UniqueConstraint('Bookmarked_by', 'title', name='unique_user_title'),
+    )

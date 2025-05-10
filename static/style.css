@@ -431,6 +431,14 @@ tr {
   border-bottom-left-radius: 20px;
 }
 
+.bookmarked-posts-profile{
+  width: 100% !important;
+}
+
+.bookmarked-posts-profile .post-mid {
+  height: 18rem;
+}
+
 .post-text {
   position: absolute;
   bottom: 0;

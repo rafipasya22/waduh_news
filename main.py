@@ -511,18 +511,8 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             "Bookmarked_by": email  
         }
 
-        existing = db.query(models.Bookmark).filter_by(
-            title=news_item["title"],
-            Bookmarked_by=email
-        ).first()
-
-        if not existing:
-            new_article = models.Bookmark(**news_item)
-            db.add(new_article)
-
         news_list.append(news_item)
 
-    db.commit()
     return JSONResponse(content={"news": news_list})
 
 @app.get("/api/ambil-news2/headline/{query}/{title}", response_class=JSONResponse)
@@ -585,7 +575,6 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
         news_list.append(news_item)
 
-    db.commit()
     return JSONResponse(content={"news": news_list})
 
 @app.get("/api/baca-news/{query}/{title}", response_class=HTMLResponse)
@@ -1415,70 +1404,22 @@ async def get_user_bookmarks(request: Request, db: Session = Depends(get_db)):
     if not user:
         return {"error": "User not found"}
     
-    bookmarks = db.query(models.Bookmark.title).filter(
+    bookmark_query = db.query(models.Bookmark).filter(
         models.Bookmark.Bookmarked_by == email
     ).all()
 
-    return {"Bookmarked Titles: ": [b.title for b in bookmarks]}
-
-@app.get("/api/get/user-bookmarks/{query}")
-async def get_user_bookmarked_news(query: str, request: Request, db: Session = Depends(get_db)):
-
-    decode_title = urllib.parse.unquote(query)
-    print(query);
-    user_session = request.session.get("user") 
-    if not user_session:
-        return {"error": "User not logged in"}
-    
-    email = user_session["email"]
-    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-    
-    if not user:
-        return {"error": "User not found"}
-    try:
-        url = f"https://newsapi.org/v2/everything?qInTitle={decode_title}&apiKey={newsapi_client_key}"
-        async with httpx.AsyncClient() as client:
-            data = await client.get(url)
-            response = data.json()
-        
-    except Exception as e:
-        return {"error": f"Error fetching news: {str(e)}"}
-
-    if response['status'] != 'ok':
-        return {"error": "Failed to fetch news"}
-
-    news_list = []
-
-    for article in response.get('articles', []):
-        try:
-            published_date = parse_date(article["publishedAt"])
-        except ValueError:
-            print(f"Skipping article with invalid date: {article}")
-            continue
-
-        if not article.get("title") or not article.get("url"):
-            print(f"Skipping article due to missing title or url: {article}")
-            continue
-        if not article.get("content"):
-            print(f"Skipping article due to missing content: {article}")
-            continue
-
-        if not article.get("urlToImage"):
-            print(f"Skipping article due to missing news image: {article}")
-            continue
-        
-
-        news_list.append({
-            "title": article.get("title"),
-            "publishedAt": article.get("publishedAt"),
-            "publishedAt_dt": published_date,
-            "author": article.get("author"),
-            "source_name": article.get("source", {}).get("name"),
-            "imageUrl": article.get("urlToImage"),
-            "content": article.get("content"),
-            "url": article.get("url")
+    bookmarks = []
+    for b in bookmark_query:
+        bookmarks.append({
+            "title": b.title,
+            "author": b.author,
+            "category": b.category,
+            "published_at": b.published_at,
+            "image_url": b.image_url,
+            "content": b.content,
+            "source_url": b.source_url,
+            "source_name": b.source_name
         })
 
-    print("News List Length:", len(news_list))
+    return {"bookmarks": bookmarks}
 
-    return {"news": news_list}
