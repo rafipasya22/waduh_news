@@ -1,3 +1,4 @@
+from math import ceil
 from fastapi import FastAPI, Depends, Form, HTTPException, Query, Request, UploadFile, File, requests
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
@@ -295,7 +296,7 @@ async def save_preferences(
 ):
     user_session = request.session.get("user") 
     if not user_session:
-        return {"error": "User not logged in"}
+        raise HTTPException(status_code=401, detail="User not logged in")
     
     email = user_session["email"]
     user = db.query(models.Akun).filter(models.Akun.Email == email).first()
@@ -312,7 +313,7 @@ async def save_preferences(
 async def get_user_preferences(request: Request, db: Session = Depends(get_db)):
     user_session = request.session.get("user")  
     if not user_session:
-        return {"error": "User not logged in"}
+        raise HTTPException(status_code=401, detail="User not logged in")
     
     email = user_session["email"]
     user = db.query(models.Akun).filter(models.Akun.Email == email).first()
@@ -1393,20 +1394,30 @@ async def remove_bookmark(request: Request, data: schemas.DeleteBookmarkRequest,
     return {"status": "Bookmark removed"}
 
 @app.get("/api/user-bookmarks")
-async def get_user_bookmarks(request: Request, db: Session = Depends(get_db)):
-    user_session = request.session.get("user") 
+async def get_user_bookmarks(
+    request: Request,
+    page: int = Query(1, gt=0),
+    page_size: int = Query(5, gt=0),
+    db: Session = Depends(get_db)
+):
+    user_session = request.session.get("user")
     if not user_session:
-        return {"error": "User not logged in"}
+        raise HTTPException(status_code=401, detail="User not logged in")
     
     email = user_session["email"]
     user = db.query(models.Akun).filter(models.Akun.Email == email).first()
     
     if not user:
         return {"error": "User not found"}
-    
+
+    total_items = db.query(models.Bookmark).filter(
+        models.Bookmark.Bookmarked_by == email
+    ).count()
+    total_pages = ceil(total_items / page_size)
+
     bookmark_query = db.query(models.Bookmark).filter(
         models.Bookmark.Bookmarked_by == email
-    ).all()
+    ).offset((page - 1) * page_size).limit(page_size).all()
 
     bookmarks = []
     for b in bookmark_query:
@@ -1414,12 +1425,76 @@ async def get_user_bookmarks(request: Request, db: Session = Depends(get_db)):
             "title": b.title,
             "author": b.author,
             "category": b.category,
-            "published_at": b.published_at,
-            "image_url": b.image_url,
+            "publishedAt": b.published_at,  
+            "imageUrl": b.image_url,
             "content": b.content,
             "source_url": b.source_url,
             "source_name": b.source_name
         })
 
-    return {"bookmarks": bookmarks}
+    return {
+        "bookmarks": bookmarks,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "current_page": page
+    }
 
+@app.get("/api/baca-news/article/bookmarks/{title}", response_class=HTMLResponse)
+async def baca_bookmark(request: Request, title:str, db: Session = Depends(get_db)):
+        decode_title = urllib.parse.unquote(title)
+
+        user_session = request.session.get("user") 
+        if not user_session:
+            raise HTTPException(status_code=401, detail="User not logged in")
+        
+        email = user_session["email"]
+        user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        try:
+            bookmark_query = db.query(models.Bookmark).filter(
+                models.Bookmark.Bookmarked_by == email,
+                models.Bookmark.title == decode_title
+            ).first()
+
+            if not bookmark_query:
+                raise HTTPException(status_code=404, detail="No complete article found")
+
+            return templates.TemplateResponse("news-page-bookmark.html", {
+                "request": request,
+                "title": bookmark_query.title,
+                "author": bookmark_query.author,
+                "category": bookmark_query.category,
+                "publishedAt": bookmark_query.published_at,
+                "imageUrl": bookmark_query.image_url,
+                "content": bookmark_query.content,
+                "source_url": bookmark_query.source_url,
+                "source_name": bookmark_query.source_name,
+                "user": user,
+                "Logged_in": True
+            })
+
+        except Exception as e:
+            print(f"Failed Fetching Article {e}")
+            raise HTTPException(status_code=404, detail="No complete article found")
+        
+
+@app.get("/getbookmarks")
+async def getbookmarks(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session: 
+        raise HTTPException(status_code=404, detail="No session found")
+    
+    email = user_session.get("email")
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User doesn't exist")
+    
+    return templates.TemplateResponse("user-bookmarks.html", {
+        "request": request,
+        "user": user,
+        "Logged_in": True
+    })

@@ -497,6 +497,14 @@ tr {
   top: 0;
 }
 
+.container-post.user-bookmarks{
+  width: 100% !important;
+}
+
+.container-post.search-more{
+  width: 100% !important;
+}
+
 .post-analytics-big .material-symbols-outlined {
   font-size: 1.5rem;
 }

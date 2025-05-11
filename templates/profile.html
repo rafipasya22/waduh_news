@@ -366,13 +366,10 @@
                 <div
                   class="bookmarked-posts d-flex justify-content-start align-items-center flex-row"
                 >
-                  {% if user.Liked is none %}
-                  <p class="me-1 mb-0">0</p>
+
+                  <p class="bookmark-numbers me-1 mb-0">0</p>
                   <small class="small">Posts Bookmarked</small>
-                  {% else %}
-                  <p class="me-1 mb-0">{{ user.Bookmarked }}</p>
-                  <small class="small">Posts Bookmarked</small>
-                  {% endif %}
+                  
                 </div>
               </div>
             </div>
@@ -431,7 +428,7 @@
         <div class="bookmarked-posts-title">
           <h3>Bookmarked <span>Posts</span></h3>
         </div>
-        <a class="seeall" href="#">See all</a>
+        <a class="seeall" href="/getbookmarks">See all</a>
       </div>
 
       <div

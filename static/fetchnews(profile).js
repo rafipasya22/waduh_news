@@ -12,6 +12,10 @@ async function fetchAndDisplayNews(event = null) {
       return;
     }
 
+    const totalBookmarks = data.total_items
+    const totalContainer = document.querySelector(".bookmark-numbers")
+    totalContainer.innerHTML = totalBookmarks;
+
     const newsList = data.bookmarks;
     const containers = document.querySelectorAll(".bookmarked-posts-profile");
 
@@ -28,9 +32,7 @@ async function fetchAndDisplayNews(event = null) {
       const postsForContainer = newsList.slice(postCount, postCount + 2);
 
       postsForContainer.forEach((news) => {
-        const redirect = `/api/baca-news/headline/${encodeURIComponent(
-          news.category
-        )}/${encodeURIComponent(news.title)}`;
+        const redirect = `/api/baca-news/article/bookmarks/${encodeURIComponent(news.title)}`;
         const catClass =
           news.category.charAt(0).toUpperCase() +
           news.category.slice(1).toLowerCase();
@@ -48,7 +50,7 @@ async function fetchAndDisplayNews(event = null) {
           <div class="post-content">
             <a href="${redirect}" class="container-img">
               <img src="${
-                news.image_url || "/static/Assets/img/default.jpg"
+                news.imageUrl || "/static/Assets/img/default.jpg"
               }" alt="" />
             </a>
 
