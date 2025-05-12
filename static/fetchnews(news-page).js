@@ -393,7 +393,152 @@ async function bookmark_post() {
   }
 }
 
+async function like_post() {
+  const postBigContainers = document.querySelector(".title-container");
+
+  const titleElement = postBigContainers.querySelector(".news-title h2");
+  const title = titleElement.textContent.trim();
+
+  try {
+    const res = await fetch("/api/check-likes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ post_title: title }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const result = await res.json();
+    const likedTitles = result.likes || [];
+
+    if (!result || !("likes" in result)) {
+      throw new Error("Invalid response: missing 'likes'");
+    }
+
+    console.log(likedTitles);
+
+    handleLikes(postBigContainers, ".news-title h2", ".likebtn", likedTitles);
+  } catch (err) {
+    console.error("Checking Bookmarks Failed:", err);
+  }
+
+  function handleLikes(post, titleSelector, btnSelector, likedTitles) {
+    const titleElement = post.querySelector(titleSelector);
+    const title = titleElement?.textContent.trim();
+    if (!title) return;
+
+    const btn = post.querySelector(btnSelector);
+    if (!btn) return;
+
+    const isExist = likedTitles.includes(title);
+    btn.classList.toggle("pressed", isExist);
+    updateTextLike(btn);
+
+    btn.addEventListener("click", async function (e) {
+      e.preventDefault();
+
+      try {
+        const likedExist = likedTitles.includes(title);
+        const checkBookmarked = btn.classList.contains("pressed");
+        console.log("waduh: ", likedExist);
+        console.log("wadaw:", checkBookmarked);
+        if (btn.classList.contains("pressed") && likedExist) {
+          const res = await fetch("/api/remove-like", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ post_title: title }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot unlike");
+            return;
+          }
+
+          btn.classList.remove("pressed");
+          updateTextLike(btn);
+          console.log("Post Unliked!");
+        } else if (!btn.classList.contains("pressed") && !likedExist) {
+          const res = await fetch("/api/addlike", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              post_title: articleData.title,
+              post_category: articleData.category,
+              post_source: articleData.source_name,
+            }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot like post");
+            return;
+          }
+
+          btn.classList.add("pressed");
+          updateTextLike(btn);
+          alert("Post liked!");
+        } else if (!btn.classList.contains("pressed") && likedExist) {
+          const res = await fetch("/api/addlike", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              post_title: articleData.title,
+              post_category: articleData.category,
+              post_source: articleData.source_name,
+            }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot add bookmark");
+            return;
+          }
+
+          btn.classList.add("pressed");
+          updateTextLike(btn);
+          alert("Post liked!");
+        } else if (btn.classList.contains("pressed") && !likedExist) {
+          const res = await fetch("/api/remove-like", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ post_title: title }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot delete bookmark");
+            return;
+          }
+
+          btn.classList.remove("pressed");
+          updateTextLike(btn);
+          console.log("Post Unliked!");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Cannot add or delete bookmark");
+      }
+    });
+  }
+
+  function updateTextLike(btn) {
+    if (btn.classList.contains("pressed")) {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined me-2"> thumb_up </span>
+        Liked
+      `;
+    } else {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined me-2"> thumb_up </span>
+        Like
+      `;
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
   bookmark_mid();
   bookmark_post();
+  like_post();
 });

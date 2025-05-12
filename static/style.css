@@ -509,6 +509,18 @@ tr {
   font-size: 1.5rem;
 }
 
+.post-analytics-big .views small{
+  margin-left: 0.5rem;
+}
+
+.post-analytics-big .share small{
+  margin-left: 0.5rem;
+}
+
+.post-analytics-big .likes small{
+  margin-left: 0.5rem;
+}
+
 .container-post-big {
   margin-bottom: 0.5rem;
 }
@@ -1290,7 +1302,7 @@ input[type="checkbox"]:checked {
   background-color: #b50000d3 !important;
 }
 
-.likebtn[aria-pressed="true"] {
+.likebtn.pressed{
   background-color: rgb(104, 223, 104) !important;
   border-color: rgb(5, 136, 0) !important;
   color: rgb(0, 142, 7) !important;
@@ -1311,7 +1323,7 @@ input[type="checkbox"]:checked {
   background-color: #b50000d3 !important;
 }
 
-.dislikebtn[aria-pressed="true"] {
+.dislikebtn.pressed {
   background-color: rgb(223, 104, 104) !important;
   border-color: rgb(136, 0, 0) !important;
   color: rgb(142, 0, 0) !important;
@@ -1468,14 +1480,14 @@ input[type="checkbox"]:checked {
   color: #dc0000d3;
 }
 
-.liked[aria-pressed="true"] {
+.liked.pressed {
   color: rgb(0, 142, 7) !important;
   .material-symbols-outlined {
     color: green !important;
   }
 }
 
-.disliked[aria-pressed="true"] {
+.disliked.pressed {
   color: rgb(142, 0, 0) !important;
   .material-symbols-outlined {
     color: rgb(128, 0, 0) !important;

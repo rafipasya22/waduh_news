@@ -1498,3 +1498,110 @@ async def getbookmarks(request: Request, db: Session = Depends(get_db)):
         "user": user,
         "Logged_in": True
     })
+
+@app.post("/api/check-likes")
+def check_likes(request: Request, data: schemas.CheckLikeResponse, db: Session = Depends(get_db)):
+    print("test")
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    title = data.post_title 
+
+    print("Titles dari frontend:", title)
+
+    likes = db.query(models.Likes.post_title).filter(
+        models.Likes.liked_by == email,
+        models.Likes.post_title == title
+    ).first()
+
+    if not likes:
+        return {"likes": ""} 
+
+    return {"likes": likes.post_title}
+
+@app.post("/api/addlike")
+def add_like(request: Request, data: schemas.LikeResponse, db=Depends(get_db)):
+    print(f"Received data: {data.model_dump()}")
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/auth", status_code=303)
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+
+    likes = models.Likes(
+        liked_by=email,
+        post_title=data.post_title,
+        post_category=data.post_category,
+        post_source=data.post_source
+    )
+
+    isExist = db.query(models.Likes).filter(
+        models.Likes.liked_by == email,
+        models.Likes.post_title == data.post_title
+    ).first()
+
+    if isExist:
+        return {"error": "Bookmark already exists."}
+
+    db.add(likes)
+    db.commit()
+    return {"message": "Bookmark saved"}
+
+@app.delete("/api/remove-like")
+async def remove_like(request: Request, data: schemas.CheckLikeResponse, db=Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    likes = db.query(models.Likes).filter(
+        models.Likes.liked_by == email,
+        models.Likes.post_title == data.post_title
+    ).first()
+
+    if not likes:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    db.delete(likes)
+    db.commit()
+
+    return {"status": "Like removed"}
+
+@app.post("/api/total_likes")
+async def get_total_likes(
+    data: schemas.CheckLikeResponse,
+    db: Session = Depends(get_db)
+):  
+    print(f"Titles data to fetch likes: {data.model_dump()}")
+
+    total_items = db.query(models.Likes).filter(
+        models.Likes.post_title == data.post_title
+    ).count()
+
+    return {"total_likes": total_items}
+
+@app.get("/api/profile/get_total_likes")
+async def get_total_profile_likes(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    
+    get_total_likes = db.query(models.Likes).filter(
+        models.Likes.liked_by == email
+    ).count()
+
+    return {"total_likes_by": get_total_likes}

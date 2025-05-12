@@ -3,6 +3,14 @@ from typing import List
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
+class LikeResponse(BaseModel):
+    post_title: str
+    post_category: str
+    post_source: str
+
+class CheckLikeResponse(BaseModel):
+    post_title: str
+
 class BookmarkRequest(BaseModel):
     Title: str
     Author: str
@@ -71,3 +79,7 @@ class UserPreferenceRequest(BaseModel):
 
 class BookmarkBatchRequest(BaseModel):
     Titles: List[str]
+
+class LikeBatchRequest(BaseModel):
+    post_titles: List[str]
+

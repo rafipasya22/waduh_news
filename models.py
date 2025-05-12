@@ -58,3 +58,14 @@ class Bookmark(Base):
     __table_args__ = (
         UniqueConstraint('Bookmarked_by', 'title', name='unique_user_title'),
     )
+
+class Likes(Base):
+	__tablename__ = "post_likes"
+	id = Column(Integer, primary_key=True, index=True)
+	post_title = Column(String(255), index=True)
+	post_category = Column(String(255), nullable=True)
+	post_source = Column(String(255), nullable=True)
+	liked_by = Column(String(100))
+	__table_args__ = (
+        UniqueConstraint('liked_by', 'post_title', name='unique_user_liked'),
+    )

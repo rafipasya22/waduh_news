@@ -203,6 +203,67 @@ async function loadPopularNews() {
   }
 }
 
+async function getlike() {
+  const postBigContainers = document.querySelectorAll(".post-big");
+  const postMidContainers = document.querySelectorAll(".post-mid");
+
+  const titleList = [];
+
+  postBigContainers.forEach((post) => {
+    const titleElement = post.querySelector(".post-text-big");
+    if (titleElement) {
+      const title = titleElement.textContent.trim();
+      if (title) {
+        titleList.push(title);
+      }
+    }
+  });
+
+  postMidContainers.forEach((post) => {
+    const titleElement = post.querySelector(".title-mid");
+    if (titleElement) {
+      const title = titleElement.textContent.trim();
+      if (title) {
+        titleList.push(title);
+      }
+    }
+  });
+
+  postBigContainers.forEach((post) => {
+    getlikes(post, ".post-text-big");
+  });
+
+  postMidContainers.forEach((post) => {
+    getlikes(post, ".title-mid");
+  });
+
+  async function getlikes(post, titleSelector) {
+    const titleElement = post.querySelector(titleSelector);
+    const title = titleElement?.textContent.trim();
+    if (!title) return;
+
+    const likeContainer = post.querySelector(".likes small");
+    if (!likeContainer) return;
+
+    try {
+      const res = await fetch("/api/total_likes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ post_title: title }),
+      });
+
+      const result = await res.json();
+      const total = result.total_likes || 0;
+
+      likeContainer.textContent = total;
+    } catch (err) {
+      console.error("Getting like Failed:", err);
+    }
+  }
+}
+
 let headlineInfoList = [];
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -212,6 +273,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const sportsResult = await loadSportsNews();
   if (sportsResult?.length) headlineInfoList.push(...sportsResult);
   await loadPopularNews();
+
+  await getlike();
 
   const postBigContainers = document.querySelectorAll(".post-big");
   const postMidContainers = document.querySelectorAll(".post-mid");
