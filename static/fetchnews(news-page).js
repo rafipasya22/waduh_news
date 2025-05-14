@@ -434,6 +434,9 @@ async function like_post() {
     const btn = post.querySelector(btnSelector);
     if (!btn) return;
 
+    const dislikebtn = post.querySelector(".dislikebtn");
+    if (!dislikebtn) return;
+
     const isExist = likedTitles.includes(title);
     btn.classList.toggle("pressed", isExist);
     updateTextLike(btn);
@@ -441,12 +444,11 @@ async function like_post() {
     btn.addEventListener("click", async function (e) {
       e.preventDefault();
 
+      const isLiked = btn.classList.contains("pressed");
+      const isDisliked = dislikebtn.classList.contains("pressed");
+
       try {
-        const likedExist = likedTitles.includes(title);
-        const checkBookmarked = btn.classList.contains("pressed");
-        console.log("waduh: ", likedExist);
-        console.log("wadaw:", checkBookmarked);
-        if (btn.classList.contains("pressed") && likedExist) {
+        if (isLiked) {
           const res = await fetch("/api/remove-like", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
@@ -461,7 +463,7 @@ async function like_post() {
           btn.classList.remove("pressed");
           updateTextLike(btn);
           console.log("Post Unliked!");
-        } else if (!btn.classList.contains("pressed") && !likedExist) {
+        } else {
           const res = await fetch("/api/addlike", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -477,43 +479,26 @@ async function like_post() {
             return;
           }
 
-          btn.classList.add("pressed");
-          updateTextLike(btn);
-          alert("Post liked!");
-        } else if (!btn.classList.contains("pressed") && likedExist) {
-          const res = await fetch("/api/addlike", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              post_title: articleData.title,
-              post_category: articleData.category,
-              post_source: articleData.source_name,
-            }),
-          });
+          if (isDisliked) {
+            const res = await fetch("/api/remove-dislike", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ post_title: title }),
+            });
 
-          if (!res.ok) {
-            alert("Cannot add bookmark");
-            return;
+            if (!res.ok) {
+              alert("Cannot remove dislike");
+              return;
+            }
+
+            dislikebtn.classList.remove("pressed");
+            updateTextdisLike(dislikebtn);
+            console.log("Dislike Removed!");
           }
 
           btn.classList.add("pressed");
           updateTextLike(btn);
           alert("Post liked!");
-        } else if (btn.classList.contains("pressed") && !likedExist) {
-          const res = await fetch("/api/remove-like", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ post_title: title }),
-          });
-
-          if (!res.ok) {
-            alert("Cannot delete bookmark");
-            return;
-          }
-
-          btn.classList.remove("pressed");
-          updateTextLike(btn);
-          console.log("Post Unliked!");
         }
       } catch (err) {
         console.error("Error:", err);
@@ -535,10 +520,179 @@ async function like_post() {
       `;
     }
   }
+
+  function updateTextdisLike(dislikeBtn) {
+    if (dislikeBtn.classList.contains("pressed")) {
+      dislikeBtn.innerHTML = `
+        <span class="material-symbols-outlined me-2">
+                  thumb_down
+                </span>
+                Disliked
+      `;
+    } else {
+      dislikeBtn.innerHTML = `
+        <span class="material-symbols-outlined me-2">
+                  thumb_down
+                </span>
+                Dislike
+      `;
+    }
+  }
+}
+
+async function dislike_post() {
+  const postBigContainers = document.querySelector(".title-container");
+
+  const titleElement = postBigContainers.querySelector(".news-title h2");
+  const title = titleElement.textContent.trim();
+
+  try {
+    const res = await fetch("/api/check-dislikes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ post_title: title }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const result = await res.json();
+    const dislikedTitles = result.dislikes || [];
+
+    if (!result || !("dislikes" in result)) {
+      throw new Error("Invalid response: missing 'dislikes'");
+    }
+
+    console.log(dislikedTitles);
+
+    handleLikes(
+      postBigContainers,
+      ".news-title h2",
+      ".dislikebtn",
+      dislikedTitles
+    );
+  } catch (err) {
+    console.error("Checking Bookmarks Failed:", err);
+  }
+
+  function handleLikes(post, titleSelector, btnSelector, dislikedTitles) {
+    const likebtn = post.querySelector(".likebtn");
+    if (!likebtn) return;
+
+    const titleElement = post.querySelector(titleSelector);
+    const title = titleElement?.textContent.trim();
+    if (!title) return;
+
+    const dislikebtn = post.querySelector(btnSelector);
+    if (!dislikebtn) return;
+
+    const isExist = dislikedTitles.includes(title);
+    dislikebtn.classList.toggle("pressed", isExist);
+    updateTextdisLike(dislikebtn);
+
+    dislikebtn.addEventListener("click", async function (e) {
+      e.preventDefault();
+
+      const isDisliked = dislikebtn.classList.contains("pressed");
+      const isLiked = likebtn.classList.contains("pressed");
+
+      try {
+        if (isDisliked) {
+          const res = await fetch("/api/remove-dislike", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ post_title: title }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot remove dislike");
+            return;
+          }
+
+          dislikebtn.classList.remove("pressed");
+          updateTextdisLike(dislikebtn);
+          console.log("Dislike Removed!");
+        } else {
+          const res = await fetch("/api/add-dislike", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              post_title: articleData.title,
+              post_category: articleData.category,
+              post_source: articleData.source_name,
+            }),
+          });
+
+          if (!res.ok) {
+            alert("Cannot dislike post");
+            return;
+          }
+
+          if (isLiked) {
+            const remove_like = await fetch("/api/remove-like", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ post_title: title }),
+            });
+
+            if (!remove_like.ok) {
+              alert("Cannot remove like");
+              return;
+            }
+
+            likebtn.classList.remove("pressed");
+            updateTextLike(likebtn);
+          }
+
+          dislikebtn.classList.add("pressed");
+          updateTextdisLike(dislikebtn);
+          alert("Post disliked!");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Something went wrong.");
+      }
+    });
+  }
+
+  function updateTextdisLike(dislikeBtn) {
+    if (dislikeBtn.classList.contains("pressed")) {
+      dislikeBtn.innerHTML = `
+        <span class="material-symbols-outlined me-2">
+                  thumb_down
+                </span>
+                Disliked
+      `;
+    } else {
+      dislikeBtn.innerHTML = `
+        <span class="material-symbols-outlined me-2">
+                  thumb_down
+                </span>
+                Dislike
+      `;
+    }
+  }
+  function updateTextLike(btn) {
+    if (btn.classList.contains("pressed")) {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined me-2"> thumb_up </span>
+        Liked
+      `;
+    } else {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined me-2"> thumb_up </span>
+        Like
+      `;
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
   bookmark_mid();
   bookmark_post();
   like_post();
+  dislike_post();
 });

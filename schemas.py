@@ -3,6 +3,14 @@ from typing import List
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
+class DislikeResponse(BaseModel):
+    post_title: str
+    post_category: str
+    post_source: str
+
+class CheckDislikeResponse(BaseModel):
+    post_title: str
+
 class LikeResponse(BaseModel):
     post_title: str
     post_category: str

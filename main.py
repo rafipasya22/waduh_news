@@ -1605,3 +1605,81 @@ async def get_total_profile_likes(request: Request, db: Session = Depends(get_db
     ).count()
 
     return {"total_likes_by": get_total_likes}
+
+@app.post("/api/add-dislike")
+def add_like(request: Request, data: schemas.DislikeResponse, db=Depends(get_db)):
+    print(f"Received data: {data.model_dump()}")
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/auth", status_code=303)
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+
+    dislikes = models.Dislikes(
+        disliked_by=email,
+        post_title=data.post_title,
+        post_category=data.post_category,
+        post_source=data.post_source
+    )
+
+    isExist = db.query(models.Dislikes).filter(
+        models.Dislikes.disliked_by == email,
+        models.Dislikes.post_title == data.post_title
+    ).first()
+
+    if isExist:
+        return {"error": "Bookmark already exists."}
+
+    db.add(dislikes)
+    db.commit()
+    return {"message": "Bookmark saved"}
+
+@app.delete("/api/remove-dislike")
+async def remove_like(request: Request, data: schemas.CheckDislikeResponse, db=Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    dislikes = db.query(models.Dislikes).filter(
+        models.Dislikes.disliked_by == email,
+        models.Dislikes.post_title == data.post_title
+    ).first()
+
+    if not dislikes:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    db.delete(dislikes)
+    db.commit()
+
+    return {"status": "Like removed"}
+
+@app.post("/api/check-dislikes")
+def check_likes(request: Request, data: schemas.CheckDislikeResponse, db: Session = Depends(get_db)):
+    print("test")
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    title = data.post_title 
+
+    print("Titles dari frontend:", title)
+
+    dislikes = db.query(models.Dislikes).filter(
+        models.Dislikes.disliked_by == email,
+        models.Dislikes.post_title == title
+    ).first()
+
+    if not dislikes:
+        return {"dislikes": ""} 
+
+    return {"dislikes": dislikes.post_title}
