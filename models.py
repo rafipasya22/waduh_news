@@ -33,6 +33,7 @@ class Akun(Base):
     ProfilePhoto = Column(Text, nullable=True)
 
     topics = relationship("Topics", secondary=user_preferences, back_populates="users")
+    comments = relationship("Comments", back_populates="user_data")
 
 class Topics(Base):
     __tablename__= "Topics"
@@ -80,3 +81,15 @@ class Dislikes(Base):
      __table_args__ = (
         UniqueConstraint('disliked_by', 'post_title', name='unique_user_disliked'),
     )
+     
+class Comments(Base):
+     __tablename__ = "post_comments"
+     id = Column(Integer, primary_key=True, index=True)
+     post_title = Column(String(255), index=True)
+     post_category = Column(String(255), nullable=True)
+     post_source = Column(String(255), nullable=True)
+     post_comments = Column(String(1000), nullable=False)
+     commented_by = Column(String(100))
+     user_id = Column(Integer, ForeignKey("Akun.id"), nullable=False)
+
+     user_data = relationship("Akun", back_populates="comments")

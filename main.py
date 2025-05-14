@@ -1664,7 +1664,6 @@ async def remove_like(request: Request, data: schemas.CheckDislikeResponse, db=D
 
 @app.post("/api/check-dislikes")
 def check_likes(request: Request, data: schemas.CheckDislikeResponse, db: Session = Depends(get_db)):
-    print("test")
     user_session = request.session.get("user")
     if not user_session:
         raise HTTPException(status_code=401, detail="User not logged in")
@@ -1683,3 +1682,57 @@ def check_likes(request: Request, data: schemas.CheckDislikeResponse, db: Sessio
         return {"dislikes": ""} 
 
     return {"dislikes": dislikes.post_title}
+
+@app.post("/api/baca-news/add-comment")
+def add_comment(request: Request, data: schemas.CommentResponse, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    title = data.post_title 
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+
+    print("Titles dari frontend:", title)
+
+    comments = models.Comments(
+        commented_by=email,
+        post_title=data.post_title,
+        post_category=data.post_category,
+        post_source=data.post_source,
+        post_comments = data.post_comments,
+        user_id = user.id
+    )
+
+    db.add(comments)
+    db.commit()
+    return {"message": "Comment Sent"}
+
+
+@app.post("/api/get_comments")
+def get_comments(request: Request, data: schemas.GetCommentResponse, db: Session = Depends(get_db)):
+    print("Titles dari www:", data.post_title)
+
+    comments = db.query(models.Comments).filter(
+        models.Comments.post_title == data.post_title
+    ).all()
+
+    result = []
+    for comment in comments:
+        result.append({
+            "comment": comment.post_comments,
+            "post_title": comment.post_title,
+            "post_category": comment.post_category,
+            "post_source": comment.post_source,
+            "user": {
+                "username": comment.user_data.Username,
+                "first_name": comment.user_data.First_name,
+                "last_name": comment.user_data.Last_name,
+                "profile_photo": comment.user_data.ProfilePhoto,
+            }
+        })
+
+    return {"comments": result}

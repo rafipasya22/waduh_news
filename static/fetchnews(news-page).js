@@ -690,9 +690,154 @@ async function dislike_post() {
   }
 }
 
+async function send_comment() {
+  const comment = document.getElementById("comment").value;
+
+  try {
+    const res = await fetch("/api/baca-news/add-comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        post_title: articleData.title,
+        post_category: articleData.category,
+        post_source: articleData.source_name,
+        post_comments: comment,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    location.reload();
+    console.log("comment sent");
+  } catch (err) {
+    console.error("Checking Bookmarks Failed:", err);
+  }
+}
+
+document.getElementById("commentForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  send_comment();
+});
+
+async function get_comments(event = null) {
+  if (event && typeof event.preventDefault === "function") {
+    event.preventDefault();
+  }
+  try {
+    const response = await fetch(`/api/get_comments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        post_title: articleData.title,
+      }),
+    });
+    const data = await response.json();
+
+    if (data.error) {
+      console.error(data.error);
+      return;
+    }
+
+    const commentList = data.comments || [];
+    console.log("data:", data.comments);
+    const commentContainer = document.querySelector(".news-comment-content");
+
+    commentContainer.innerHTML = "";
+
+    commentList.forEach((comment) => {
+      if (!comment.user) return;
+      const commentElement = document.createElement("div");
+      commentElement.classList.add(
+        "comment",
+        "d-flex",
+        "justify-content-start",
+        "align-items-start",
+        "flex-row",
+        "mt-4"
+      );
+
+      commentElement.innerHTML = `
+          <div class="comment-left me-3" style="width: fit-content">
+              <img class="comment-image" src="/${comment.user.profile_photo}" alt="" />
+            </div>
+            <div
+              class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
+              style="width: 90%; border-bottom: solid 1px var(--grey)"
+            >
+              <div
+                class="comment-top-right d-flex justify-content-start align-items-start flex-column"
+              >
+                <div
+                  class="nameanddate d-flex justify-content-start align-items-center flex-row"
+                >
+                  <h5 class="name-comment">${comment.user.first_name} ${comment.user.last_name}</h5>
+                  <small style="font-size: 0.3rem"
+                    ><i class="fa-solid fa-circle"></i
+                  ></small>
+                  <small>2 Hours Ago</small>
+                </div>
+
+                <p>
+                  ${comment.comment}
+                </p>
+              </div>
+              <div
+                class="comment-bottom-right d-flex justify-content-center align-items-center flex-row mt-3"
+              >
+                <small
+                  ><a
+                    class="liked d-flex justify-content-center align-items-center flex-row"
+                    role="button"
+                    data-bs-toggle="button"
+                    ><span class="material-symbols-outlined"> thumb_up </span>
+                    102 Likes</a
+                  ></small
+                >
+                <small class="circle-comment mx-2" style="color: var(--grey)"
+                  ><i class="fa-solid fa-circle"></i
+                ></small>
+                <small
+                  ><a
+                    class="disliked d-flex justify-content-center align-items-center flex-row"
+                    role="button"
+                    data-bs-toggle="button"
+                    ><span class="material-symbols-outlined"> thumb_down </span>
+                    25 Dislikes</a
+                  ></small
+                >
+                <small class="circle-comment mx-2" style="color: var(--grey)"
+                  ><i class="fa-solid fa-circle"></i
+                ></small>
+                <small
+                  ><a
+                    class="report d-flex justify-content-center align-items-center flex-row"
+                    role="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#reportModal"
+                    >Report</a
+                  ></small
+                >
+              </div>
+            </div>
+        `;
+
+      commentContainer.appendChild(commentElement);
+    });
+  } catch (error) {
+    console.error("Error fetching news:", error);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
   bookmark_mid();
   bookmark_post();
   like_post();
   dislike_post();
+  get_comments();
 });

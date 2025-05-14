@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      {{ title }} | Waduh News - Stay Informed, Stay Ahead, Bringing You the News That Matters
+      {{ title }} | Waduh News - Stay Informed, Stay Ahead, Bringing You the
+      News That Matters
     </title>
     <link rel="stylesheet" href="/static/style.css" />
     <link
@@ -22,7 +23,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
   </head>
-  <body data-category = "{{ category }}">
+  <body data-category="{{ category }}">
     <div class="navbar d-flex justify-content-between align-center">
       <a
         href="#"
@@ -250,7 +251,10 @@
           >
         </li>
         <li class="nav-item">
-          <a class="nav-link" aria-current="page" href="/news/category/technology"
+          <a
+            class="nav-link"
+            aria-current="page"
+            href="/news/category/technology"
             >Technology</a
           >
         </li>
@@ -265,7 +269,12 @@
           >
         </li>
         <li class="nav-item">
-          <a class="nav-link" aria-current="page" href="/news/category/entertainment">Entertainment</a>
+          <a
+            class="nav-link"
+            aria-current="page"
+            href="/news/category/entertainment"
+            >Entertainment</a
+          >
         </li>
         <li class="nav-item">
           <a class="nav-link" aria-current="page" href="/news/category/business"
@@ -273,8 +282,16 @@
           >
         </li>
       </ul>
-      <form action="/news/search" method="get" class="input-search d-flex align-items-center me-3" id="container-search">
-        <span class="searchlogo material-symbols-outlined py-2 ps-2" id="icon-search">
+      <form
+        action="/news/search"
+        method="get"
+        class="input-search d-flex align-items-center me-3"
+        id="container-search"
+      >
+        <span
+          class="searchlogo material-symbols-outlined py-2 ps-2"
+          id="icon-search"
+        >
           search
         </span>
         <input
@@ -672,22 +689,27 @@
 
       <div class="comments-container mt-4 px-4 py-3">
         <h4>Comments</h4>
-        <div class="comment-area">
-          <textarea
-            id="comment"
-            maxlength="1000"
-            placeholder="Write a comment....."
-            oninput="updateCharCount()"
-          ></textarea>
-          <div class="comment-footer mt-4">
-            <div class="char-count">
-              <b id="charRemaining">1000</b> Character Remaining
+        <form id="commentForm" method="POST">
+          <div class="comment-area">
+            <textarea
+              id="comment"
+              name="comment"
+              maxlength="1000"
+              placeholder="Write a comment....."
+              oninput="updateCharCount()"
+              required
+            ></textarea>
+
+            <div class="comment-footer mt-4">
+              <div class="char-count">
+                <b id="charRemaining">1000</b> Character Remaining
+              </div>
+              <button type="submit" class="send-btn">
+                Send Comment <i class="fa-solid fa-paper-plane ms-2"></i>
+              </button>
             </div>
-            <button class="send-btn">
-              Send Comment <i class="fa-solid fa-paper-plane ms-2"></i>
-            </button>
           </div>
-        </div>
+        </form>
       </div>
       <div class="news-comments">
         <div
@@ -702,18 +724,14 @@
           </div>
         </div>
         <div
-          class="news-comment-content d-flex justify-content-evenly align-items-center flex-column mt-4"
+          class="news-comment-content d-flex justify-content-start align-items-start flex-column mt-4"
         >
           <div
             class="comment d-flex justify-content-start align-items-start flex-row mt-1"
             style="width: 100%"
           >
             <div class="comment-left me-3" style="width: fit-content">
-              <img
-                class="comment-image"
-                src=""
-                alt=""
-              />
+              <img class="comment-image" src="" alt="" />
             </div>
             <div
               class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
@@ -787,11 +805,7 @@
             style="width: 100%"
           >
             <div class="comment-left me-3" style="width: fit-content">
-              <img
-                class="comment-image"
-                src=""
-                alt=""
-              />
+              <img class="comment-image" src="" alt="" />
             </div>
             <div
               class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
@@ -865,11 +879,7 @@
             style="width: 100%"
           >
             <div class="comment-left me-3" style="width: fit-content">
-              <img
-                class="comment-image"
-                src=""
-                alt=""
-              />
+              <img class="comment-image" src="" alt="" />
             </div>
             <div
               class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
@@ -943,11 +953,7 @@
             style="width: 100%"
           >
             <div class="comment-left me-3" style="width: fit-content">
-              <img
-                class="comment-image"
-                src=""
-                alt=""
-              />
+              <img class="comment-image" src="" alt="" />
             </div>
             <div
               class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
@@ -1021,11 +1027,7 @@
             style="width: 100%"
           >
             <div class="comment-left me-3" style="width: fit-content">
-              <img
-                class="comment-image"
-                src=""
-                alt=""
-              />
+              <img class="comment-image" src="" alt="" />
             </div>
             <div
               class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"

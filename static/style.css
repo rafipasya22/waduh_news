@@ -1372,6 +1372,11 @@ input[type="checkbox"]:checked {
   color: var(--dark);
 }
 
+.comment{
+  width: 100% !important;
+}
+
+
 .comment-area {
   border-radius: 10px;
   padding: 1rem;
@@ -1452,7 +1457,9 @@ input[type="checkbox"]:checked {
 }
 
 .comment-image {
-  width: 70px;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
   border-radius: 10px;
 }
 
@@ -2280,6 +2287,7 @@ input[type="checkbox"]:checked {
   }
 
   .comment-image {
+    height: 45px;
     width: 45px;
     border-radius: 10px;
   }
