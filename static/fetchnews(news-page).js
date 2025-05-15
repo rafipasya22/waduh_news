@@ -238,6 +238,12 @@ const articleData = {
   source_name: dataContainer.dataset.sourceName,
 };
 
+const userData = {
+  first_name: dataContainer.dataset.userFirstName,
+  last_name: dataContainer.dataset.userLastName,
+  user_email: dataContainer.dataset.userEmail,
+};
+
 async function bookmark_post() {
   const postBigContainers = document.querySelectorAll(".title-container");
 
@@ -691,7 +697,13 @@ async function dislike_post() {
 }
 
 async function send_comment() {
-  const comment = document.getElementById("comment").value;
+  const input = document.getElementById("comment").value.trim();
+  const comment = input.replace(/\s+/g, ' ').trim();
+
+  if(!comment){
+    alert("Comment Cannot Be Empty!")
+    return;
+  }
 
   try {
     const res = await fetch("/api/baca-news/add-comment", {
@@ -723,6 +735,21 @@ document.getElementById("commentForm").addEventListener("submit", function (e) {
   send_comment();
 });
 
+function comment_date(dateString) {
+  const now = new Date();
+  const commentDate = new Date(dateString);
+  const seconds = Math.floor((now - commentDate) / 1000);
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+}
+
+
 async function get_comments(event = null) {
   if (event && typeof event.preventDefault === "function") {
     event.preventDefault();
@@ -753,6 +780,7 @@ async function get_comments(event = null) {
     commentList.forEach((comment) => {
       if (!comment.user) return;
       const commentElement = document.createElement("div");
+      const profilePhoto = comment.user.profile_photo || "static/Assets/ProfileImg/default.jpg";
       commentElement.classList.add(
         "comment",
         "d-flex",
@@ -762,9 +790,10 @@ async function get_comments(event = null) {
         "mt-4"
       );
 
-      commentElement.innerHTML = `
+      if (comment.commented_by == userData.user_email) {
+        commentElement.innerHTML = `
           <div class="comment-left me-3" style="width: fit-content">
-              <img class="comment-image" src="/${comment.user.profile_photo}" alt="" />
+              <img class="comment-image" src="/${profilePhoto}"  alt="" />
             </div>
             <div
               class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
@@ -780,7 +809,83 @@ async function get_comments(event = null) {
                   <small style="font-size: 0.3rem"
                     ><i class="fa-solid fa-circle"></i
                   ></small>
-                  <small>2 Hours Ago</small>
+                  <small>${comment_date(comment.created_at)}</small>
+                </div>
+
+                <p>
+                  ${comment.comment}
+                </p>
+              </div>
+              <div
+                class="comment-bottom-right d-flex justify-content-center align-items-center flex-row mt-3"
+              >
+                <small
+                  ><a
+                    class="liked d-flex justify-content-center align-items-center flex-row"
+                    role="button"
+                    data-bs-toggle="button"
+                    ><span class="material-symbols-outlined"> thumb_up </span>
+                    102 Likes</a
+                  ></small
+                >
+                <small class="circle-comment mx-2" style="color: var(--grey)"
+                  ><i class="fa-solid fa-circle"></i
+                ></small>
+                <small
+                  ><a
+                    class="disliked d-flex justify-content-center align-items-center flex-row"
+                    role="button"
+                    data-bs-toggle="button"
+                    ><span class="material-symbols-outlined"> thumb_down </span>
+                    25 Dislikes</a
+                  ></small
+                >
+                <small class="circle-comment mx-2" style="color: var(--grey)"
+                  ><i class="fa-solid fa-circle"></i
+                ></small>
+                <small
+                  ><a
+                    class="report d-flex justify-content-center align-items-center flex-row"
+                    role="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#reportModal"
+                    >Report</a
+                  ></small
+                >
+                <small class="circle-comment mx-2" style="color: var(--grey);"
+                  ><i class="fa-solid fa-circle"></i
+                ></small>
+                <small
+                  ><a
+                    class="deletecomment"
+                    id="deletecomment"
+                    role="button"
+                    >Delete</a
+                  ></small
+                >
+              </div>
+            </div>
+        `;
+      } else {
+        commentElement.innerHTML = `
+          <div class="comment-left me-3" style="width: fit-content">
+              <img class="comment-image" src="/${profilePhoto}" alt="" />
+            </div>
+            <div
+              class="comment-right d-flex justify-content-start align-items-start flex-column pb-3"
+              style="width: 90%; border-bottom: solid 1px var(--grey)"
+            >
+              <div
+                class="comment-top-right d-flex justify-content-start align-items-start flex-column"
+              >
+                <div
+                  class="nameanddate d-flex justify-content-start align-items-center flex-row"
+                >
+                  <h5 class="name-comment">${comment.user.first_name} ${comment.user.last_name}</h5>
+                  <small style="font-size: 0.3rem"
+                    ><i class="fa-solid fa-circle"></i
+                  ></small>
+                  <small>${comment_date(comment.created_at)}</small>
                 </div>
 
                 <p>
@@ -826,6 +931,7 @@ async function get_comments(event = null) {
               </div>
             </div>
         `;
+      }
 
       commentContainer.appendChild(commentElement);
     });
@@ -839,5 +945,42 @@ document.addEventListener("DOMContentLoaded", async function () {
   bookmark_post();
   like_post();
   dislike_post();
-  get_comments();
+  await get_comments();
+
+  document.querySelectorAll("#deletecomment").forEach((btn) => {
+    console.log("Found delete button:", btn); 
+    btn.addEventListener("click", async function () {
+      console.log("Delete clicked"); 
+      const confirmed = confirm(
+        "Are you sure you want to delete this comment?"
+      );
+      if (!confirmed) return;
+
+      const commentElement = this.closest(".comment");
+      const commentText = commentElement.querySelector("p").innerText;
+      console.log(commentText);
+
+      try {
+        const response = await fetch("/api/delete-comment", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            post_title: articleData.title,
+            post_comments: commentText,
+          }),
+        });
+
+        if (!response.ok) {
+          alert("Failed to delete comment.");
+        } 
+
+        alert("Comment Deleted")
+        commentElement.remove();
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+      }
+    });
+  });
 });

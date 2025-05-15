@@ -12,6 +12,10 @@ class CommentResponse(BaseModel):
 class GetCommentResponse(BaseModel):
     post_title: str
 
+class DeleteCommentResponse(BaseModel):
+    post_title: str
+    post_comments: str
+    
 class DislikeResponse(BaseModel):
     post_title: str
     post_category: str

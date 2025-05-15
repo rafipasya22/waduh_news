@@ -1662,6 +1662,34 @@ async def remove_like(request: Request, data: schemas.CheckDislikeResponse, db=D
 
     return {"status": "Like removed"}
 
+@app.delete("/api/delete-comment")
+def delete_comment(request: Request, data: schemas.DeleteCommentResponse, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    
+    print(email)
+    print(data.post_title)
+    print(data.post_comments)
+
+    comment = db.query(models.Comments).filter(
+        models.Comments.commented_by == email,
+        models.Comments.post_title == data.post_title,
+        models.Comments.post_comments == data.post_comments
+    ).first()
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    db.delete(comment)
+    db.commit()
+
+    return {"status": "comment deleted"}
+
 @app.post("/api/check-dislikes")
 def check_likes(request: Request, data: schemas.CheckDislikeResponse, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
@@ -1704,7 +1732,8 @@ def add_comment(request: Request, data: schemas.CommentResponse, db: Session = D
         post_category=data.post_category,
         post_source=data.post_source,
         post_comments = data.post_comments,
-        user_id = user.id
+        user_id = user.id,
+        created_at = datetime.now()
     )
 
     db.add(comments)
@@ -1713,8 +1742,8 @@ def add_comment(request: Request, data: schemas.CommentResponse, db: Session = D
 
 
 @app.post("/api/get_comments")
-def get_comments(request: Request, data: schemas.GetCommentResponse, db: Session = Depends(get_db)):
-    print("Titles dari www:", data.post_title)
+def get_comments(data: schemas.GetCommentResponse, db: Session = Depends(get_db)):
+    print("Titles dari www:", datetime.now())
 
     comments = db.query(models.Comments).filter(
         models.Comments.post_title == data.post_title
@@ -1724,7 +1753,9 @@ def get_comments(request: Request, data: schemas.GetCommentResponse, db: Session
     for comment in comments:
         result.append({
             "comment": comment.post_comments,
+            "commented_by": comment.commented_by,
             "post_title": comment.post_title,
+            "created_at": comment.created_at,
             "post_category": comment.post_category,
             "post_source": comment.post_source,
             "user": {

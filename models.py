@@ -91,5 +91,6 @@ class Comments(Base):
      post_comments = Column(String(1000), nullable=False)
      commented_by = Column(String(100))
      user_id = Column(Integer, ForeignKey("Akun.id"), nullable=False)
+     created_at = Column(DateTime)
 
      user_data = relationship("Akun", back_populates="comments")
