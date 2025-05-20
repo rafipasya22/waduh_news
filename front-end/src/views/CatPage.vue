@@ -1,0 +1,222 @@
+<script setup>
+import Navbar from '@/components/navbar.vue'
+import Footer from '@/components/footer.vue'
+import Post_big from '@/components/post_big.vue'
+import Post_mid from '@/components/post_mid.vue'
+import pagination from '@/components/pagination.vue'
+import Post_mv from '@/components/post_most_viewed.vue'
+import { bookmarkpost } from '@/composables/bookmark.vue'
+import { analytics } from '@/composables/post_analytics.vue'
+import { userdata } from '@/composables/get_userdata.vue'
+
+const { getcomments, getlike, getUserInfo } = analytics()
+const { userData, getUserData } = userdata()
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+
+import '@/assets/style.css'
+import { onMounted, ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const catNewsHeadline = ref([])
+const mostViewed = ref([])
+const isUserLoggedIn = ref(false)
+const newsList = ref([])
+const totalPages = ref(1)
+const currentPage = ref(1)
+const route = useRoute()
+
+const cat = computed(() => route.params.cat || route.path.split('/').pop())
+
+const capCat = computed(() => {
+  return cat.value.charAt(0).toUpperCase() + cat.value.slice(1).toLowerCase()
+})
+
+async function fetchCatHeadline() {
+  const res = await fetch(`/api/news/category/${encodeURIComponent(cat.value)}`)
+  const data = await res.json()
+
+  if (data.news && data.news.length > 0) {
+    const slicedNews = data.news.slice(0, 3)
+    await getlike(slicedNews)
+    await getcomments(slicedNews)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
+  }
+  return []
+}
+
+async function fetchMostViewed() {
+  const res = await fetch(`/api/news/category/newest/${encodeURIComponent(cat.value)}?page_size=10`)
+  const data = await res.json()
+
+  if (data.news && data.news.length > 0) {
+    const slicedNews = data.news.slice(0, 10)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
+  }
+  return []
+}
+
+const fetchNews = async (page = 1) => {
+  try {
+    const response = await fetch(
+      `/api/news/category/newest/${encodeURIComponent(cat.value)}?page=${page}&page_size=5`,
+    )
+    const data = await response.json()
+    if (data.error) {
+      console.error(data.error)
+      return
+    }
+    newsList.value = data.news
+    totalPages.value = data.total_pages
+    currentPage.value = page
+  } catch (error) {
+    console.error('Error fetching news:', error)
+  }
+}
+
+const capitalize = (text) => {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1).toLowerCase() : ''
+}
+
+const getNewsSource = (news) => {
+  if (news.author && news.source_name) {
+    return `Reported By ${news.author} via ${news.source_name}`
+  } else if (news.author) {
+    return `Reported By ${news.author}`
+  } else if (news.source_name) {
+    return `Reported via ${news.source_name}`
+  } else {
+    return 'No Source'
+  }
+}
+
+const getRedirect = (news) => {
+  return `/api/baca-news/headline/${encodeURIComponent(news.category)}/${encodeURIComponent(news.title)}`
+}
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString()
+}
+
+onMounted(async () => {
+  console.log(cat.value)
+  console.log(typeof cat.value)
+  await getUserData()
+  isUserLoggedIn.value = await getUserInfo()
+  catNewsHeadline.value = await fetchCatHeadline()
+  mostViewed.value = await fetchMostViewed()
+  fetchNews()
+
+  console.log(catNewsHeadline.value)
+
+  const allTitles = [...catNewsHeadline.value].map((p) => p.title)
+  fetchBookmarks(allTitles)
+})
+</script>
+
+<template>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <div class="content news-index mb-5">
+    <div class="todays-headline">
+      <div class="headline-title">
+        <h3 class="Headline-top">{{ capCat }}</h3>
+        <h2 class="Headline-bottom">Headline</h2>
+      </div>
+      <div class="top d-flex flex-row align-items-start"></div>
+    </div>
+    <div class="popular">
+      <div class="top d-flex flex-row align-items-start">
+        <div class="popular-mid">
+          <Post_mid
+            v-for="(post, index) in catNewsHeadline.slice(1, 3)"
+            :key="index"
+            :post="post"
+            :bookmarked="bookmarkedTitles.includes(post.title)"
+            @toggleBookmark="() => toggleBookmark(post)"
+          />
+        </div>
+        <Post_big
+          v-if="catNewsHeadline[0]"
+          :post="catNewsHeadline[0]"
+          :bookmarked="bookmarkedTitles.includes(catNewsHeadline[0].title)"
+          @toggleBookmark="() => toggleBookmark(catNewsHeadline[0])"
+        />
+      </div>
+    </div>
+    <div class="recent mt-2">
+      <div
+        class="liked-top d-flex justify-content-between align-items-center flex-row mt-4"
+        style="width: 100%"
+      >
+        <div class="liked-posts-title">
+          <h3>Recent <span>Posts</span></h3>
+        </div>
+      </div>
+      <div class="container-recent d-flex justify-content-between align-items-start flex-row">
+        <div
+          class="recent-posts-profile d-flex justify-content-between align-items-start flex-column mt-2 me-3"
+        >
+          <div class="container-post d-flex justify-content-center align-items-start flex-column">
+            <div
+              v-for="(news, index) in newsList"
+              :key="news.title"
+              class="post-long d-flex justify-content-start align-items-start flex-row p-1 mb-3"
+            >
+              <div class="post-image">
+                <router-link :to="getRedirect(news)" class="container-img">
+                  <img :src="news.imageUrl" :alt="`Image for ${news.title}`" />
+                </router-link>
+              </div>
+              <div
+                class="post-content d-flex justify-content-between align-items-start flex-column"
+              >
+                <div
+                  class="text-area-post-long d-flex justify-content-start align-items-start flex-column"
+                >
+                  <router-link :to="getRedirect(news)" class="post-text-long">
+                    <h4>{{ news.title }}</h4>
+                  </router-link>
+                  <small class="news-long-upload-date">
+                    Uploaded {{ formatDate(news.publishedAt) }}
+                  </small>
+                  <small class="news-long-reporter">
+                    <i>{{ getNewsSource(news) }}</i>
+                  </small>
+                  <div :class="['categories-long', 'news-cat', capitalize(news.category), 'mt-2']">
+                    <div class="cat-text px-1">
+                      <p class="px-1">{{ capitalize(news.category) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4" style="width: 100%">
+            <div class="pagination-container d-flex justify-content-center flex-grow-1">
+              <nav>
+                <pagination
+                  :totalPages="totalPages"
+                  :currentPage="currentPage"
+                  @page-changed="fetchNews"
+                />
+              </nav>
+            </div>
+          </div>
+        </div>
+        <div class="most-viewed justify-content-center align-items-start flex-column mt-2">
+          <h2 class="px-3 pt-3">Most Viewed</h2>
+          <div class="popular-island px-4 py-0">
+            <Post_mv
+              v-for="(post, index) in mostViewed.slice(0, 10)"
+              :key="index"
+              :post="post"
+              :post_number="index"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <Footer></Footer>
+</template>

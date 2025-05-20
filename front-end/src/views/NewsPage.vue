@@ -1,0 +1,416 @@
+<script setup>
+import Post_mid from '@/components/post_mid.vue'
+import Navbar from '@/components/navbar.vue'
+import Footer from '@/components/footer.vue'
+import Comment_container from '@/components/comment_container.vue'
+import { likepost } from '@/composables/like_btn.vue'
+import '@/assets/style.css'
+import { bookmarkpost } from '@/composables/bookmark.vue'
+import { userdata } from '@/composables/get_userdata.vue'
+import { analytics } from '@/composables/post_analytics.vue'
+import { useRoute } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+
+const { getcomments, getlike, getUserInfo } = analytics()
+const { userData, getUserData } = userdata()
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+const {
+  likedtitle,
+  dislikedtitle,
+  fetchLikes,
+  fetchDislikes,
+  isPostLiked,
+  isPostDisliked,
+  addLike,
+  add_Dislike,
+  removeLike,
+  removeDislike,
+} = likepost()
+
+const route = useRoute()
+
+const query = route.params.query
+const title = route.params.title
+
+const nxtNews = ref([])
+const isUserLoggedIn = ref(false)
+const newsList = ref([])
+const comment = ref('')
+const postComments = ref([])
+
+const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
+
+async function fetchNxtNews() {
+  const res = await fetch(`/api/ambil_nxtnews/${encodeURIComponent(query)}`)
+  const data = await res.json()
+  if (data.news && data.news.length > 0) {
+    const randomIndex = Math.floor(Math.random() * data.news.length)
+    const slicedNews = [data.news[randomIndex]]
+    await getlike(slicedNews)
+    await getcomments(slicedNews)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
+  }
+  return []
+}
+
+async function fetchComments(title) {
+  try {
+    const res = await fetch('/api/get_comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title }),
+    })
+    const data = await res.json()
+    postComments.value = data.comments || []
+  } catch (error) {
+    console.error('Error fetching likes:', error)
+    postComments.value = []
+  }
+}
+
+const getNewsSource = (news) => {
+  if (news.author && news.source_name) {
+    return `Reported By ${news.author} via ${news.source_name}`
+  } else if (news.author) {
+    return `Reported By ${news.author}`
+  } else if (news.source_name) {
+    return `Reported via ${news.source_name}`
+  } else {
+    return 'No Source'
+  }
+}
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString()
+}
+
+async function getNews() {
+  try {
+    const res = await fetch(
+      `/api/baca-news/${encodeURIComponent(query)}/${encodeURIComponent(title)}`,
+    )
+    const data = await res.json()
+    if (data.error) {
+      console.error(data.error)
+      return
+    }
+    newsList.value = data.news
+  } catch (error) {
+    console.error('Gagal fetch berita:', error)
+  }
+}
+
+const handleLikeClick = async (post) => {
+  try {
+    if (isPostLiked(post.post_title)) {
+      removeLike(post.post_title)
+      console.log('Post Unliked!')
+    } else {
+      addLike(post)
+
+      if (isPostDisliked(post.post_title)) {
+        await removeDislike(post.post_title)
+        console.log('Dislike Removed!')
+      }
+      alert('Post liked!')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+const handleDisLikeClick = async (post) => {
+  try {
+    if (isPostDisliked(post.post_title)) {
+      removeDislike(post.post_title)
+      console.log('Dislike removed!')
+    } else {
+      add_Dislike(post)
+
+      if (isPostLiked(post.post_title)) {
+        await removeLike(post.post_title)
+        console.log('Like Removed!')
+      }
+      alert('Post Disliked!')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+const send_comment = async (post) => {
+  try {
+    const res = await fetch('/api/baca-news/add-comment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        post_title: post.title,
+        post_category: post.category,
+        post_source: post.source_name,
+        post_comments: comment.value,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`)
+    }
+    alert('comment sent')
+    window.location.reload()
+  } catch (err) {
+    console.error('Checking Bookmarks Failed:', err)
+  }
+}
+
+
+onMounted(async () => {
+  nxtNews.value = await fetchNxtNews()
+  isUserLoggedIn.value = await getUserInfo()
+  await getUserData()
+  await getNews()
+  console.log(newsList.value[0])
+  await fetchLikes(newsList.value[0].title)
+  await fetchDislikes(newsList.value[0].title)
+  await fetchComments(newsList.value[0].title)
+  console.log(isPostLiked(newsList.value[0].title))
+  const allTitles = [...newsList.value, ...nxtNews.value].map((p) => p.title)
+  fetchBookmarks(allTitles)
+})
+</script>
+
+<template>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <div v-if="newsList[0]" :key="newsList[0].title" class="content mb-5">
+    <div class="top d-flex flex-row align-items-start">
+      <div class="post-big np mt-2">
+        <a href="#" class="news-image"
+          ><img :src="newsList[0]?.imageUrl || '/image-assets/default.jpeg'" alt=""
+        /></a>
+      </div>
+      <div class="sports nxt-stories np mt-2">
+        <div class="title-sports d-flex flex-row justify-content-between align-items-start">
+          <h3 style="font-weight: 700">Next<span style="font-weight: 400"> Stories</span></h3>
+        </div>
+        <Post_mid
+          v-if="nxtNews"
+          :post="nxtNews[0]"
+          :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
+          @toggleBookmark="() => toggleBookmark(nxtNews[0])"
+        />
+      </div>
+    </div>
+    <div class="title-container mt-2">
+      <div class="news-title d-flex justify-content-start align-items-center flex-row">
+        <h2 style="color: var(--dark); font-size: clamp(20px, 2vw, 50px)">
+          {{ newsList[0].title }}
+        </h2>
+      </div>
+      <div class="title-bottom d-flex justify-content-between align-items-center flex-row mt-2">
+        <div class="news-details d-flex justify-content-start align-items-start flex-column">
+          <h5 style="margin-bottom: 0 !important; color: var(--dark)">
+            Uploaded {{ formatDate(newsList[0].publishedAt) }}
+          </h5>
+          <small style="color: var(--dark)">
+            <i>{{ getNewsSource(newsList[0]) }}</i>
+          </small>
+        </div>
+        <div class="news-interactions justify-content-start align-items-start flex-row">
+          <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
+            <a
+              @click.prevent="
+                handleLikeClick({
+                  post_title: newsList[0].title,
+                  post_category: newsList[0].category,
+                  post_source: newsList[0].source_name,
+                })
+              "
+              class="likebtn btn d-flex justify-content-center align-items-center"
+              :class="{ pressed: isPostLiked(newsList[0].title) }"
+              role="button"
+              data-bs-toggle="button"
+              ><span class="material-symbols-outlined me-2"> thumb_up </span>
+              {{ isPostLiked(newsList[0].title) ? 'Liked' : 'Like' }}</a
+            >
+          </div>
+          <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
+            <a
+              @click.prevent="
+                handleDisLikeClick({
+                  post_title: newsList[0].title,
+                  post_category: newsList[0].category,
+                  post_source: newsList[0].source_name,
+                })
+              "
+              :class="{ pressed: isPostDisliked(newsList[0].title) }"
+              class="dislikebtn btn d-flex justify-content-center align-items-center"
+              role="button"
+              data-bs-toggle="button"
+              ><span class="material-symbols-outlined me-2"> thumb_down </span>
+              {{ isPostDisliked(newsList[0].title) ? 'Disliked' : 'Dislike' }}</a
+            >
+          </div>
+          <div class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3 me-2">
+            <a
+              @click="toggleBookmark(newsList[0])"
+              :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-center`"
+              role="button"
+              data-bs-toggle="button"
+            >
+              <span class="material-symbols-outlined me-2">
+                {{ isBookmarked ? 'bookmark_added' : 'bookmark' }}
+              </span>
+              {{ isBookmarked ? 'Post bookmarked!' : 'Bookmark this post' }}
+            </a>
+          </div>
+          <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
+            <div class="dropdown">
+              <a
+                class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                role="button"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                ><span class="material-symbols-outlined"> share </span></a
+              >
+              <div class="dropdown-menu p-4">
+                <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
+                <div class="d-flex justify-content-between align-items-start flex-row mt-3">
+                  <div class="d-flex justify-content-between align-items-start flex-column">
+                    <div class="facebook me-3 mb-3" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
+                      </a>
+                    </div>
+                    <div class="whatsapp me-3" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                  <div class="twitter" style="width: 50%">
+                    <a
+                      class="sharebtn btn d-flex justify-content-start align-items-center"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      ><i class="fa-brands fa-x-twitter me-2"></i>X
+                    </a>
+                  </div>
+                </div>
+                <div class="copy-link-container mt-2">
+                  <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
+                    Or copy the link:
+                  </label>
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="copyLinkInput"
+                      value="{{ source_url }}"
+                      readonly
+                    />
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                      Copy
+                    </button>
+                  </div>
+                  <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="newspage-content mt-2">
+      <p>{{ newsList[0].content }}</p>
+
+      <small style="color: var(--dark)">Source: {{ newsList[0].source_url }}</small>
+      <br />
+    </div>
+    <div class="share-container d-flex justify-content-start align-items-center flex-row mt-3">
+      <div class="socials d-flex flex-column align-items-center justify-content-evenly me-2">
+        <div class="text">Share:</div>
+      </div>
+      <div class="logos d-flex align-items-center">
+        <a href="http://facebook.com"><i class="fa-brands fa-facebook"></i></a>
+        <a href=""><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="http://x.com"><i class="fa-brands fa-x-twitter"></i></a>
+        <input
+          type="text"
+          class="form-control"
+          id="copyLinkInput2"
+          value="{{ newsList[0].source_url }}"
+          readonly
+          hidden
+        />
+        <button
+          class="link-copy-btn"
+          type="button"
+          style="
+            background-color: transparent;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          "
+          onclick="copyLink2()"
+        >
+          <i class="fa-solid fa-link"></i>
+        </button>
+      </div>
+      <small id="copySuccess2" class="text-success ms-2 mt-2 d-none">Link copied!</small>
+    </div>
+    <div class="comments-container mt-4 px-4 py-3">
+      <h4>Comments</h4>
+      <form id="commentForm" @submit.prevent="send_comment(newsList[0])">
+        <div class="comment-area">
+          <textarea
+            id="comment"
+            name="comment"
+            maxlength="1000"
+            v-model="comment"
+            placeholder="Write a comment....."
+            @input="updateCharCount"
+            required
+          ></textarea>
+
+          <div class="comment-footer mt-4">
+            <div class="char-count"><b id="charRemaining">1000</b> Character Remaining</div>
+            <button type="submit" class="send-btn">
+              Send Comment <i class="fa-solid fa-paper-plane ms-2"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="news-comments">
+      <div
+        class="news-comments-top d-flex justify-content-start align-items-start flex-column mt-3"
+      >
+        <div class="sorty-comments d-flex justify-content-start align-items-start flex-row mt-4">
+          <button class="sort-comments active">Newest</button>
+          <button class="sort-comments">Oldest</button>
+          <button class="sort-comments">Most Liked</button>
+        </div>
+      </div>
+      <div
+        class="news-comment-content d-flex justify-content-start align-items-start flex-column mt-4"
+      >
+        <Comment_container
+          v-for="comment in postComments"
+          :key="comment.id"
+          :comment="comment"
+          :user-email="userData.Email"
+          :post-title="newsList[0].title"
+        />
+      </div>
+    </div>
+  </div>
+  <Footer />
+</template>
