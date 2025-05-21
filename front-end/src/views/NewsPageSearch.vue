@@ -165,7 +165,6 @@ const send_comment = async (post) => {
   }
 }
 
-
 onMounted(async () => {
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
@@ -182,7 +181,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
   <div v-if="newsList[0]" :key="newsList[0].title" class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
@@ -401,6 +400,7 @@ onMounted(async () => {
       </div>
       <div
         class="news-comment-content d-flex justify-content-start align-items-start flex-column mt-4"
+        v-if="postComments.length > 0"
       >
         <Comment_container
           v-for="comment in postComments"
@@ -409,6 +409,16 @@ onMounted(async () => {
           :user-email="userData.Email"
           :post-title="newsList[0].title"
         />
+      </div>
+      <div
+        class="news-comment-content d-flex justify-content-center align-items-center flex-column mt-4"
+        v-else-if="postComments.length == 0"
+      >
+        <span class="material-symbols-outlined" style="font-size: 10rem; color: var(--grey)">
+          forum
+        </span>
+        <small style="color: var(--grey)">No comments yet on this post</small>
+        <small style="color: var(--grey)">Be the first to comment!</small>
       </div>
     </div>
   </div>

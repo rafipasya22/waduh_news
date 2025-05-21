@@ -126,14 +126,14 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             "last_name": family_name,
             "email": email
         }
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="http://localhost:5173/", status_code=303)
     else:
         token = utilities.encrypt_user_data({
         "first_name": given_name,
         "last_name": family_name,
         "email": email
         })
-        redirect_url = f"/auth?token={token}"
+        redirect_url = f"http://localhost:5173/auth?token={token}"
         return RedirectResponse(url=redirect_url)
 
 @app.get("/api/user")

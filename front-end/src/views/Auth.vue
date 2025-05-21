@@ -64,7 +64,7 @@
             <h4>Or</h4>
             <hr />
           </div>
-          <a href="/auth/google" class="btn-gulugulu">
+          <a @click.prevent="handleGoogleAuth" class="btn-gulugulu">
             <img src="/image-assets/Google_logo.webp" alt="" />
             <h4>Continue With <span id="Google">Google</span></h4>
           </a>
@@ -96,7 +96,7 @@
             <h4>Or</h4>
             <hr />
           </div>
-          <a href="/auth/google" class="btn-gulugulu">
+          <a @click.prevent="handleGoogleAuth" class="btn-gulugulu">
             <img src="/image-assets/Google_logo.webp" alt="" />
             <h4>Continue With <span id="Google">Google</span></h4>
           </a>
@@ -179,6 +179,8 @@ export default {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
     if (token) this.isSignUp = true
+
+    this.getUserToken()
   },
   methods: {
     async submitSignUp() {
@@ -260,6 +262,27 @@ export default {
         Confirm_Password: '',
       }
       this.signupError = ''
+    },
+    handleGoogleAuth() {
+      window.location.href = 'http://localhost:8000/auth/google'
+    },
+    async getUserToken() {
+      try {
+        const response = await fetch('/api/auth' + window.location.search)
+        const data = await response.json()
+
+        if (!response.ok) {
+          console.error(data.detail || 'Fetching Token failed')
+          alert(data.detail || 'Fetching Token failed')
+        } else {
+          this.signup.First_name = data.prefill.first_name || ''
+          this.signup.Last_name = data.prefill.last_name || ''
+          this.signup.Email = data.prefill.email || ''
+        }
+      } catch (err) {
+        console.error('Error:', err)
+        this.loginError = 'Something went wrong.'
+      }
     },
   },
 }

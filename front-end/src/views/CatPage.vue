@@ -8,6 +8,7 @@ import Post_mv from '@/components/post_most_viewed.vue'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
+import { watch } from 'vue'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
@@ -78,6 +79,13 @@ const capitalize = (text) => {
   return text ? text.charAt(0).toUpperCase() + text.slice(1).toLowerCase() : ''
 }
 
+watch(cat, async () => {
+  newsList.value = []
+  catNewsHeadline.value = await fetchCatHeadline()
+  mostViewed.value = await fetchMostViewed()
+  fetchNews()
+})
+
 const getNewsSource = (news) => {
   if (news.author && news.source_name) {
     return `Reported By ${news.author} via ${news.source_name}`
@@ -91,7 +99,7 @@ const getNewsSource = (news) => {
 }
 
 const getRedirect = (news) => {
-  return `/api/baca-news/headline/${encodeURIComponent(news.category)}/${encodeURIComponent(news.title)}`
+  return `/news/baca-news/headline/${encodeURIComponent(news.category)}/${encodeURIComponent(news.title)}`
 }
 
 const formatDate = (date) => {
@@ -99,6 +107,7 @@ const formatDate = (date) => {
 }
 
 onMounted(async () => {
+  newsList.value = []
   console.log(cat.value)
   console.log(typeof cat.value)
   await getUserData()

@@ -9,10 +9,12 @@ function handleChange(event) {
   emit('toggleBookmark', props.post)
 }
 
-function newsLink(news){
-  if(news.sourceType === 'headline'){
+function newsLink(news) {
+  if (props.bookmarked) {
+    return `/news/baca-news/article/bookmarks/${news.category}/${encodeURIComponent(news.title)}`
+  } else if (news.sourceType === 'headline') {
     return `/news/baca-news/headline/${news.category}/${news.title}`
-  }else{
+  } else {
     return `/news/baca-news/${news.category}/${news.title}`
   }
 }
