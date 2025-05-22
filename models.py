@@ -94,3 +94,25 @@ class Comments(Base):
      created_at = Column(DateTime)
 
      user_data = relationship("Akun", back_populates="comments")
+
+class CommLikes(Base):
+    __tablename__ = "comment_likes"
+    id = Column(Integer, primary_key=True, index=True)
+    comment = Column(String(255), index=True)
+    liked_by = Column(String(100))
+    commented_by = Column(String(100))
+    post_title = Column(String(255))
+    __table_args__ = (
+        UniqueConstraint('liked_by', 'comment', 'commented_by', name='unique_comment_user_liked'),
+    )
+    
+class CommdisLikes(Base):
+    __tablename__ = "comment_dislikes"
+    id = Column(Integer, primary_key=True, index=True)
+    comment = Column(String(255), index=True)
+    disliked_by = Column(String(100))
+    commented_by = Column(String(100))
+    post_title = Column(String(255))
+    __table_args__ = (
+        UniqueConstraint('disliked_by', 'comment', 'commented_by', name='unique_comment_user_disliked'),
+    )

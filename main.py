@@ -2,7 +2,7 @@ from math import ceil
 from fastapi import FastAPI, Depends, Form, HTTPException, Query, Request, UploadFile, File, requests
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
-from sqlalchemy import delete
+from sqlalchemy import delete, desc, func
 from sqlalchemy.orm import Session
 from datetime import datetime
 import urllib
@@ -26,6 +26,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import string
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 
         
 load_dotenv()
@@ -1729,6 +1730,204 @@ async def get_total_comments(
 
     return {"total_comments": total_items}
 
+@app.post("/api/like-comment")
+async def like_a_comment(
+    request: Request,
+    data: schemas.CommentLikeResponse,
+    db: Session = Depends(get_db)
+):
+    print(f"Comment to be deleted:  {data.model_dump()}")
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"error": "Please Log in First."}
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+
+    commentLike = models.CommLikes(
+        liked_by=email,
+        post_title=data.post_title,
+        comment=data.comment,
+        commented_by=data.commented_by
+    )
+
+    isExist = db.query(models.CommLikes).filter(
+        models.CommLikes.liked_by == email,
+        models.CommLikes.comment == data.comment,
+        models.CommLikes.commented_by == data.commented_by,
+        models.CommLikes.post_title == data.post_title
+    ).first()
+
+    if isExist:
+        return {"error": "Comment already liked."}
+
+    db.add(commentLike)
+    db.commit()
+    return {"message": "comment liked"}
+
+@app.post("/api/dislike-comment")
+async def dislike_a_comment(
+    request: Request,
+    data: schemas.CommentDislikeResponse,
+    db: Session = Depends(get_db)
+):
+    print(f"Comment to be deleted:  {data.model_dump()}")
+    user_session = request.session.get("user")
+    if not user_session:
+        return {"error": "Please Log in First."}
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+
+    commentDislike = models.CommdisLikes(
+        disliked_by=email,
+        post_title=data.post_title,
+        comment=data.comment,
+        commented_by=data.commented_by
+    )
+
+    isExist = db.query(models.CommdisLikes).filter(
+        models.CommdisLikes.disliked_by == email,
+        models.CommdisLikes.comment == data.comment,
+        models.CommdisLikes.commented_by == data.commented_by,
+        models.CommdisLikes.post_title == data.post_title
+    ).first()
+
+    if isExist:
+        return {"error": "Comment already disliked."}
+
+    db.add(commentDislike)
+    db.commit()
+    return {"message": "comment disliked"}
+
+@app.post("/api/check-likes-comment")
+def check_likes_comment(data: schemas.CommentLikeResponse, db: Session = Depends(get_db)):
+    title = data.post_title 
+
+    print("Titles dari frontend:", title)
+
+    commlikes = db.query(models.CommLikes).filter(
+        models.CommLikes.commented_by== data.commented_by,
+        models.CommLikes.comment == data.comment,
+        models.CommLikes.post_title == title
+    ).first()
+
+    if not commlikes:
+        return {"comment_likes": ""} 
+
+    return {"comment_likes": commlikes}
+
+@app.post("/api/check-total-likes-comment")
+def check_totallikes_comment(data: schemas.CommentLikeResponse, db: Session = Depends(get_db)):
+    title = data.post_title 
+
+    print("Titles dari frontend:", title)
+
+    totalcommlikes = db.query(models.CommLikes).filter(
+        models.CommLikes.commented_by== data.commented_by,
+        models.CommLikes.comment == data.comment,
+        models.CommLikes.post_title == title
+    ).count()
+
+    if not totalcommlikes:
+        return {"total_comment_likes": ""} 
+
+    return {"total_comment_likes": totalcommlikes}
+
+@app.post("/api/check-dislikes-comment")
+def check_dislikes_comment(data: schemas.CommentDislikeResponse, db: Session = Depends(get_db)):
+    title = data.post_title 
+
+    print("Titles dari frontend:", title)
+
+    dislikes = db.query(models.CommdisLikes).filter(
+        models.CommdisLikes.commented_by== data.commented_by,
+        models.CommdisLikes.comment == data.comment,
+        models.CommdisLikes.post_title == title
+    ).first()
+
+    if not dislikes:
+        return {"comment_dislikes": ""} 
+
+    return {"comment_dislikes": dislikes}
+
+@app.post("/api/check-total-dislikes-comment")
+def check_totaldislikes_comment(data: schemas.CommentDislikeResponse, db: Session = Depends(get_db)):
+    title = data.post_title 
+
+    print("Titles dari frontend:", title)
+
+    totalcommdislikes = db.query(models.CommdisLikes).filter(
+        models.CommdisLikes.commented_by== data.commented_by,
+        models.CommdisLikes.comment == data.comment,
+        models.CommdisLikes.post_title == title
+    ).count()
+
+    if not totalcommdislikes:
+        return {"total_comment_dislikes": ""} 
+
+    return {"total_comment_dislikes": totalcommdislikes}
+
+@app.delete("/api/remove-comment-dislike")
+async def remove_comment_dislike(request: Request, data: schemas.CommentDislikeResponse, db=Depends(get_db)):
+    print(f"Received data: {data.model_dump()}")
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    dislikes = db.query(models.CommdisLikes).filter(
+        models.CommdisLikes.disliked_by == email,
+        models.CommdisLikes.comment == data.comment,
+        models.CommdisLikes.commented_by == data.commented_by,
+        models.CommdisLikes.post_title == data.post_title
+    ).first()
+
+    if not dislikes:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    db.delete(dislikes)
+    db.commit()
+
+    return {"status": "Dislike removed"}
+
+@app.delete("/api/remove-comment-like")
+async def remove_comment_like(request: Request, data: schemas.CommentLikeResponse, db=Depends(get_db)):
+    print(f"Received data: {data.model_dump()}")
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    remove_comm_likes = db.query(models.CommLikes).filter(
+        models.CommLikes.liked_by == email,
+        models.CommLikes.comment == data.comment,
+        models.CommLikes.commented_by == data.commented_by,
+        models.CommLikes.post_title == data.post_title
+    ).first()
+
+    if not remove_comm_likes:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    db.delete(remove_comm_likes)
+    db.commit()
+
+    return {"status": "Dislike removed"}
+
 @app.post("/api/get_comments")
 def get_comments(data: schemas.GetCommentResponse, db: Session = Depends(get_db)):
     print("Titles dari www:", datetime.now())
@@ -1736,6 +1935,72 @@ def get_comments(data: schemas.GetCommentResponse, db: Session = Depends(get_db)
     comments = db.query(models.Comments).filter(
         models.Comments.post_title == data.post_title
     ).all()
+
+    result = []
+    for comment in comments:
+        result.append({
+            "comment": comment.post_comments,
+            "commented_by": comment.commented_by,
+            "post_title": comment.post_title,
+            "created_at": comment.created_at,
+            "post_category": comment.post_category,
+            "post_source": comment.post_source,
+            "user": {
+                "username": comment.user_data.Username,
+                "first_name": comment.user_data.First_name,
+                "last_name": comment.user_data.Last_name,
+                "profile_photo": comment.user_data.ProfilePhoto,
+            }
+        })
+
+    return {"comments": result}
+
+@app.post("/api/get_comments/sorted-newest")
+def get_comments(data: schemas.GetCommentResponse, db: Session = Depends(get_db)):
+    print("Titles dari www:", datetime.now())
+
+    comments = db.query(models.Comments).filter(
+        models.Comments.post_title == data.post_title
+    ).order_by(models.Comments.created_at.desc()).all()
+
+    result = []
+    for comment in comments:
+        result.append({
+            "comment": comment.post_comments,
+            "commented_by": comment.commented_by,
+            "post_title": comment.post_title,
+            "created_at": comment.created_at,
+            "post_category": comment.post_category,
+            "post_source": comment.post_source,
+            "user": {
+                "username": comment.user_data.Username,
+                "first_name": comment.user_data.First_name,
+                "last_name": comment.user_data.Last_name,
+                "profile_photo": comment.user_data.ProfilePhoto,
+            }
+        })
+
+    return {"comments": result}
+
+@app.post("/api/get_comments/sorted-most-liked")
+def get_comments(data: schemas.GetCommentResponse, db: Session = Depends(get_db)):
+    print("Titles dari www:", datetime.now())
+
+    comments = db.query(models.Comments).\
+        options(joinedload(models.Comments.user_data)).\
+        outerjoin(
+            models.CommLikes,
+            (models.Comments.post_comments == models.CommLikes.comment) &
+            (models.Comments.commented_by == models.CommLikes.commented_by) &
+            (models.Comments.post_title == models.CommLikes.post_title)
+        ).\
+        filter(models.Comments.post_title == data.post_title).\
+        group_by(models.Comments.id).\
+        order_by(
+            desc(func.count(models.CommLikes.id)),
+            desc(models.Comments.created_at)
+        ).\
+        all()
 
     result = []
     for comment in comments:

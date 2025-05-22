@@ -1,9 +1,16 @@
 <script setup>
+import { watch, ref } from 'vue'
+
 const props = defineProps({
   comment: Object,
   userEmail: String,
-  postTitle: String
+  postTitle: String,
 })
+
+const likedcomment = ref([])
+const dislikedcomment = ref([])
+const total_comment_likes = ref(null)
+const total_comment_dislikes = ref(null)
 
 function comment_date(dateString) {
   const now = new Date()
@@ -27,12 +34,207 @@ async function removeComment(title, comment) {
   })
 
   if (res.ok) {
-    alert("comment deleted")
+    alert('comment deleted')
     window.location.reload()
   } else {
     throw new Error('Failed to delete comment')
   }
 }
+
+async function likeComment(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/like-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+
+    if (!res.ok) throw new Error('failed to like comment')
+
+    await checkcommentlikes(title, comment, commented_by)
+    await totalcommentlikes(title, comment, commented_by)
+  } catch (error) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+async function unlikeComment(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/remove-comment-like', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+
+    if (!res.ok) throw new Error('failed to like comment')
+
+    await checkcommentlikes(title, comment, commented_by)
+    await totalcommentlikes(title, comment, commented_by)
+  } catch (error) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+async function dislikeComment(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/dislike-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+
+    if (!res.ok) throw new Error('failed to dislike comment')
+
+    await checkcommentdislikes(title, comment, commented_by)
+    await totalcommentdislikes(title, comment, commented_by)
+  } catch (error) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+async function removeCommentDislike(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/remove-comment-dislike', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+
+    if (!res.ok) throw new Error('failed to like comment')
+
+    await checkcommentdislikes(title, comment, commented_by)
+    await totalcommentdislikes(title, comment, commented_by)
+  } catch (error) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+async function checkcommentlikes(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/check-likes-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+    const data = await res.json()
+    const like = data.comment_likes
+    likedcomment.value = like ? [like] : []
+  } catch (error) {
+    console.error('Error fetching dislikes:', error)
+    likedcomment.value = []
+  }
+}
+
+async function totalcommentlikes(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/check-total-likes-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+    const data = await res.json()
+    total_comment_likes.value = data.total_comment_likes || 0
+  } catch (error) {
+    console.error('Error fetching dislikes:', error)
+    total_comment_likes.value = 0
+  }
+}
+
+async function checkcommentdislikes(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/check-dislikes-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+    const data = await res.json()
+    const dislike = data.comment_dislikes
+    dislikedcomment.value = dislike ? [dislike] : []
+  } catch (error) {
+    console.error('Error fetching dislikes:', error)
+    dislikedcomment.value = []
+  }
+}
+
+async function totalcommentdislikes(title, comment, commented_by) {
+  try {
+    const res = await fetch('/api/check-total-dislikes-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title, comment: comment, commented_by: commented_by }),
+    })
+    const data = await res.json()
+    total_comment_dislikes.value = data.total_comment_dislikes || 0
+  } catch (error) {
+    console.error('Error fetching dislikes:', error)
+    total_comment_dislikes.value = 0
+  }
+}
+
+function iscommliked(title, comment) {
+  return likedcomment.value.some(
+    (like) => like.post_title === title && like.comment === comment
+  )
+}
+
+function iscommdisliked(title, comment) {
+  return dislikedcomment.value.some(
+    (dislike) => dislike.post_title === title && dislike.comment === comment
+  )
+}
+
+const handleLikeClick = async (title, comment, commented_by) => {
+  try {
+    if (iscommliked(title, comment)) {
+      unlikeComment(title, comment, commented_by)
+      console.log('Comment Unliked!')
+    } else {
+      likeComment(title, comment, commented_by)
+      if(iscommdisliked(title, comment)){
+        removeCommentDislike(title, comment, commented_by)
+      }
+      console.log('Comment liked!')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+const handleDisLikeClick = async (title, comment, commented_by) => {
+  try {
+    if (iscommdisliked(title, comment)) {
+      removeCommentDislike(title, comment, commented_by)
+      console.log('Dislike Removed!')
+    } else {
+      dislikeComment(title, comment, commented_by)
+      if(iscommliked(title, comment)){
+        unlikeComment(title, comment, commented_by)
+      }
+      console.log('Comment disliked!')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Error processing your request')
+  }
+}
+
+watch(
+  () => props.comment,
+  async (newComment) => {
+    if (newComment) {
+      await checkcommentlikes(props.postTitle, newComment.comment, newComment.commented_by)
+      await totalcommentlikes(props.postTitle, newComment.comment, newComment.commented_by)
+      await checkcommentdislikes(props.postTitle, newComment.comment, newComment.commented_by)
+      await totalcommentdislikes(props.postTitle, newComment.comment, newComment.commented_by)
+    }
+  },
+  { immediate: true, deep: true }
+)
 </script>
 
 <template>
@@ -63,22 +265,52 @@ async function removeComment(title, comment) {
       <div
         class="comment-bottom-right d-flex justify-content-center align-items-center flex-row mt-3"
       >
-        <small>
-          <a class="liked d-flex justify-content-center align-items-center flex-row" role="button">
+        <small v-if="total_comment_likes > 0">
+          <a
+            @click.prevent="handleLikeClick(postTitle, comment.comment, comment.commented_by)"
+            class="liked d-flex justify-content-center align-items-center flex-row"
+            :class="{ pressed: iscommliked(postTitle, comment.comment) }"
+            role="button"
+          >
             <span class="material-symbols-outlined"> thumb_up </span>
-            102 Likes
+            {{ total_comment_likes }} Likes
+          </a>
+        </small>
+
+        <small v-else>
+          <a
+            @click.prevent="handleLikeClick(postTitle, comment.comment, comment.commented_by)"
+            class="liked d-flex justify-content-center align-items-center flex-row"
+            :class="{ pressed: iscommliked(postTitle, comment.comment) }"
+            role="button"
+          >
+            <span class="material-symbols-outlined"> thumb_up </span>
+            Like
           </a>
         </small>
         <small class="circle-comment mx-2" style="color: var(--grey)">
           <i class="fa-solid fa-circle"></i>
         </small>
-        <small>
+        <small v-if="total_comment_dislikes > 0">
           <a
             class="disliked d-flex justify-content-center align-items-center flex-row"
             role="button"
+            @click.prevent="handleDisLikeClick(postTitle, comment.comment, comment.commented_by)"
+            :class="{ pressed: iscommdisliked(postTitle, comment.comment) }"
           >
             <span class="material-symbols-outlined"> thumb_down </span>
-            25 Dislikes
+            {{ total_comment_dislikes }} Dislikes
+          </a>
+        </small>
+        <small v-else>
+          <a
+            class="disliked d-flex justify-content-center align-items-center flex-row"
+            role="button"
+            @click.prevent="handleDisLikeClick(postTitle, comment.comment, comment.commented_by)"
+            :class="{ pressed: iscommdisliked(postTitle, comment.comment) }"
+          >
+            <span class="material-symbols-outlined"> thumb_down </span>
+            Dislike
           </a>
         </small>
         <small class="circle-comment mx-2" style="color: var(--grey)">
@@ -103,7 +335,9 @@ async function removeComment(title, comment) {
           <i class="fa-solid fa-circle"></i>
         </small>
         <small v-if="comment.commented_by === userEmail">
-          <a class="deletecomment" @click="removeComment(postTitle, comment.comment)" role="button"> Delete </a>
+          <a class="deletecomment" @click="removeComment(postTitle, comment.comment)" role="button">
+            Delete
+          </a>
         </small>
       </div>
     </div>

@@ -37,6 +37,7 @@ const isUserLoggedIn = ref(false)
 const newsList = ref([])
 const comment = ref('')
 const postComments = ref([])
+const activeSort = ref('newest')
 
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
 
@@ -56,6 +57,36 @@ async function fetchNxtNews() {
 async function fetchComments(title) {
   try {
     const res = await fetch('/api/get_comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title }),
+    })
+    const data = await res.json()
+    postComments.value = data.comments || []
+  } catch (error) {
+    console.error('Error fetching likes:', error)
+    postComments.value = []
+  }
+}
+
+async function fetchCommentsNewest(title) {
+  try {
+    const res = await fetch('/api/get_comments/sorted-newest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title }),
+    })
+    const data = await res.json()
+    postComments.value = data.comments || []
+  } catch (error) {
+    console.error('Error fetching likes:', error)
+    postComments.value = []
+  }
+}
+
+async function fetchCommentsMostLiked(title) {
+  try {
+    const res = await fetch('/api/get_comments/sorted-most-liked', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ post_title: title }),
@@ -140,6 +171,24 @@ const handleDisLikeClick = async (post) => {
   }
 }
 
+const sortcomments_newest = async (title) => {
+  postComments.value = []
+  activeSort.value = 'newest'
+  fetchCommentsNewest(title)
+}
+
+const sortcomments_oldest = async (title) => {
+  postComments.value = []
+  activeSort.value = 'oldest'
+  fetchComments(title)
+}
+
+const sortcomments_mostliked = async (title) => {
+  postComments.value = []
+  activeSort.value = 'mostliked'
+  fetchCommentsMostLiked(title)
+}
+
 const send_comment = async (post) => {
   try {
     const res = await fetch('/api/baca-news/add-comment', {
@@ -165,7 +214,6 @@ const send_comment = async (post) => {
   }
 }
 
-
 onMounted(async () => {
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
@@ -176,14 +224,14 @@ onMounted(async () => {
   await fetchDislikes(newsList.value[0].title)
   await fetchComments(newsList.value[0].title)
   console.log(isPostLiked(newsList.value[0].title))
-  console.log("jumlah komen", postComments.value.length)
+  console.log('jumlah komen', postComments.value.length)
   const allTitles = [...newsList.value, ...nxtNews.value].map((p) => p.title)
   fetchBookmarks(allTitles)
 })
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
   <div v-if="newsList[0]" :key="newsList[0].title" class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
@@ -395,9 +443,27 @@ onMounted(async () => {
         class="news-comments-top d-flex justify-content-start align-items-start flex-column mt-3"
       >
         <div class="sorty-comments d-flex justify-content-start align-items-start flex-row mt-4">
-          <button class="sort-comments active">Newest</button>
-          <button class="sort-comments">Oldest</button>
-          <button class="sort-comments">Most Liked</button>
+          <button
+            @click="sortcomments_newest(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'newest' ? 'active' : ''"
+          >
+            Newest
+          </button>
+          <button
+            @click="sortcomments_oldest(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'oldest' ? 'active' : ''"
+          >
+            Oldest
+          </button>
+          <button
+            @click="sortcomments_mostliked(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'mostliked' ? 'active' : ''"
+          >
+            Most Liked
+          </button>
         </div>
       </div>
       <div
@@ -416,9 +482,11 @@ onMounted(async () => {
         class="news-comment-content d-flex justify-content-center align-items-center flex-column mt-4"
         v-else-if="postComments.length == 0"
       >
-        <span class="material-symbols-outlined" style="font-size: 10rem; color: var(--grey);"> forum </span>
-        <small style="color: var(--grey);">No comments yet on this post</small>
-        <small style="color: var(--grey);">Be the first to comment!</small>
+        <span class="material-symbols-outlined" style="font-size: 10rem; color: var(--grey)">
+          forum
+        </span>
+        <small style="color: var(--grey)">No comments yet on this post</small>
+        <small style="color: var(--grey)">Be the first to comment!</small>
       </div>
     </div>
   </div>

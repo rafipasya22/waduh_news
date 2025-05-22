@@ -37,6 +37,7 @@ const isUserLoggedIn = ref(false)
 const newsList = ref([])
 const comment = ref('')
 const postComments = ref([])
+const activeSort = ref('newest')
 
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
 
@@ -56,6 +57,36 @@ async function fetchNxtNews() {
 async function fetchComments(title) {
   try {
     const res = await fetch('/api/get_comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title }),
+    })
+    const data = await res.json()
+    postComments.value = data.comments || []
+  } catch (error) {
+    console.error('Error fetching likes:', error)
+    postComments.value = []
+  }
+}
+
+async function fetchCommentsNewest(title) {
+  try {
+    const res = await fetch('/api/get_comments/sorted-newest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_title: title }),
+    })
+    const data = await res.json()
+    postComments.value = data.comments || []
+  } catch (error) {
+    console.error('Error fetching likes:', error)
+    postComments.value = []
+  }
+}
+
+async function fetchCommentsMostLiked(title) {
+  try {
+    const res = await fetch('/api/get_comments/sorted-most-liked', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ post_title: title }),
@@ -165,6 +196,24 @@ const send_comment = async (post) => {
   }
 }
 
+const sortcomments_newest = async (title) => {
+  postComments.value = []
+  activeSort.value = 'newest'
+  fetchCommentsNewest(title)
+}
+
+const sortcomments_oldest = async (title) => {
+  postComments.value = []
+  activeSort.value = 'oldest'
+  fetchComments(title)
+}
+
+const sortcomments_mostliked = async (title) => {
+  postComments.value = []
+  activeSort.value = 'mostliked'
+  fetchCommentsMostLiked(title)
+}
+
 onMounted(async () => {
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
@@ -173,7 +222,7 @@ onMounted(async () => {
   console.log(newsList.value[0])
   await fetchLikes(newsList.value[0].title)
   await fetchDislikes(newsList.value[0].title)
-  await fetchComments(newsList.value[0].title)
+  await fetchCommentsNewest(newsList.value[0].title)
   console.log(isPostLiked(newsList.value[0].title))
   const allTitles = [...newsList.value, ...nxtNews.value].map((p) => p.title)
   fetchBookmarks(allTitles)
@@ -393,9 +442,27 @@ onMounted(async () => {
         class="news-comments-top d-flex justify-content-start align-items-start flex-column mt-3"
       >
         <div class="sorty-comments d-flex justify-content-start align-items-start flex-row mt-4">
-          <button class="sort-comments active">Newest</button>
-          <button class="sort-comments">Oldest</button>
-          <button class="sort-comments">Most Liked</button>
+          <button
+            @click="sortcomments_newest(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'newest' ? 'active' : ''"
+          >
+            Newest
+          </button>
+          <button
+            @click="sortcomments_oldest(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'oldest' ? 'active' : ''"
+          >
+            Oldest
+          </button>
+          <button
+            @click="sortcomments_mostliked(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'mostliked' ? 'active' : ''"
+          >
+            Most Liked
+          </button>
         </div>
       </div>
       <div
