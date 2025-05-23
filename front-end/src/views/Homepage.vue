@@ -4,6 +4,7 @@ import Navbar from '@/components/navbar.vue'
 import Footer from '@/components/footer.vue'
 import Post_big from '@/components/post_big.vue'
 import Post_mid from '@/components/post_mid.vue'
+import Noti from '@/components/noti.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
@@ -16,6 +17,8 @@ const { getlike, getcomments, getUserInfo } = analytics()
 const headlinePost = ref(null)
 const sportsPosts = ref([])
 const popularPosts = ref([])
+const isSuccess = ref(false)
+const taskMsg = ref(null)
 
 const isUserLoggedIn = ref(false)
 
@@ -29,6 +32,16 @@ async function fetchHeadlineNews() {
     return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
   }
   return []
+}
+
+function taskNoti({ message, success }) {
+  taskMsg.value = message
+  isSuccess.value = success
+  const noti = document.querySelector('.noti')
+  noti.classList.add('show')
+  setTimeout(() => {
+    noti.classList.remove('show')
+  }, 10000)
 }
 
 async function fetchSportsNews() {
@@ -87,7 +100,7 @@ onMounted(async () => {
           v-if="headlinePost"
           :post="headlinePost[0]"
           :bookmarked="bookmarkedTitles.includes(headlinePost[0].title)"
-          @toggleBookmark="() => toggleBookmark(headlinePost[0])"
+          @toggleBookmark="() => toggleBookmark(headlinePost[0], taskNoti)"
         />
         <div class="sports mt-2">
           <div class="title-sports d-flex flex-row justify-content-between align-items-start">
@@ -100,7 +113,7 @@ onMounted(async () => {
               :key="index"
               :post="post"
               :bookmarked="bookmarkedTitles.includes(post.title)"
-              @toggleBookmark="toggleBookmark"
+              @toggleBookmark="toggleBookmark(post, taskNoti)"
             />
           </div>
         </div>
@@ -117,18 +130,21 @@ onMounted(async () => {
             :key="index"
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
-            @toggleBookmark="() => toggleBookmark(post)"
+            @toggleBookmark="() => toggleBookmark(post, taskNoti)"
           />
         </div>
         <Post_big
           v-if="popularPosts[0]"
           :post="popularPosts[0]"
           :bookmarked="bookmarkedTitles.includes(popularPosts[0].title)"
-          @toggleBookmark="() => toggleBookmark(popularPosts[0])"
+          @toggleBookmark="() => toggleBookmark(popularPosts[0], taskNoti)"
         />
       </div>
     </div>
+    <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
+  
 
   <Footer></Footer>
+  
 </template>

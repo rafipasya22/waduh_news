@@ -2,6 +2,7 @@
 import Post_mid from '@/components/post_mid.vue'
 import Navbar from '@/components/navbar.vue'
 import Footer from '@/components/footer.vue'
+import Noti from '@/components/noti.vue'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
@@ -13,6 +14,8 @@ const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
 const { getUserData, userData } = userdata()
 
 const isUserLoggedIn = ref(false)
+const isSuccess = ref(false)
+const taskMsg = ref(null)
 
 const total_likes = ref(null)
 const total_bookmarks = ref(null)
@@ -32,8 +35,6 @@ const errorMessage = ref('')
 const previewSrc = ref('/static/Assets/ProfileImg/default.jpg')
 const location = ref('')
 const fileInput = ref(null)
-
-
 
 async function get_total_likes() {
   try {
@@ -98,7 +99,7 @@ function previewImage(event) {
       previewSrc.value = reader.result
     }
     reader.readAsDataURL(file)
-  } 
+  }
 }
 
 async function handleSubmitPassword() {
@@ -147,9 +148,13 @@ async function handleUploadPhoto() {
     const result = await response.json()
 
     if (!response.ok) {
-      alert(result.message || 'Upload failed')
+      taskMsg.value = result.message || 'Upload failed'
+      isSuccess.value = false
+      await taskNoti()
     } else {
-      alert(result.message || 'Profile updated successfully')
+      taskMsg.value = result.message || 'Profile updated successfully'
+      isSuccess.value = true
+      await taskNoti()
     }
     window.location.reload()
   } catch (err) {
@@ -157,18 +162,22 @@ async function handleUploadPhoto() {
   }
 }
 
-const deletephoto = async () =>{
+const deletephoto = async () => {
   try {
     const response = await fetch('/api/delete-photo', {
-      method: 'POST'
+      method: 'POST',
     })
 
     const result = await response.json()
 
     if (!response.ok) {
-      alert(result.message || 'Upload failed')
+      taskMsg.value = result.message || 'Upload failed'
+      isSuccess.value = false
+      await taskNoti()
     } else {
-      alert(result.message || 'Profile updated successfully')
+      taskMsg.value = result.message || 'Profile updated successfully'
+      isSuccess.value = true
+      await taskNoti()
     }
     window.location.reload()
   } catch (err) {
@@ -191,13 +200,31 @@ const submitPersonalInfo = async () => {
     if (!res.ok) throw new Error('Failed to update personal info')
 
     const data = await res.json()
+
     console.log('Success:', data.message)
-    alert("Profile updated successfully")
+    taskMsg.value = data.message || 'Profile updated successfully'
+    isSuccess.value = true
+    await taskNoti()
     window.location.reload()
   } catch (err) {
     console.error('Error:', err)
-    alert('An error occurred while updating your profile.')
+    isSuccess.value = false
+    await taskNoti()
   }
+}
+
+const taskNoti = () => {
+  return new Promise((resolve) => {
+    const noti = document.querySelector('.noti')
+    noti.classList.add('show')
+
+    setTimeout(() => {
+      noti.classList.remove('show')
+      setTimeout(() => {
+        resolve()
+      }, 300)
+    }, 3000)
+  })
 }
 
 onMounted(async () => {
@@ -221,7 +248,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
   <div class="content mb-5 d-flex justify-content-between align-items-start flex-column">
     <div class="content-top d-flex justify-content-between align-items-end w-100">
       <div class="profile-container d-flex justify-content-start align-center flex-row p-3">
@@ -353,6 +380,8 @@ onMounted(async () => {
       />
     </div>
   </div>
+
+  <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
 
   <div
     class="modal fade"
@@ -623,7 +652,11 @@ onMounted(async () => {
         </div>
         <div class="modal-body">
           <div class="editprofile-container">
-            <form @submit.prevent="handleUploadPhoto" id="uploadphoto" enctype="multipart/form-data">
+            <form
+              @submit.prevent="handleUploadPhoto"
+              id="uploadphoto"
+              enctype="multipart/form-data"
+            >
               <div class="d-flex align-items-center mb-4">
                 <div class="me-3">
                   <img
@@ -696,7 +729,6 @@ onMounted(async () => {
                   name="Location"
                 ></textarea>
               </div>
-
             </form>
           </div>
         </div>

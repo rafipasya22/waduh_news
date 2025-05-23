@@ -14,7 +14,7 @@ export function bookmarkpost() {
     bookmarkedTitles.value = data.bookmarked || []
   }
 
-  async function toggleBookmark(post) {
+  async function toggleBookmark(post, onNotify) {
     const isBookmarked = bookmarkedTitles.value.includes(post.title)
     async function fetchArticleDetail(post) {
       const endpoint =
@@ -57,12 +57,14 @@ export function bookmarkpost() {
 
       if (isBookmarked) {
         bookmarkedTitles.value = bookmarkedTitles.value.filter((t) => t !== post.title)
+        onNotify?.({ message: `Removed bookmark: "${post.title}"`, success: true })
       } else {
         bookmarkedTitles.value.push(post.title)
+        onNotify?.({ message: `Bookmarked: "${post.title}"`, success: true })
       }
     } catch (err) {
       console.error('Gagal toggle bookmark:', err)
-      alert('Gagal memproses bookmark')
+      onNotify?.({ message: 'Failed to bookmark post', success: false })
     }
   }
 

@@ -380,6 +380,37 @@ tr {
   transform: scale(1.05);
 }
 
+.noti{
+  background-color: var(--light);
+  border-radius: 7px;
+  width: 40vw;
+  position: fixed; 
+  bottom: 20px;    
+  right: 20px;     
+  transform: translateX(120%); 
+  z-index: 9999;   
+  transition: transform 0.6s ease; 
+}
+
+.noti.show {
+  transform: translateX(0); 
+}
+
+.noti-left{
+  width: 10%;
+  height: 5vh;
+}
+
+.noti-left span{
+  font-size: 2rem;
+}
+
+.noti-right{
+  width: 80%;
+  height: 5vh;
+  color: var(--dark);
+}
+
 .popular .top .post-big {
   margin-left: 1rem;
   margin-right: 0 !important;

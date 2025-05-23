@@ -4,6 +4,7 @@ import Footer from '@/components/footer.vue'
 import Post_big from '@/components/post_big.vue'
 import Post_mid from '@/components/post_mid.vue'
 import pagination from '@/components/pagination.vue'
+import Noti from '@/components/noti.vue'
 import Post_mv from '@/components/post_most_viewed.vue'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
@@ -25,6 +26,8 @@ const isUserLoggedIn = ref(false)
 const newsList = ref([])
 const totalPages = ref(1)
 const currentPage = ref(1)
+const isSuccess = ref(false)
+const taskMsg = ref(null)
 const route = useRoute()
 
 const cat = computed(() => route.params.cat || route.path.split('/').pop())
@@ -55,6 +58,16 @@ async function fetchMostViewed() {
     return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
   }
   return []
+}
+
+function taskNoti({ message, success }) {
+  taskMsg.value = message
+  isSuccess.value = success
+  const noti = document.querySelector('.noti')
+  noti.classList.add('show')
+  setTimeout(() => {
+    noti.classList.remove('show')
+  }, 10000)
 }
 
 const fetchNews = async (page = 1) => {
@@ -141,14 +154,14 @@ onMounted(async () => {
             :key="index"
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
-            @toggleBookmark="() => toggleBookmark(post)"
+            @toggleBookmark="() => toggleBookmark(post, taskNoti)"
           />
         </div>
         <Post_big
           v-if="catNewsHeadline[0]"
           :post="catNewsHeadline[0]"
           :bookmarked="bookmarkedTitles.includes(catNewsHeadline[0].title)"
-          @toggleBookmark="() => toggleBookmark(catNewsHeadline[0])"
+          @toggleBookmark="() => toggleBookmark(catNewsHeadline[0], taskNoti)"
         />
       </div>
     </div>
@@ -226,6 +239,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
   <Footer></Footer>
 </template>

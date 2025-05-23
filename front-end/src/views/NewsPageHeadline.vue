@@ -3,6 +3,7 @@ import Post_mid from '@/components/post_mid.vue'
 import Navbar from '@/components/navbar.vue'
 import Footer from '@/components/footer.vue'
 import Comment_container from '@/components/comment_container.vue'
+import Noti from '@/components/noti.vue'
 import { likepost } from '@/composables/like_btn.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
@@ -37,6 +38,8 @@ const isUserLoggedIn = ref(false)
 const newsList = ref([])
 const comment = ref('')
 const postComments = ref([])
+const isSuccess = ref(false)
+const taskMsg = ref(null)
 const activeSort = ref('newest')
 
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
@@ -49,7 +52,7 @@ async function fetchNxtNews() {
     const slicedNews = [data.news[randomIndex]]
     await getlike(slicedNews)
     await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
+    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
   }
   return []
 }
@@ -125,7 +128,12 @@ async function getNews() {
       console.error(data.error)
       return
     }
-    newsList.value = data.news
+    const newsData = data.news.map(post => ({
+      ...post,
+      sourceType: 'headline',
+    }))
+
+    newsList.value = newsData
   } catch (error) {
     console.error('Gagal fetch berita:', error)
   }
@@ -214,6 +222,16 @@ const sortcomments_mostliked = async (title) => {
   fetchCommentsMostLiked(title)
 }
 
+function taskNoti({ message, success }) {
+  taskMsg.value = message
+  isSuccess.value = success
+  const noti = document.querySelector('.noti')
+  noti.classList.add('show')
+  setTimeout(() => {
+    noti.classList.remove('show')
+  }, 10000)
+}
+
 onMounted(async () => {
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
@@ -246,7 +264,7 @@ onMounted(async () => {
           v-if="nxtNews"
           :post="nxtNews[0]"
           :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
-          @toggleBookmark="() => toggleBookmark(nxtNews[0])"
+          @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti)"
         />
       </div>
     </div>
@@ -302,7 +320,7 @@ onMounted(async () => {
           </div>
           <div class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3 me-2">
             <a
-              @click="toggleBookmark(newsList[0])"
+              @click="toggleBookmark(newsList[0], taskNoti)"
               :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-center`"
               role="button"
               data-bs-toggle="button"
@@ -488,6 +506,7 @@ onMounted(async () => {
         <small style="color: var(--grey)">Be the first to comment!</small>
       </div>
     </div>
+    <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
   <Footer />
 </template>
