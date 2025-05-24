@@ -10,7 +10,7 @@ import { bookmarkpost } from '@/composables/bookmark.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { useRoute } from 'vue-router'
-import { ref, onMounted, computed } from 'vue'
+import { watch, ref, onMounted, computed } from 'vue'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
@@ -52,7 +52,7 @@ async function fetchNxtNews() {
     const slicedNews = [data.news[randomIndex]]
     await getlike(slicedNews)
     await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
+    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
   }
   return []
 }
@@ -137,6 +137,7 @@ const handleLikeClick = async (post) => {
     if (isPostLiked(post.post_title)) {
       removeLike(post.post_title)
       console.log('Post Unliked!')
+      taskNoti({message: "Post Unliked", success: true})
     } else {
       addLike(post)
 
@@ -144,11 +145,11 @@ const handleLikeClick = async (post) => {
         await removeDislike(post.post_title)
         console.log('Dislike Removed!')
       }
-      alert('Post liked!')
+      taskNoti({message: "Post liked", success: true})
     }
   } catch (err) {
     console.error(err)
-    alert('Error processing your request')
+    taskNoti({message: "Error processing your request", success: false})
   }
 }
 
@@ -157,6 +158,7 @@ const handleDisLikeClick = async (post) => {
     if (isPostDisliked(post.post_title)) {
       removeDislike(post.post_title)
       console.log('Dislike removed!')
+      taskNoti({message: "Dislike removed!", success: true})
     } else {
       add_Dislike(post)
 
@@ -164,11 +166,11 @@ const handleDisLikeClick = async (post) => {
         await removeLike(post.post_title)
         console.log('Like Removed!')
       }
-      alert('Post Disliked!')
+      taskNoti({message: "Post disliked!", success: true})
     }
   } catch (err) {
     console.error(err)
-    alert('Error processing your request')
+    taskNoti({message: "Error processing your request", success: false})
   }
 }
 
@@ -221,9 +223,20 @@ function taskNoti({ message, success }) {
   const noti = document.querySelector('.noti')
   noti.classList.add('show')
   setTimeout(() => {
-    noti.classList.remove('show')
-  }, 10000)
+      noti.classList.remove('show')
+      setTimeout(() => {
+        resolve()
+      }, 300)
+    }, 3000)
 }
+
+watch(
+  () => [route.params.query, route.params.title],
+  async () => {
+    await getNews()
+  },
+  { immediate: true }
+)
 
 onMounted(async () => {
   nxtNews.value = await fetchNxtNews()

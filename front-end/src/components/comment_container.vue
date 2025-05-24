@@ -7,6 +7,8 @@ const props = defineProps({
   postTitle: String,
 })
 
+const emit = defineEmits(['comment-removed'])
+
 const likedcomment = ref([])
 const dislikedcomment = ref([])
 const total_comment_likes = ref(null)
@@ -34,8 +36,7 @@ async function removeComment(title, comment) {
   })
 
   if (res.ok) {
-    alert('comment deleted')
-    window.location.reload()
+    emit('comment-removed', comment)
   } else {
     throw new Error('Failed to delete comment')
   }

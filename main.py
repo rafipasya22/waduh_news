@@ -588,8 +588,11 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
 @app.get("/api/baca-news/{query}/{title}", response_class=HTMLResponse)
 async def baca_news(query: str, title: str):
+    
     decoded_query = urllib.parse.unquote(query)
     decoded_title = urllib.parse.unquote(title)
+    print("Menerima permintaan:", decoded_query, decoded_title)
+
 
     try:
         response = newsapi.get_everything(

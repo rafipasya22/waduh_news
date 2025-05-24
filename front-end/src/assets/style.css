@@ -383,7 +383,7 @@ tr {
 .noti{
   background-color: var(--light);
   border-radius: 7px;
-  width: 40vw;
+  width: fit-content;
   position: fixed; 
   bottom: 20px;    
   right: 20px;     
@@ -397,8 +397,9 @@ tr {
 }
 
 .noti-left{
-  width: 10%;
-  height: 5vh;
+  width: 4vw;
+  height: 3vh;
+  margin-right: 1rem;
 }
 
 .noti-left span{
@@ -407,7 +408,7 @@ tr {
 
 .noti-right{
   width: 80%;
-  height: 5vh;
+  height: 3vh;
   color: var(--dark);
 }
 
