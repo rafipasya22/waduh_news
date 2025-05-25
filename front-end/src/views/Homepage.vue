@@ -17,6 +17,7 @@ const { getlike, getcomments, getUserInfo } = analytics()
 const headlinePost = ref(null)
 const sportsPosts = ref([])
 const popularPosts = ref([])
+const recoPosts = ref([])
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 
@@ -63,7 +64,19 @@ async function fetchPopularNews() {
     const slicedNews = data.news.slice(0, 3)
     await getlike(slicedNews)
     await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
+    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
+  }
+  return []
+}
+
+async function fetchReco() {
+  const res = await fetch('/api/recommended')
+  const data = await res.json()
+  if (data.news && data.news.length > 0) {
+    const slicedNews = data.news.slice(0, 3)
+    await getlike(slicedNews)
+    await getcomments(slicedNews)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
   }
   return []
 }
@@ -78,7 +91,9 @@ onMounted(async () => {
   sportsPosts.value = await fetchSportsNews()
 
   popularPosts.value = await fetchPopularNews()
+  recoPosts.value = await fetchReco()
   console.log('Fetched headl posts:', headlinePost.value)
+  console.log('Nothing:', popularPosts.value)
 
   const allTitles = [...headlinePost.value, ...sportsPosts.value, ...popularPosts.value].map(
     (p) => p.title,
@@ -138,6 +153,29 @@ onMounted(async () => {
           :post="popularPosts[0]"
           :bookmarked="bookmarkedTitles.includes(popularPosts[0].title)"
           @toggleBookmark="() => toggleBookmark(popularPosts[0], taskNoti)"
+        />
+      </div>
+    </div>
+    <div class="popular mt-5">
+      <div class="headline-title">
+        <h3 class="Headline-top">Based</h3>
+        <h2 class="Headline-bottom">On your preferences</h2>
+      </div>
+      <div class="top d-flex flex-row align-items-start">
+        <div class="popular-mid mt-2">
+          <Post_mid
+            v-for="(post, index) in recoPosts.slice(1, 3)"
+            :key="index"
+            :post="post"
+            :bookmarked="bookmarkedTitles.includes(post.title)"
+            @toggleBookmark="() => toggleBookmark(post, taskNoti)"
+          />
+        </div>
+        <Post_big
+          v-if="recoPosts[0]"
+          :post="recoPosts[0]"
+          :bookmarked="bookmarkedTitles.includes(recoPosts[0].title)"
+          @toggleBookmark="() => toggleBookmark(recoPosts[0], taskNoti)"
         />
       </div>
     </div>

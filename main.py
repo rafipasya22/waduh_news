@@ -1,4 +1,5 @@
 from math import ceil
+import random
 from fastapi import FastAPI, Depends, Form, HTTPException, Query, Request, UploadFile, File, requests
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
@@ -2023,3 +2024,47 @@ def get_comments(data: schemas.GetCommentResponse, db: Session = Depends(get_db)
         })
 
     return {"comments": result}
+
+@app.get("/api/recommended")
+def recommend(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    
+    getPref = db.query(models.Topics.Topic_Name).join(models.user_preferences, models.Topics.id == models.user_preferences.c.topic_id).join(models.Akun, models.Akun.id == models.user_preferences.c.user_id).filter(models.Akun.Email == email).all()
+    
+    catList = [cat[0] for cat in getPref]
+
+    news_list = []
+
+    for cat in catList:
+        cat = cat.lower()
+        print(cat)
+        try:
+            response = newsapi.get_top_headlines(category = cat)
+        except Exception as e:
+            return {"error": f"Error fetching news: {str(e)}"}
+
+        if response['status'] != 'ok':
+            return {"error": "Failed to fetch news"}
+
+        for article in response.get('articles', []):
+            if article.get("urlToImage") and article.get("content"):
+                news_item = {
+                    "title": article.get("title"),
+                    "publishedAt": article.get("publishedAt"),
+                    "author": article.get("author"),
+                    "imageUrl": article.get("urlToImage"),
+                    "content": article.get("content"),
+                    "url": article.get("url"),
+                    "category": cat  
+                }
+                news_list.append(news_item)
+
+    random.shuffle(news_list)
+    return {"news": news_list}
+    
