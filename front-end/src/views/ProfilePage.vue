@@ -6,6 +6,7 @@ import Noti from '@/components/noti.vue'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
+import Skel_mid from '@/components/post_mid_skeleton.vue'
 import { useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 
@@ -31,6 +32,7 @@ const oldPass = ref('')
 const newPass = ref('')
 const confirmPass = ref('')
 const errorMessage = ref('')
+let isLoading = ref(true)
 
 const previewSrc = ref('/static/Assets/ProfileImg/default.jpg')
 const location = ref('')
@@ -242,6 +244,7 @@ onMounted(async () => {
 
   const allTitles = [...bookmarkedPosts.value].map((p) => p.title)
   await fetchBookmarks(allTitles)
+  isLoading.value=false
 
   console.log(userData.value)
 })
@@ -361,7 +364,10 @@ onMounted(async () => {
       <router-link to="/profile/bookmarks/seeall" class="seeall">See all</router-link>
     </div>
 
-    <div class="bookmarked-posts-profile d-flex flex-row mt-2">
+    <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
+      <Skel_mid v-for="x in 2" :key="x"/>
+    </div>
+    <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
       <Post_mid
         v-for="(post, index) in bookmarkedPosts.slice(0, 2)"
         :key="index"
@@ -370,7 +376,10 @@ onMounted(async () => {
         @toggleBookmark="() => toggleBookmark(post)"
       />
     </div>
-    <div class="bookmarked-posts-profile d-flex flex-row mt-2">
+    <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
+      <Skel_mid v-for="x in 2" :key="x"/>
+    </div>
+    <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
       <Post_mid
         v-for="(post, index) in bookmarkedPosts.slice(2, 4)"
         :key="index"

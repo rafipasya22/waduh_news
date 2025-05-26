@@ -4,8 +4,12 @@ import Footer from '@/components/footer.vue'
 import Post_big from '@/components/post_big.vue'
 import Post_mid from '@/components/post_mid.vue'
 import pagination from '@/components/pagination.vue'
+import Skel from '@/components/post_big_skeleton.vue'
+import Skel_long from '@/components/post_long_skeleton.vue'
+import Skel_mid from '@/components/post_mid_skeleton.vue'
 import Noti from '@/components/noti.vue'
 import Post_mv from '@/components/post_most_viewed.vue'
+import Skel_mv from '@/components/post_most_viewed_skeleton.vue'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
@@ -29,6 +33,7 @@ const currentPage = ref(1)
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 const route = useRoute()
+let isLoading = ref(true)
 
 const cat = computed(() => route.params.cat || route.path.split('/').pop())
 
@@ -133,6 +138,7 @@ onMounted(async () => {
 
   const allTitles = [...catNewsHeadline.value].map((p) => p.title)
   fetchBookmarks(allTitles)
+  isLoading.value=false
 })
 </script>
 
@@ -147,7 +153,13 @@ onMounted(async () => {
       <div class="top d-flex flex-row align-items-start"></div>
     </div>
     <div class="popular">
-      <div class="top d-flex flex-row align-items-start">
+      <div v-if="isLoading" class="top d-flex flex-row align-items-start">
+        <div class="popular-mid">
+          <Skel_mid v-for="x in 2" :key="x"/>
+        </div>
+        <Skel/>
+      </div>
+      <div v-else class="top d-flex flex-row align-items-start">
         <div class="popular-mid">
           <Post_mid
             v-for="(post, index) in catNewsHeadline.slice(1, 3)"
@@ -178,7 +190,11 @@ onMounted(async () => {
         <div
           class="recent-posts-profile d-flex justify-content-between align-items-start flex-column mt-2 me-3"
         >
-          <div class="container-post d-flex justify-content-center align-items-start flex-column">
+          <div v-if="isLoading" class="container-post d-flex justify-content-center align-items-start flex-column">
+            <Skel_long v-for="x in 5" :key="x"/>
+          </div>
+
+          <div v-else class="container-post d-flex justify-content-center align-items-start flex-column">
             <div
               v-for="(news, index) in newsList"
               :key="news.title"
@@ -215,7 +231,12 @@ onMounted(async () => {
           </div>
 
           <div class="d-flex justify-content-between align-items-center mt-4" style="width: 100%">
-            <div class="pagination-container d-flex justify-content-center flex-grow-1">
+            <div v-if="isLoading" class="pagination-container d-flex justify-content-center flex-grow-1">
+              <nav>
+                
+              </nav>
+            </div>
+            <div v-else class="pagination-container d-flex justify-content-center flex-grow-1">
               <nav>
                 <pagination
                   :totalPages="totalPages"
@@ -228,7 +249,11 @@ onMounted(async () => {
         </div>
         <div class="most-viewed justify-content-center align-items-start flex-column mt-2">
           <h2 class="px-3 pt-3">Most Viewed</h2>
-          <div class="popular-island px-4 py-0">
+          <div v-if="isLoading" class="popular-island px-4 py-0">
+            <Skel_mv v-for="x in 7" :key="x"/>
+            
+          </div>
+          <div v-else class="popular-island px-4 py-0">
             <Post_mv
               v-for="(post, index) in mostViewed.slice(0, 10)"
               :key="index"
