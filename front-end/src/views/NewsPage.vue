@@ -4,6 +4,9 @@ import Navbar from '@/components/navbar.vue'
 import Footer from '@/components/footer.vue'
 import Noti from '@/components/noti.vue'
 import Comment_container from '@/components/comment_container.vue'
+import Skel_title from '@/components/newspage_skeleton/title_container_skeleton.vue'
+import Skel_content from '@/components/newspage_skeleton/news_content_skeleton.vue'
+import Skel_mid from '@/components/post_mid_skeleton.vue'
 import { likepost } from '@/composables/like_btn.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
@@ -38,6 +41,7 @@ const isUserLoggedIn = ref(false)
 const newsList = ref([])
 const comment = ref('')
 const postComments = ref([])
+let isLoading = ref(true)
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 const activeSort = ref('newest')
@@ -262,12 +266,106 @@ onMounted(async () => {
   console.log('jumlah komen', postComments.value.length)
   const allTitles = [...newsList.value, ...nxtNews.value].map((p) => p.title)
   fetchBookmarks(allTitles)
+  isLoading.value = false
 })
 </script>
 
 <template>
   <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
-  <div v-if="newsList[0]" :key="newsList[0].title" class="content mb-5">
+  <div v-if="isLoading" class="content mb-5">
+    <div class="top d-flex flex-row align-items-start">
+      <div class="post-big np mt-2">
+        <a href="#" class="news-image"
+          ><img :src="'/image-assets/default.jpeg'" alt=""
+        /></a>
+      </div>
+      <div class="sports nxt-stories np mt-2">
+        <div class="title-sports d-flex flex-row justify-content-between align-items-start">
+          <h3 style="font-weight: 700">Next<span style="font-weight: 400"> Stories</span></h3>
+        </div>
+        <Skel_mid/>
+      </div>
+    </div>
+
+    <Skel_title/>
+    <Skel_content/>
+    <div class="comments-container mt-4 px-4 py-3">
+      <h4>Comments</h4>
+      <form id="commentForm" @submit.prevent="send_comment(newsList[0])">
+        <div class="comment-area">
+          <textarea
+            id="comment"
+            name="comment"
+            maxlength="1000"
+            v-model="comment"
+            placeholder="Write a comment....."
+            @input="updateCharCount"
+            required
+          ></textarea>
+
+          <div class="comment-footer mt-4">
+            <div class="char-count"><b id="charRemaining">1000</b> Character Remaining</div>
+            <button type="submit" class="send-btn">
+              Send Comment <i class="fa-solid fa-paper-plane ms-2"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="news-comments">
+      <div
+        class="news-comments-top d-flex justify-content-start align-items-start flex-column mt-3"
+      >
+        <div class="sorty-comments d-flex justify-content-start align-items-start flex-row mt-4">
+          <button
+            @click="sortcomments_newest(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'newest' ? 'active' : ''"
+          >
+            Newest
+          </button>
+          <button
+            @click="sortcomments_oldest(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'oldest' ? 'active' : ''"
+          >
+            Oldest
+          </button>
+          <button
+            @click="sortcomments_mostliked(newsList[0].title)"
+            class="sort-comments"
+            :class="activeSort === 'mostliked' ? 'active' : ''"
+          >
+            Most Liked
+          </button>
+        </div>
+      </div>
+      <div
+        class="news-comment-content d-flex justify-content-start align-items-start flex-column mt-4"
+        v-if="postComments.length > 0"
+      >
+        <Comment_container
+          v-for="comment in postComments"
+          :key="comment.id"
+          :comment="comment"
+          :user-email="userData.Email"
+          :post-title="newsList[0].title"
+        />
+      </div>
+      <div
+        class="news-comment-content d-flex justify-content-center align-items-center flex-column mt-4"
+        v-else-if="postComments.length == 0"
+      >
+        <span class="material-symbols-outlined" style="font-size: 10rem; color: var(--grey)">
+          forum
+        </span>
+        <small style="color: var(--grey)">No comments yet on this post</small>
+        <small style="color: var(--grey)">Be the first to comment!</small>
+      </div>
+    </div>
+    <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
+  </div>
+  <div v-else class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
         <a href="#" class="news-image"
@@ -286,6 +384,7 @@ onMounted(async () => {
         />
       </div>
     </div>
+
     <div class="title-container mt-2">
       <div class="news-title d-flex justify-content-start align-items-center flex-row">
         <h2 style="color: var(--dark); font-size: clamp(20px, 2vw, 50px)">
@@ -511,7 +610,6 @@ onMounted(async () => {
           :comment="comment"
           :user-email="userData.Email"
           :post-title="newsList[0].title"
-          @comment-removed="handleCommentRemoved"
         />
       </div>
       <div

@@ -20,6 +20,7 @@ const headlinePost = ref(null)
 const sportsPosts = ref([])
 const popularPosts = ref([])
 const recoPosts = ref([])
+const recoPosts2 = ref([])
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 let isLoading = ref(true)
@@ -67,7 +68,7 @@ async function fetchPopularNews() {
     const slicedNews = data.news.slice(0, 3)
     await getlike(slicedNews)
     await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
+    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
   }
   return []
 }
@@ -84,18 +85,31 @@ async function fetchReco() {
   return []
 }
 
+async function getq() {
+  const res = await fetch('/api/user-query')
+  const data = await res.json()
+  if (data.news && data.news.length > 0) {
+    const slicedNews = data.news
+    await getlike(slicedNews)
+    await getcomments(slicedNews)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
+  }
+  return []
+}
+
 onMounted(async () => {
   isUserLoggedIn.value = await getUserInfo()
-  const isloggedin = isUserLoggedIn.value;
+  console.log(recoPosts2.value)
+  const isloggedin = isUserLoggedIn.value
   await getUserData()
-  console.log(isloggedin);
+  console.log(isloggedin)
   headlinePost.value = await fetchHeadlineNews()
-  console.log("post",headlinePost.value)
+  console.log('post', headlinePost.value)
   sportsPosts.value = await fetchSportsNews()
 
   popularPosts.value = await fetchPopularNews()
   recoPosts.value = await fetchReco()
-  isLoading.value = false
+  recoPosts2.value = await getq()
   console.log('Fetched headl posts:', headlinePost.value)
   console.log('Nothing:', popularPosts.value)
 
@@ -108,7 +122,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
   <div class="content mb-5">
     <div class="todays-headline">
       <div class="headline-title">
@@ -116,15 +130,15 @@ onMounted(async () => {
         <h2 class="Headline-bottom">Headline</h2>
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
-        <Skel/>
+        <Skel />
         <div class="sports mt-2">
           <div class="title-sports d-flex flex-row justify-content-between align-items-start">
             <h3>Sports News</h3>
             <a class="seeall" href="/news/category/sports">See all</a>
           </div>
           <div class="sports-container d-flex justify-content-start align-items-center">
-            <Skel_mid/>
-            <Skel_mid/>
+            <Skel_mid />
+            <Skel_mid />
           </div>
         </div>
       </div>
@@ -158,9 +172,9 @@ onMounted(async () => {
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <div class="popular-mid mt-2">
-          <Skel_mid v-for="x in 2" :key="x"/>
+          <Skel_mid v-for="x in 2" :key="x" />
         </div>
-        <Skel/>
+        <Skel />
       </div>
       <div v-else class="top d-flex flex-row align-items-start">
         <div class="popular-mid mt-2">
@@ -180,6 +194,24 @@ onMounted(async () => {
         />
       </div>
     </div>
+    <div class="recomended mt-5">
+      <div class="headline-title">
+        <h3 class="Headline-top">Based</h3>
+        <h2 class="Headline-bottom">on your activities</h2>
+      </div>
+      <div v-if="isLoading" class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll;">
+        <Skel_mid v-for="x in 5" :key="x"/>
+      </div>
+      <div v-else class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll;">
+        <Post_mid
+          v-for="(post, index) in recoPosts2.slice(0, 5)"
+          :key="index"
+          :post="post"
+          :bookmarked="bookmarkedTitles.includes(post.title)"
+          @toggleBookmark="toggleBookmark(post, taskNoti)"
+        />
+      </div>
+    </div>
     <div class="popular mt-5">
       <div class="headline-title">
         <h3 class="Headline-top">Based</h3>
@@ -187,9 +219,9 @@ onMounted(async () => {
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <div class="popular-mid mt-2">
-          <Skel_mid v-for="x in 2" :key="x"/>
+          <Skel_mid v-for="x in 2" :key="x" />
         </div>
-        <Skel/>
+        <Skel />
       </div>
       <div v-else class="top d-flex flex-row align-items-start">
         <div class="popular-mid mt-2">
@@ -211,8 +243,6 @@ onMounted(async () => {
     </div>
     <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
-  
 
   <Footer></Footer>
-  
 </template>

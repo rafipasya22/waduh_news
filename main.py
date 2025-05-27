@@ -28,11 +28,14 @@ from nltk.tokenize import word_tokenize
 import string
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
+import spacy
+from collections import Counter
 
         
 load_dotenv()
 
 app = FastAPI()
+nlp = spacy.load("en_core_web_sm") 
 
 nltk.download('punkt_tab')
 nltk.download("stopwords")
@@ -73,6 +76,22 @@ def parse_date(date_str):
         return dt.replace(tzinfo=None)  
     except Exception:
         raise ValueError(f"Invalid published date format: {date_str}")
+
+def generate_newsapi_query(texts: list[str], top_k: int = 5) -> list[str]:
+    all_entities = []
+
+    for text in texts:
+        if not text:
+            continue
+        doc = nlp(text)
+        all_entities += [
+            ent.text.strip() for ent in doc.ents
+            if ent.label_ in ["PERSON", "ORG", "GPE", "EVENT"]
+        ]
+
+    counter = Counter(all_entities)
+    top_entities = [e for e, _ in counter.most_common(top_k)]
+    return top_entities
 
 @app.get("/auth/google")
 def login_with_google():
@@ -2067,4 +2086,61 @@ def recommend(request: Request, db: Session = Depends(get_db)):
 
     random.shuffle(news_list)
     return {"news": news_list}
-    
+
+@app.get("/api/user-query")
+def get_newsapi_query(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    bookmarks = db.query(models.Bookmark).filter(models.Bookmark.Bookmarked_by == email).limit(20).all()
+    likes = db.query(models.Likes).filter(models.Likes.liked_by == email).limit(20).all()
+
+    texts = []
+
+    for b in bookmarks:
+        if b.title:
+            texts.append(b.title)
+        if b.content:
+            texts.append(b.content)
+
+    for l in likes:
+        if l.post_title:
+            texts.append(l.post_title)
+
+    if not texts:
+        return {"query": "", "message": "Tidak ada data relevan untuk user ini."}
+    q_list = generate_newsapi_query(texts)
+
+    news_list = []
+
+    for que in q_list:
+        try:
+            response = newsapi.get_everything(q = que, page_size=10)
+        except Exception as e:
+            continue
+
+        if response['status'] != 'ok':
+            return {"error": "Failed to fetch news"}
+
+        for article in response.get('articles', []):
+            if article.get("urlToImage") and article.get("content"):
+                news_item = {
+                    "title": article.get("title"),
+                    "publishedAt": article.get("publishedAt"),
+                    "author": article.get("author"),
+                    "imageUrl": article.get("urlToImage"),
+                    "content": article.get("content"),
+                    "url": article.get("url"),
+                    "category": "general"  
+                }
+                news_list.append(news_item)
+        
+        if not news_list:
+            return {"news": [], "message": "No news articles found for extracted topics."}
+
+    random.shuffle(news_list)
+    return {"news": news_list}

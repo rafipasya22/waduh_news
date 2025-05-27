@@ -34,14 +34,14 @@
 }
 
 .cat-text.skel{
-    background-color: gainsboro;
+    background-color: var(--skel);
     border-radius: 20px;
     width: 8vw;
     height: 1.5vh;
 }
 
 .placeholdertext{
-    background-color: gainsboro;
+    background-color: var(--skel);
     border-radius: 20px;
     width: 10vw;
     height: 1.5vh;

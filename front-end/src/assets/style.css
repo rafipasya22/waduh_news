@@ -4,6 +4,7 @@
   --grey: #6c757d;
   --dark: #323232;
   --search: #e5e5e5;
+  --skel: #dcdcdc
 }
 
 body.dark {
@@ -12,6 +13,7 @@ body.dark {
   --grey: #575757;
   --dark: #fbfbfb;
   --search: #4e4e4e;
+  --skel: rgb(62, 62, 62);
 }
 
 body {
@@ -1550,6 +1552,22 @@ input[type='checkbox']:checked {
   .material-symbols-outlined {
     color: green !important;
   }
+}
+
+.reco {
+  gap: 12px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
+}
+
+.reco::-webkit-scrollbar {
+  display: none; 
+}
+
+.top.reco .post-mid {
+  flex: 0 0 auto;      
+  width: 32vw !important;    
 }
 
 .disliked.pressed {

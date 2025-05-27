@@ -17,6 +17,7 @@ const { getUserData, userData } = userdata()
 const isUserLoggedIn = ref(false)
 const isSuccess = ref(false)
 const taskMsg = ref(null)
+const recq = ref([])
 
 const total_likes = ref(null)
 const total_bookmarks = ref(null)
@@ -55,6 +56,8 @@ async function get_total_likes() {
     total_likes.value = 0
   }
 }
+
+
 
 async function get_total_bookmarks() {
   try {

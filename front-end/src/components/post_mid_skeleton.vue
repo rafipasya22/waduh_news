@@ -39,7 +39,7 @@
 
 <style scoped>
 .material-symbols-outlined.skel{
-    color: rgb(192, 192, 192);
+    color: var(--skel);
 }
 .news-cat.skel {
   background-color: rgb(54, 54, 54);
@@ -47,7 +47,7 @@
   width: 6vw;
 }
 .textplaceholder {
-  background-color: gainsboro;
+  background-color: var(--skel);
   height: 1.3vh;
   width: 3vw;
   border-radius: 20px;

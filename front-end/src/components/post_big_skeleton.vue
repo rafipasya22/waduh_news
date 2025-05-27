@@ -22,12 +22,12 @@
 
 <style scoped>
 .news-cat.skel {
-  background-color: gainsboro;
+  background-color: var(--skel);
   height: 2vh;
   width: 6vw;
 }
 .text-area-post-biog {
-  background-color: gainsboro;
+  background-color: var(--skel);
   width: 95%;
   height: 2vh;
   border-radius: 20px;
