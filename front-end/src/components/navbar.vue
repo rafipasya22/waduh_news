@@ -13,7 +13,7 @@
     </router-link>
 
     <div class="conttainer d-flex justify-content-evenly align-items-center flex-row">
-      <div class="acc-dropdown">
+      <div v-if="width >= 1000" class="acc-dropdown">
         <a
           href="javascript:;"
           class="d-flex align-items-center"
@@ -58,6 +58,20 @@
           </template>
         </ul>
       </div>
+      <div v-else class="acc-dropdown">
+        <img
+          class="rounded-circle object-fit-cover"
+          :src="
+            loggedIn
+              ? profilephoto
+                ? profilephoto
+                : '/profile/default.jpg'
+              : '/profile/default.jpg'
+          "
+          width="40"
+          height="40"
+        />
+      </div>
     </div>
 
     <!-- Offcanvas Desktop -->
@@ -100,20 +114,137 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="offcanvas-body">
-        <div>
-          Some text as placeholder. In real life you can have the elements you have chosen. Like,
-          text, images, lists, etc.
+      <div class="offcanvas-body d-flex justify-content-between align-items-start flex-column">
+        <div class="sidebar-menu" style="width: 100%">
+          <p class="d-inline-flex pb-2 my-2 gap-1" style="width: 100%">
+            <a
+              class="menucollapse"
+              data-bs-toggle="collapse"
+              href="#menucol_news"
+              role="button"
+              style="width: 100%; text-decoration: none"
+              aria-expanded="false"
+              aria-controls="menucol_news"
+            >
+              <div class="col-text d-flex justify-content-between flex-row align-items-center">
+                <p style="margin: 0 !important">News Categories</p>
+                <span class="material-symbols-outlined"> keyboard_arrow_down </span>
+              </div>
+            </a>
+          </p>
+          <div class="collapse mb-4" id="menucol_news">
+            <div class="card card-body menucol px-3 pt-3">
+              <router-link
+                to="/news/category/sports"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >Sports
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+              <router-link
+                to="/news/category/technology"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >Technology
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+              <router-link
+                to="/news/category/science"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >Science
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+              <router-link
+                to="/news/category/entertainment"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >Entertainment
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+              <router-link
+                to="/news/category/business"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >Business
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+              <router-link
+                to="/news/category/health"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >Health
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+            </div>
+          </div>
+          <p class="d-inline-flex pb-2 my-2 gap-1" style="width: 100%">
+            <a
+              class="menucollapse"
+              data-bs-toggle="collapse"
+              href="#menucol_profile"
+              role="button"
+              style="width: 100%; text-decoration: none"
+              aria-expanded="false"
+              aria-controls="menucol_profile"
+            >
+              <div class="col-text d-flex justify-content-between flex-row align-items-center">
+                <p style="margin: 0 !important">Profile</p>
+                <span class="material-symbols-outlined"> keyboard_arrow_down </span>
+              </div>
+            </a>
+          </p>
+          <div class="collapse mb-4" id="menucol_profile">
+            <div class="card card-body menucol px-3 pt-3">
+              <router-link
+                to="/profile"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >My profile
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+              <router-link
+                to="/profile/bookmarks/seeall"
+                class="sidemenu item d-flex justify-content-between align-items-center flex-row my-2"
+                >See Bookmarks
+                <span class="material-symbols-outlined"> arrow_right </span>
+              </router-link>
+            </div>
+          </div>
+          <div class="search-sidebar d-flex justify-content-start align-items-start flex-column gap-2">
+            <p style="margin: 0 !important">Search News</p>
+            <form
+              id="container-search"
+              class="input-search sidebar d-flex align-items-center expanded"
+              @submit.prevent="onSearch"
+            >
+              <span id="icon-search" class="searchlogo material-symbols-outlined py-2 ps-2">
+                search
+              </span>
+              <input
+                id="input-search"
+                type="text"
+                class="search ps-1 pe-3"
+                placeholder="Search Posts..."
+                aria-label="Search"
+                v-model="searchQuery"
+                ref="searchInput"
+              />
+            </form>
+          </div>
         </div>
-        <div class="dropdown mt-3">
-          <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Dropdown button
-          </button>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
+        <div class="settingsandlogout" style="width: 100%">
+          <div class="settingbtn my-2">
+            <a
+              class="settingbtn-sidebar"
+              href="#"
+              data-bs-toggle="modal"
+              data-bs-target="#settingsModal"
+            >
+              Settings
+            </a>
+          </div>
+          <a
+            class="logout-sidebar d-flex justify-content-between align-items-center flex-row mt-3"
+            style="width: 100%; text-decoration: none; cursor: pointer"
+            @click.prevent="logout"
+          >
+            Log out
+            <span class="material-symbols-outlined" style="color: var(--grey)"> logout </span>
+          </a>
         </div>
       </div>
     </div>
@@ -221,7 +352,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRouter } from 'vue-router'
 
@@ -245,6 +376,7 @@ const isSearchExpanded = ref(false)
 const searchQuery = ref('')
 
 const isDarkmode = ref(false)
+let width = ref(window.innerWidth)
 
 const ToggleTheme = () => {
   if (isDarkmode.value) {
@@ -254,6 +386,24 @@ const ToggleTheme = () => {
     document.body.classList.remove('dark')
     localStorage.setItem('theme', 'light')
   }
+}
+
+function updateSize() {
+  width.value = window.innerWidth
+}
+
+function sidebar() {
+  const btn = document.getElementById('sidebarbtn')
+  if (!btn) {
+    console.log('gaada')
+  }
+  console.log('btn ada')
+  if (window.innerWidth < 1000) {
+    btn.setAttribute('data-bs-target', '#sidebarmobile')
+  } else {
+    btn.setAttribute('data-bs-target', '#sidebardesktop')
+  }
+  console.log('target:', btn.getAttribute('data-bs-target'))
 }
 
 async function logout() {
@@ -308,7 +458,13 @@ function onSearch() {
   }
 }
 
+watch(width, () => {
+  sidebar()
+})
+
 onMounted(() => {
+  window.addEventListener('resize', updateSize)
+  sidebar()
   window.addEventListener('scroll', onScroll)
   window.addEventListener('mousemove', onMouseMove)
   document.addEventListener('click', handleClickOutside)
@@ -318,6 +474,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateSize)
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('click', handleClickOutside)

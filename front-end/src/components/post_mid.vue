@@ -66,7 +66,7 @@ function capitalize(input) {
             !bookmarked ? 'bookmark' : 'bookmark_added'
           }}</span>
         </label>
-        <small>{{ !bookmarked ? 'bookmark' : 'saved' }}</small>
+        <small>{{ !bookmarked ? 'Bookmark' : 'Saved' }}</small>
       </div>
     </div>
   </div>

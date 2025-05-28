@@ -4,7 +4,7 @@
   --grey: #6c757d;
   --dark: #323232;
   --search: #e5e5e5;
-  --skel: #dcdcdc
+  --skel: #dcdcdc;
 }
 
 body.dark {
@@ -164,6 +164,7 @@ body::-webkit-scrollbar {
   margin-top: 9rem;
   margin-right: 9rem !important;
   margin-left: 9rem !important;
+  min-height: 70vh;
 }
 
 .hover-zone {
@@ -382,33 +383,33 @@ tr {
   transform: scale(1.05);
 }
 
-.noti{
+.noti {
   background-color: var(--light);
   border-radius: 7px;
   width: fit-content;
-  position: fixed; 
-  bottom: 20px;    
-  right: 20px;     
-  transform: translateX(120%); 
-  z-index: 9999;   
-  transition: transform 0.6s ease; 
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  transform: translateX(120%);
+  z-index: 9999;
+  transition: transform 0.6s ease;
 }
 
 .noti.show {
-  transform: translateX(0); 
+  transform: translateX(0);
 }
 
-.noti-left{
+.noti-left {
   width: 4vw;
   height: 3vh;
   margin-right: 1rem;
 }
 
-.noti-left span{
+.noti-left span {
   font-size: 2rem;
 }
 
-.noti-right{
+.noti-right {
   width: 80%;
   height: 3vh;
   color: var(--dark);
@@ -1557,17 +1558,67 @@ input[type='checkbox']:checked {
 .reco {
   gap: 12px;
   scroll-snap-type: x mandatory;
-  scrollbar-width: none; 
+  scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .reco::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 .top.reco .post-mid {
-  flex: 0 0 auto;      
-  width: 32vw !important;    
+  flex: 0 0 auto;
+  width: 32vw !important;
+}
+
+li.list-group-item {
+  color: var(--dark) !important;
+}
+
+.card.card-body.menucol {
+  border-radius: 10px;
+  border-color: var(--bg-light);
+  background-color: var(--bg-light) !important;
+}
+
+.sidemenu.item {
+  padding-bottom: 1rem;
+  text-decoration: none;
+  color: var(--dark);
+}
+
+.sidemenu.item:focus {
+  color: #dc0000d3;
+}
+
+.sidemenu.item:hover {
+  color: #dc0000d3;
+}
+
+.menucollapse {
+  color: var(--dark);
+}
+
+.menucollapse[aria-expanded="true"] .col-text span{
+  transform: rotate(180deg);
+  color: #dc0000d3;
+}
+
+.logout-sidebar {
+  color: var(--dark);
+}
+
+.logout-sidebar span {
+  color: var(--grey);
+}
+
+.settingbtn-sidebar {
+  color: var(--dark);
+  text-decoration: none;
+}
+
+.input-search.expanded.sidebar{
+  width: 100% !important;
 }
 
 .disliked.pressed {
@@ -1663,7 +1714,7 @@ input[type='checkbox']:checked {
   width: 70%;
 }
 
-.recent-posts-profile.bookmarks{
+.recent-posts-profile.bookmarks {
   width: 100% !important;
 }
 
@@ -1854,6 +1905,9 @@ input[type='checkbox']:checked {
 }
 
 @media (max-width: 1055px) {
+  .container-img img {
+    height: 100%;
+  }
   #toggle-btn {
     display: block;
   }
