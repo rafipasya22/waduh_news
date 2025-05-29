@@ -9,8 +9,6 @@ from datetime import datetime
 import urllib
 import models, schemas, crud, utilities
 from database import engine, Base, get_db
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 import httpx
 from dotenv import load_dotenv
 from starlette.middleware.sessions import SessionMiddleware
@@ -26,7 +24,6 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import string
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 import spacy
 from collections import Counter
@@ -60,8 +57,7 @@ app.add_middleware(SessionMiddleware, secret_key= os.getenv("SESSION_MIDDLEWARE_
 
 Base.metadata.create_all(bind=engine)
 
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -186,18 +182,6 @@ async def home(request: Request, db: Session = Depends(get_db)):
     
     return RedirectResponse(url="/login", status_code=303)
 
-@app.get("/index/profile/{username}")
-async def profile(username: str, request: Request, db: Session = Depends(get_db)):
-    user = db.query(models.Akun).filter(models.Akun.Username == username).first()
-    
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
-    
-    return templates.TemplateResponse("profile.html", {
-        "request": request,
-        "user": user,
-        "Logged_in": True
-    })
 
 @app.get("/api/auth")
 async def auth(token: str = Query(None)):
@@ -276,7 +260,7 @@ def upload_profile_picture(
     request: Request,
     db: Session = Depends(get_db),
     Location: str = Form(...),
-    file: UploadFile = File(...),
+    file: UploadFile = File(default=None),
 ):
     crud.upload_photo(db, request, file)
     crud.update_loc(request, db, Location)
@@ -738,18 +722,6 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
     return JSONResponse(content={"news": news_list})
 
-@app.get("/news/category/{cat}", response_class=HTMLResponse)
-async def newscat(request: Request, db: Session = Depends(get_db)):
-    user_session = request.session.get("user")
-    if not user_session:
-        return templates.TemplateResponse("cat-page.html", {"request": request})
-    
-    email = user_session.get("email")
-    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-
-    return templates.TemplateResponse("cat-page.html", {"request": request, "user": user, "Logged_in": True})
-
-
 @app.get("/api/news/category/{cat}")
 async def ambilnews(cat: str):
     try:
@@ -822,17 +794,6 @@ async def ambilnews(cat: str, page: int = Query(1, ge=1), page_size: int = Query
         "total_pages": (len(news_list) + page_size - 1) // page_size,
         "news": paginated
     }
-
-@app.get("/news/search", response_class=HTMLResponse)
-async def newscat(request: Request, db: Session = Depends(get_db), q: str = Query(None)):
-    user_session = request.session.get("user")
-    if not user_session:
-        return templates.TemplateResponse("search-index.html", {"request": request})
-    
-    email = user_session.get("email")
-    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-
-    return templates.TemplateResponse("search-index.html", {"request": request, "user": user, "Logged_in": True, "query": q})
 
 @app.get("/api/news/search/{query}")
 async def ambilnews(query: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
@@ -1204,96 +1165,6 @@ async def get_popular_keywords(cat: str):
         "top_keywords": [{"word": w, "count": c} for w, c in top_keywords]
     }
 
-@app.get("/news/more-categories/search/", response_class=HTMLResponse)
-async def newscat(request: Request, query:str = "", category:str = "", db: Session = Depends(get_db)):
-    user_session = request.session.get("user")
-    if not user_session:
-        return templates.TemplateResponse("search-index.html", {"request": request})
-    
-    email = user_session.get("email")
-    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-
-    return templates.TemplateResponse("search-more-cat.html", {"request": request, "user": user, "Logged_in": True, "query": query, "category": category})
-
-@app.get("/api/search/more-categories/baca-news/{query}/{title}", response_class=HTMLResponse)
-async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
-    decoded_query = urllib.parse.unquote(query)
-    decoded_title = urllib.parse.unquote(title)
-
-    try:
-        url = f"https://newsapi.org/v2/top-headlines?q={decoded_title}&category={decoded_query}&apiKey={newsapi_client_key}"
-        async with httpx.AsyncClient() as client:
-            data = await client.get(url)
-            response = data.json()
-    except Exception as e:
-        print("Fetching news failed:", e)
-        raise HTTPException(status_code=404, detail="Topic not found")
-
-    articles = response.get("articles", [])
-
-    for article in articles:
-        if not all([
-            article.get("urlToImage"),
-            article.get("url"),
-            article.get("title"),
-            article.get("publishedAt"),
-            article.get("content") or article.get("description") or article.get("title")
-        ]):
-            continue
-
-        try:
-            url = article["url"]
-            title = article["title"]
-            image_url = article["urlToImage"].strip()
-
-            news_article = Article(url)
-            news_article.download()
-            news_article.parse()
-            full_text = news_article.text or article.get("content") or article.get("description") or article.get("title")
-
-            date = article["publishedAt"]
-            date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
-            article_date = date_format.strftime("%d %B %Y")
-
-            author = article.get("author") or "Unknown"
-            source_name = article.get("source", {}).get("name") or "Unknown"
-        except Exception as e:
-            print(f"Failed Parsing Article: {e}")
-            continue  
-
-        user_session = request.session.get("user")
-        if not user_session:
-            return templates.TemplateResponse("news-page.html", {
-            "request": request,
-            "title": title,
-            "author": author,
-            "publishedAt": article_date,
-            "imageUrl": image_url,
-            "category": decoded_query,
-            "content": full_text,
-            "source_url": url,
-            "source_name": source_name
-        })
-
-        email = user_session.get("email")
-        user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-
-        return templates.TemplateResponse("news-page.html", {
-            "request": request,
-            "title": title,
-            "author": author,
-            "publishedAt": article_date,
-            "imageUrl": image_url,
-            "category": decoded_query,
-            "content": full_text,
-            "source_url": url,
-            "source_name": source_name,
-            "user": user,
-            "Logged_in": True
-        })
-
-    raise HTTPException(status_code=404, detail="No complete article found")
-
 @app.post("/api/check-bookmarks")
 def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Session = Depends(get_db)):
     print("test")
@@ -1462,24 +1333,6 @@ async def baca_bookmark(request: Request, title:str, db: Session = Depends(get_d
             print(f"Failed Fetching Article {e}")
             raise HTTPException(status_code=404, detail="No complete article found")
         
-
-@app.get("/getbookmarks")
-async def getbookmarks(request: Request, db: Session = Depends(get_db)):
-    user_session = request.session.get("user")
-    if not user_session: 
-        raise HTTPException(status_code=404, detail="No session found")
-    
-    email = user_session.get("email")
-    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User doesn't exist")
-    
-    return templates.TemplateResponse("user-bookmarks.html", {
-        "request": request,
-        "user": user,
-        "Logged_in": True
-    })
 
 @app.get("/api/profile/get_total_bookmarks")
 async def get_total_profile_bookmarks(request: Request, db: Session = Depends(get_db)):

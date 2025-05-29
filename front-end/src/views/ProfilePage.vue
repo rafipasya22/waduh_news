@@ -135,6 +135,7 @@ async function handleSubmitPassword() {
 }
 
 async function handleUploadPhoto() {
+  console.log("location input:", location.value)
   const formData = new FormData()
 
   const file = fileInput.value?.files[0]
@@ -143,6 +144,7 @@ async function handleUploadPhoto() {
   }
 
   formData.append('Location', location.value)
+  console.log("formdata: ", formData.get("Location"))
 
   try {
     const response = await fetch('/api/edit', {
@@ -160,8 +162,8 @@ async function handleUploadPhoto() {
       taskMsg.value = result.message || 'Profile updated successfully'
       isSuccess.value = true
       await taskNoti()
+      window.location.reload()
     }
-    window.location.reload()
   } catch (err) {
     alert('An error occurred while uploading')
   }
@@ -738,7 +740,7 @@ onMounted(async () => {
                   class="input-form me-3"
                   rows="5"
                   placeholder="e.g Bandung, Jawa Barat, Indonesia"
-                  name="Location"
+                  name="location"
                 ></textarea>
               </div>
             </form>

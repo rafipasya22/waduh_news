@@ -558,9 +558,6 @@ tr {
   margin-left: 0.5rem;
 }
 
-.post-analytics-big .share small {
-  margin-left: 0.5rem;
-}
 
 .post-analytics-big .likes small {
   margin-left: 0.5rem;
@@ -1189,7 +1186,7 @@ tr {
 }
 
 .offcanvas-body .table a {
-  color: var(--grey) !important;
+  color: var(--grey) ;
   font-weight: 400 !important;
   text-decoration: none !important;
 }
@@ -1621,6 +1618,10 @@ li.list-group-item {
   width: 100% !important;
 }
 
+.shr.dropdown-toggle::after {
+    display: none !important;
+}
+
 .disliked.pressed {
   color: rgb(142, 0, 0) !important;
   .material-symbols-outlined {
@@ -1720,14 +1721,6 @@ li.list-group-item {
 
 .post-big.np {
   width: 70% !important;
-}
-
-.news-interactions {
-  display: flex;
-}
-
-.news-interactions-lite {
-  display: none;
 }
 
 .facebook .sharebtn {
@@ -2171,13 +2164,6 @@ li.list-group-item {
 }
 
 @media (max-width: 705px) {
-  .news-interactions {
-    display: none;
-  }
-
-  .news-interactions-lite {
-    display: flex;
-  }
 
   .dropdown-menu .bookmarkbtn span {
     font-size: clamp(8px, 15px, 15px) !important;

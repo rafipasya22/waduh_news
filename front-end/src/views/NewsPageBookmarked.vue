@@ -13,7 +13,7 @@ import { bookmarkpost } from '@/composables/bookmark.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { useRoute } from 'vue-router'
-import { watch, ref, onMounted, computed } from 'vue'
+import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
@@ -45,6 +45,7 @@ let isLoading = ref(true)
 const taskMsg = ref(null)
 const postComments = ref([])
 const activeSort = ref('newest')
+const width = ref(window.innerWidth)
 
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
 
@@ -74,6 +75,12 @@ async function fetchComments(title) {
     console.error('Error fetching likes:', error)
     postComments.value = []
   }
+}
+
+function updateCharCount() {
+  const textarea = document.getElementById("comment");
+  const remaining = 1000 - textarea.value.length;
+  document.getElementById("charRemaining").textContent = remaining;
 }
 
 async function fetchCommentsNewest(title) {
@@ -234,6 +241,29 @@ function taskNoti({ message, success }) {
   }, 3000)
 }
 
+function updateSize() {
+  width.value = window.innerWidth
+  console.log(width.value)
+}
+
+function copyLink(event) {
+  const btn = event.currentTarget
+  const input_container = btn.closest('.logos')
+  const input = input_container.querySelector('#copyLinkInput').value
+  navigator.clipboard.writeText(input)
+
+  const msg_container = input_container.closest('.share-container')
+  const msg = msg_container.querySelector('.text-success')
+  if (!msg) {
+    console.log('gaada')
+  } else {
+    msg.classList.remove('d-none')
+    setTimeout(() => {
+      msg.classList.add('d-none')
+    }, 3000)
+  }
+}
+
 watch(
   () => [route.params.query, route.params.title],
   async () => {
@@ -243,6 +273,7 @@ watch(
 )
 
 onMounted(async () => {
+  window.addEventListener('resize', updateSize)
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
@@ -256,29 +287,29 @@ onMounted(async () => {
   fetchBookmarks(allTitles)
   isLoading.value = false
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateSize)
+})
 </script>
 
 <template>
   <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
-  
-
   <div v-if="isLoading" class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
-        <a href="#" class="news-image"
-          ><img :src="'/image-assets/default.jpeg'" alt=""
-        /></a>
+        <a href="#" class="news-image"><img :src="'/image-assets/default.jpeg'" alt="" /></a>
       </div>
       <div class="sports nxt-stories np mt-2">
         <div class="title-sports d-flex flex-row justify-content-between align-items-start">
           <h3 style="font-weight: 700">Next<span style="font-weight: 400"> Stories</span></h3>
         </div>
-        <Skel_mid/>
+        <Skel_mid />
       </div>
     </div>
 
-    <Skel_title/>
-    <Skel_content/>
+    <Skel_title />
+    <Skel_content />
     <div class="comments-container mt-4 px-4 py-3">
       <h4>Comments</h4>
       <form id="commentForm" @submit.prevent="send_comment(newsList[0])">
@@ -390,7 +421,10 @@ onMounted(async () => {
             <i>{{ getNewsSource(newsList[0]) }}</i>
           </small>
         </div>
-        <div class="news-interactions justify-content-start align-items-start flex-row">
+        <div
+          v-if="width > 705"
+          class="news-interactions d-flex justify-content-start align-items-start flex-row"
+        >
           <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
             <a
               @click.prevent="
@@ -499,6 +533,121 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+        <div
+          v-else
+          class="news-interactions-lite d-flex justify-content-start align-items-start flex-row"
+        >
+          <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
+            <a
+              @click.prevent="
+                handleLikeClick({
+                  post_title: newsList[0].title,
+                  post_category: newsList[0].category,
+                  post_source: newsList[0].source_name,
+                })
+              "
+              class="likebtn btn d-flex justify-content-center align-items-center"
+              :class="{ pressed: isPostLiked(newsList[0].title) }"
+              role="button"
+              data-bs-toggle="button"
+              ><span class="material-symbols-outlined"> thumb_up </span></a
+            >
+          </div>
+          <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
+            <a
+              @click.prevent="
+                handleDisLikeClick({
+                  post_title: newsList[0].title,
+                  post_category: newsList[0].category,
+                  post_source: newsList[0].source_name,
+                })
+              "
+              :class="{ pressed: isPostDisliked(newsList[0].title) }"
+              class="dislikebtn btn d-flex justify-content-center align-items-center"
+              role="button"
+              data-bs-toggle="button"
+              ><span class="material-symbols-outlined"> thumb_down </span></a
+            >
+          </div>
+
+          <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
+            <div class="dropdown">
+              <a
+                class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                role="button"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                ><span class="material-symbols-outlined"> share </span></a
+              >
+              <div class="dropdown-menu p-4">
+                <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
+                <div class="d-flex justify-content-between align-items-start flex-row mt-3">
+                  <div class="d-flex justify-content-between align-items-start flex-column">
+                    <div class="facebook me-3 mb-3" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
+                      </a>
+                    </div>
+                    <div class="whatsapp me-3" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-start flex-column">
+                    <div class="twitter" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center mb-3"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-x-twitter me-2"></i>X
+                      </a>
+                    </div>
+                    <div
+                      class="bookmark-btn-big d-flex justify-content-start align-items-start me-2"
+                    >
+                      <a
+                        @click="toggleBookmark(newsList[0], taskNoti)"
+                        :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-start`"
+                        role="button"
+                        data-bs-toggle="button"
+                      >
+                        <span class="material-symbols-outlined me-2">
+                          {{ isBookmarked ? 'bookmark_added' : 'bookmark' }}
+                        </span>
+                        {{ isBookmarked ? 'Saved!' : 'Bookmark this post' }}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="copy-link-container mt-2">
+                  <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
+                    Or copy the link:
+                  </label>
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="copyLinkInput"
+                      value="{{ source_url }}"
+                      readonly
+                    />
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                      Copy
+                    </button>
+                  </div>
+                  <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="newspage-content mt-2">
@@ -518,8 +667,8 @@ onMounted(async () => {
         <input
           type="text"
           class="form-control"
-          id="copyLinkInput2"
-          value="{{ newsList[0].source_url }}"
+          id="copyLinkInput"
+          :value="newsList[0].source_url"
           readonly
           hidden
         />
@@ -532,7 +681,7 @@ onMounted(async () => {
             box-shadow: none !important;
             padding: 0 !important;
           "
-          onclick="copyLink2()"
+          @click="copyLink"
         >
           <i class="fa-solid fa-link"></i>
         </button>
@@ -615,6 +764,6 @@ onMounted(async () => {
     </div>
     <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
-  
+
   <Footer />
 </template>

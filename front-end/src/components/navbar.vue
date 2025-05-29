@@ -77,7 +77,7 @@
     <!-- Offcanvas Desktop -->
     <div class="offcanvas offcanvas-top px-5" tabindex="-1" id="sidebardesktop">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title">More <span>Categories</span></h5>
+        <h5 class="offcanvas-title">More <span>Menu</span></h5>
         <button
           type="button"
           class="btn-close"
@@ -92,11 +92,61 @@
             id="offcanvas-links"
           >
             <tr
-              v-for="(cat, index) in categories"
-              :key="index"
-              class="keyword-links d-flex align-items-start justify-content-start flex-column"
+              class="keyword-links d-flex align-items-start justify-content-start flex-column me-4"
             >
-              <th>{{ cat }}</th>
+              <th>
+                Route
+              </th>
+              <td>
+                <router-link to="/"> Home </router-link>
+              </td>
+              <td>
+                <router-link to="/"> About </router-link>
+              </td>
+            </tr>
+
+            <tr
+              class="keyword-links d-flex align-items-start justify-content-start flex-column me-4"
+            >
+              <th>Profile</th>
+              <td>
+                <router-link to="/profile"> My Profile </router-link>
+              </td>
+              <td>
+                <router-link to="/profile/bookmarks/seeall"> Bookmarks </router-link>
+              </td>
+            </tr>
+            <tr
+              class="keyword-links d-flex align-items-start justify-content-start flex-column me-4"
+            >
+              <th>Categories</th>
+              <td class="d-flex justify-content-start flex-column gap-3">
+                <div class="d-flex justify-content-start flex-row gap-4">
+                  <router-link to="/news/category/sports" class="nav-link" aria-current="page"
+                    >Sports</router-link
+                  >
+                  <router-link to="/news/category/technology" class="nav-link" aria-current="page"
+                    >Technology</router-link
+                  >
+                  <router-link to="/news/category/health" class="nav-link" aria-current="page"
+                    >Health</router-link
+                  >
+                </div>
+                <div class="d-flex justify-content-start flex-row gap-4">
+                  <router-link to="/news/category/science" class="nav-link" aria-current="page"
+                    >Science</router-link
+                  >
+                  <router-link
+                    to="/news/category/entertainment"
+                    class="nav-link"
+                    aria-current="page"
+                    >Entertainment</router-link
+                  >
+                  <router-link to="/news/category/business" class="nav-link" aria-current="page"
+                    >Business</router-link
+                  >
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -204,7 +254,9 @@
               </router-link>
             </div>
           </div>
-          <div class="search-sidebar d-flex justify-content-start align-items-start flex-column gap-2">
+          <div
+            class="search-sidebar d-flex justify-content-start align-items-start flex-column gap-2"
+          >
             <p style="margin: 0 !important">Search News</p>
             <form
               id="container-search"

@@ -25,6 +25,24 @@ function capitalize(input) {
   }
   return input.charAt(0).toUpperCase() + input.slice(1)
 }
+
+function copyLink(event) {
+  const btn = event.currentTarget
+  const input_container = btn.closest('.input-group')
+  const input = input_container.querySelector('#copyLinkInput').value
+  navigator.clipboard.writeText(input)
+
+  const msg_container = input_container.closest('.copy-link-container')
+  const msg = msg_container.querySelector('.text-success')
+  if (!msg) {
+    console.log('gaada')
+  } else {
+    msg.classList.remove('d-none')
+    setTimeout(() => {
+      msg.classList.add('d-none')
+    }, 3000)
+  }
+}
 </script>
 
 <template>
@@ -38,28 +56,89 @@ function capitalize(input) {
       <p class="px-1">{{ capitalize(post.category) }}</p>
     </div>
     <div class="container-post-big d-flex flex-row justify-content-evenly align-items-center">
-      <div  class="text-area-post-biog">
-        <router-link :to="newsLink(post)" class="post-text-big pe-2 ps-3 justify-content-start">{{ post.title }}</router-link>
+      <div class="text-area-post-biog">
+        <router-link :to="newsLink(post)" class="post-text-big pe-2 ps-3 justify-content-start">{{
+          post.title
+        }}</router-link>
       </div>
       <div class="buttonandanalytics">
         <div class="post-analytics-big d-flex flex-row justify-content-evenly align-items-center">
+          <div class="likes d-flex flex-row justify-content-center align-items-center mb-2">
+            <span class="material-symbols-outlined"> favorite </span>
+            <small>{{ post.total_likes }}</small>
+          </div>
           <div class="post-comm d-flex flex-row justify-content-center align-items-center mb-2">
             <span class="material-symbols-outlined"> forum </span>
             <small>{{ post.total_comments }}</small>
           </div>
-          <div class="share d-flex flex-row justify-content-center align-items-center mb-2">
-            <span class="material-symbols-outlined"> share </span>
-            <small>1.3K</small>
-          </div>
-          <div class="likes d-flex flex-row justify-content-center align-items-center mb-2">
-            <span class="material-symbols-outlined"> favorite </span>
-            <small>{{ post.total_likes }}</small>
+          <div class="share d-flex flex-column justify-content-center align-items-center mb-2">
+            <div class="dropdown">
+              <a
+                class="d-flex flex-row justify-content-center align-items-center dropdown-toggle"
+                role="button"
+                style="text-decoration: none; color: var(--dark)"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                ><span class="material-symbols-outlined"> share </span>
+              </a>
+              <div class="dropdown-menu p-4">
+                <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
+                <div class="d-flex justify-content-between align-items-start flex-row mt-3">
+                  <div class="d-flex justify-content-between align-items-start flex-column">
+                    <div class="facebook me-3 mb-3" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
+                      </a>
+                    </div>
+                    <div class="whatsapp me-3" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-start flex-column">
+                    <div class="twitter" style="width: 50%">
+                      <a
+                        class="sharebtn btn d-flex justify-content-start align-items-center mb-3"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-x-twitter me-2"></i>X
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="copy-link-container mt-2">
+                  <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
+                    Or copy the link:
+                  </label>
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="copyLinkInput"
+                      :value="post.url"
+                      readonly
+                    />
+                    <button class="btn btn-outline-secondary" type="button" @click="copyLink">
+                      Copy
+                    </button>
+                  </div>
+                  <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3">
           <a
             @click.prevent="handleChange"
-            :class="`bookmarkbtn ${ bookmarked ? 'bookmarked' : '' } btn d-flex justify-content-center`"
+            :class="`bookmarkbtn ${bookmarked ? 'bookmarked' : ''} btn d-flex justify-content-center`"
             role="button"
             data-bs-toggle="button"
             ><span class="material-symbols-outlined me-2">{{
@@ -72,104 +151,3 @@ function capitalize(input) {
     </div>
   </div>
 </template>
-
-<!--
-<div class="todays-headline">
-    <div class="headline-title">
-      <h3 class="Headline-top">Todays</h3>
-      <h2 class="Headline-bottom">Headline</h2>
-    </div>
-    <div class="top d-flex flex-row align-items-start">
-      <div class="sports mt-2">
-        <div class="title-sports d-flex flex-row justify-content-between align-items-start">
-          <h3>Sports News</h3>
-          <a class="seeall" href="/news/category/sports">See all</a>
-        </div>
-        <div class="sports-container d-flex justify-content-start align-items-center">
-          <div class="post-mid d-flex flex-row justify-content-evenly mb-3 mt-2">
-            <div class="post-content">
-              <a href="" class="container-img"
-                ><img src="../static/Assets/img/default.jpeg" alt=""
-              /></a>
-
-              <a
-                href=""
-                class="post-text d-flex justify-content-start align-items-start flex-column px-3 pt-3"
-              >
-                <div class="news-cat d-flex justify-content-center align-items-center mb-2">
-                  <p class="px-1"></p>
-                </div>
-                <span class="title-mid"></span
-              ></a>
-            </div>
-            <div class="post-analytics-mid">
-              <div class="views d-flex flex-column justify-content-center align-items-center mb-2">
-                <span class="material-symbols-outlined"> visibility </span>
-                <small>1.3K</small>
-              </div>
-              <div class="share d-flex flex-column justify-content-center align-items-center mb-2">
-                <span class="material-symbols-outlined"> share </span>
-                <small>1.3K</small>
-              </div>
-              <div class="likes d-flex flex-column justify-content-center align-items-center mb-2">
-                <span class="material-symbols-outlined"> favorite </span>
-                <small>Loading</small>
-              </div>
-              <div
-                class="bookmark d-flex flex-column justify-content-center align-items-center mb-2"
-              >
-                <label class="bookmark-icon">
-                  <input type="checkbox" />
-                  <span class="material-symbols-outlined">bookmark</span>
-                </label>
-                <small>Bookmark</small>
-              </div>
-            </div>
-          </div>
-          <div class="post-mid d-flex flex-row justify-content-evenly mb-3 mt-2">
-            <div class="post-content">
-              <a href="" class="container-img"
-                ><img src="../static/Assets/img/default.jpeg" alt=""
-              /></a>
-
-              <a
-                href="#"
-                class="post-text d-flex justify-content-start align-items-start flex-column px-3 pt-3 px-3 pt-3"
-              >
-                <div class="news-cat d-flex justify-content-center align-items-center mb-2">
-                  <p class="px-1"></p>
-                </div>
-                <span class="title-mid"></span>
-              </a>
-            </div>
-            <div class="post-analytics-mid">
-              <div class="views d-flex flex-column justify-content-center align-items-center mb-2">
-                <span class="material-symbols-outlined"> visibility </span>
-                <small>1.3K</small>
-              </div>
-              <div class="share d-flex flex-column justify-content-center align-items-center mb-2">
-                <span class="material-symbols-outlined"> share </span>
-                <small>1.3K</small>
-              </div>
-              <div class="likes d-flex flex-column justify-content-center align-items-center mb-2">
-                <span class="material-symbols-outlined"> favorite </span>
-                <small>Loading</small>
-              </div>
-              <div
-                class="bookmark d-flex flex-column justify-content-center align-items-center mb-2"
-              >
-                <label class="bookmark-icon">
-                  <input type="checkbox" />
-                  <span class="material-symbols-outlined">bookmark</span>
-                </label>
-                <small>Bookmark</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
--->
