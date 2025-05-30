@@ -37,27 +37,9 @@ nlp = spacy.load("en_core_web_sm")
 nltk.download('punkt_tab')
 nltk.download("stopwords")
 
-def extract_keywords(texts):
-    stop_words = set(stopwords.words("english"))
-    words = []
-
-    for text in texts:
-        if not text:
-            continue
-        tokens = word_tokenize(text.lower())
-        filtered = [
-            word for word in tokens
-            if word.isalnum() and word not in stop_words and word not in string.punctuation
-        ]
-        words.extend(filtered)
-
-    return Counter(words).most_common(10)
-
 app.add_middleware(SessionMiddleware, secret_key= os.getenv("SESSION_MIDDLEWARE_CLIENT_SECRET"))
 
 Base.metadata.create_all(bind=engine)
-
-
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -73,20 +55,20 @@ def parse_date(date_str):
     except Exception:
         raise ValueError(f"Invalid published date format: {date_str}")
 
-def generate_newsapi_query(texts: list[str], top_k: int = 5) -> list[str]:
-    all_entities = []
+def get_reco(titles: list[str], quan: int = 5) -> list[str]:
+    queries = []
 
-    for text in texts:
-        if not text:
+    for title in titles:
+        if not title:
             continue
-        doc = nlp(text)
-        all_entities += [
+        doc = nlp(title)
+        queries += [
             ent.text.strip() for ent in doc.ents
             if ent.label_ in ["PERSON", "ORG", "GPE", "EVENT"]
         ]
 
-    counter = Counter(all_entities)
-    top_entities = [e for e, _ in counter.most_common(top_k)]
+    counter = Counter(queries)
+    top_entities = [e for e, _ in counter.most_common(quan)]
     return top_entities
 
 @app.get("/auth/google")
@@ -1140,31 +1122,6 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
     return JSONResponse(content={"news": news_list})
 
-@app.get("/api/popular-keywords/{cat}")
-async def get_popular_keywords(cat: str):
-    decoded_cat = urllib.parse.unquote(cat)
-    url = f"https://newsapi.org/v2/top-headlines?category={decoded_cat}&apiKey={newsapi_client_key}"
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            res = await client.get(url)
-            res.raise_for_status()
-            data = res.json()
-    except httpx.ConnectTimeout:
-        return {"error": "Koneksi timeout ke NewsAPI."}
-    except httpx.HTTPStatusError as exc:
-        return {"error": f"Error dari NewsAPI: {exc.response.status_code}"}
-    except Exception as e:
-        return {"error": f"Gagal mengambil data: {str(e)}"}
-
-    articles = data.get("articles", [])
-    combined_texts = [article.get("title", "") for article in articles]
-    top_keywords = extract_keywords(combined_texts)
-
-    return {
-        "top_keywords": [{"word": w, "count": c} for w, c in top_keywords]
-    }
-
 @app.post("/api/check-bookmarks")
 def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Session = Depends(get_db)):
     print("test")
@@ -1966,7 +1923,7 @@ def get_newsapi_query(request: Request, db: Session = Depends(get_db)):
 
     if not texts:
         return {"query": "", "message": "Tidak ada data relevan untuk user ini."}
-    q_list = generate_newsapi_query(texts)
+    q_list = get_reco(texts)
 
     news_list = []
 

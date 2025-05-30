@@ -78,9 +78,15 @@ async function fetchComments(title) {
 }
 
 function updateCharCount() {
-  const textarea = document.getElementById("comment");
-  const remaining = 1000 - textarea.value.length;
-  document.getElementById("charRemaining").textContent = remaining;
+  const textarea = document.getElementById('comment')
+  const remaining = 1000 - textarea.value.length
+  document.getElementById('charRemaining').textContent = remaining
+}
+
+function resetCharCount() {
+  const textarea = document.getElementById('comment')
+  const remaining = 1000
+  document.getElementById('charRemaining').textContent = remaining
 }
 
 async function fetchCommentsNewest(title) {
@@ -122,6 +128,16 @@ const getNewsSource = (news) => {
     return `Reported via ${news.source_name}`
   } else {
     return 'No Source'
+  }
+}
+
+async function handleRemovedComment(comment) {
+  try {
+    postComments.value = postComments.value.filter((c) => c.comment == comment.comment)
+    await(fetchComments(title))
+    taskNoti({ message: 'Comment deleted!', success: true })
+  } catch (error) {
+    taskNoti({ message: error, success: false })
   }
 }
 
@@ -203,10 +219,13 @@ const send_comment = async (post) => {
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`)
     }
-    alert('comment sent')
-    window.location.reload()
+
+    await fetchComments(post.title)
+    comment.value = ''
+    resetCharCount()
+    taskNoti({ message: 'Comment sent!', success: true })
   } catch (err) {
-    console.error('Checking Bookmarks Failed:', err)
+    taskNoti({ message: 'Failed to send comment', success: false })
   }
 }
 
@@ -235,9 +254,6 @@ function taskNoti({ message, success }) {
   noti.classList.add('show')
   setTimeout(() => {
     noti.classList.remove('show')
-    setTimeout(() => {
-      resolve()
-    }, 300)
   }, 3000)
 }
 
@@ -274,6 +290,7 @@ watch(
 
 onMounted(async () => {
   window.addEventListener('resize', updateSize)
+  console.log("comment data:", postComments)
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
@@ -749,6 +766,7 @@ onBeforeUnmount(() => {
           :comment="comment"
           :user-email="userData.Email"
           :post-title="newsList[0].title"
+          @comment-removed="handleRemovedComment"
         />
       </div>
       <div

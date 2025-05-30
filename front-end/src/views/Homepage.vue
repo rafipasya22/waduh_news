@@ -194,7 +194,7 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="recomended mt-5">
+    <div class="recomended mt-5" :class="isUserLoggedIn ? 'show' : 'd-none'">
       <div class="headline-title">
         <h3 class="Headline-top">Based</h3>
         <h2 class="Headline-bottom">on your activities</h2>
@@ -212,7 +212,7 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="popular mt-5">
+    <div class="popular mt-5" :class="isUserLoggedIn ? 'show' : 'd-none'">
       <div class="headline-title">
         <h3 class="Headline-top">Based</h3>
         <h2 class="Headline-bottom">On your preferences</h2>

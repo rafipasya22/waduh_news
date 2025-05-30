@@ -28,7 +28,7 @@ function comment_date(dateString) {
   return `${days} day${days > 1 ? 's' : ''} ago`
 }
 
-async function removeComment(title, comment) {
+async function removeComment(title, comment, commented_by) {
   const res = await fetch('/api/delete-comment', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
@@ -36,6 +36,21 @@ async function removeComment(title, comment) {
   })
 
   if (res.ok) {
+    if (iscommliked(title,comment)) {
+      try {
+        unlikeComment(title, comment, commented_by)
+      } catch (error) {
+        console.log('ga di like')
+      }
+    }
+    if (iscommdisliked(title,comment)) {
+      try {
+        removeCommentDislike(title, comment, commented_by)
+      } catch (error) {
+        console.log('ga di dislike')
+      }
+    }
+
     emit('comment-removed', comment)
   } else {
     throw new Error('Failed to delete comment')
@@ -73,7 +88,7 @@ async function unlikeComment(title, comment, commented_by) {
     await checkcommentlikes(title, comment, commented_by)
     await totalcommentlikes(title, comment, commented_by)
   } catch (error) {
-    console.error(err)
+    console.error(error)
     alert('Error processing your request')
   }
 }
@@ -177,14 +192,12 @@ async function totalcommentdislikes(title, comment, commented_by) {
 }
 
 function iscommliked(title, comment) {
-  return likedcomment.value.some(
-    (like) => like.post_title === title && like.comment === comment
-  )
+  return likedcomment.value.some((like) => like.post_title === title && like.comment === comment)
 }
 
 function iscommdisliked(title, comment) {
   return dislikedcomment.value.some(
-    (dislike) => dislike.post_title === title && dislike.comment === comment
+    (dislike) => dislike.post_title === title && dislike.comment === comment,
   )
 }
 
@@ -195,7 +208,7 @@ const handleLikeClick = async (title, comment, commented_by) => {
       console.log('Comment Unliked!')
     } else {
       likeComment(title, comment, commented_by)
-      if(iscommdisliked(title, comment)){
+      if (iscommdisliked(title, comment)) {
         removeCommentDislike(title, comment, commented_by)
       }
       console.log('Comment liked!')
@@ -213,7 +226,7 @@ const handleDisLikeClick = async (title, comment, commented_by) => {
       console.log('Dislike Removed!')
     } else {
       dislikeComment(title, comment, commented_by)
-      if(iscommliked(title, comment)){
+      if (iscommliked(title, comment)) {
         unlikeComment(title, comment, commented_by)
       }
       console.log('Comment disliked!')
@@ -234,7 +247,7 @@ watch(
       await totalcommentdislikes(props.postTitle, newComment.comment, newComment.commented_by)
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 </script>
 
@@ -336,7 +349,11 @@ watch(
           <i class="fa-solid fa-circle"></i>
         </small>
         <small v-if="comment.commented_by === userEmail">
-          <a class="deletecomment" @click="removeComment(postTitle, comment.comment)" role="button">
+          <a
+            class="deletecomment"
+            @click="removeComment(postTitle, comment.comment, comment.commented_by)"
+            role="button"
+          >
             Delete
           </a>
         </small>

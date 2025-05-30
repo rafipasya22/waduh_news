@@ -103,7 +103,7 @@ class CommLikes(Base):
     commented_by = Column(String(100))
     post_title = Column(String(255))
     __table_args__ = (
-        UniqueConstraint('liked_by', 'comment', 'commented_by', name='unique_comment_user_liked'),
+        UniqueConstraint('liked_by', 'comment', 'commented_by', 'post_title', name='unique_comment_user_liked'),
     )
     
 class CommdisLikes(Base):
@@ -114,5 +114,5 @@ class CommdisLikes(Base):
     commented_by = Column(String(100))
     post_title = Column(String(255))
     __table_args__ = (
-        UniqueConstraint('disliked_by', 'comment', 'commented_by', name='unique_comment_user_disliked'),
+        UniqueConstraint('disliked_by', 'comment', 'commented_by', 'post_title', name='unique_comment_user_disliked'),
     )
