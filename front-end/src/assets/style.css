@@ -558,7 +558,6 @@ tr {
   margin-left: 0.5rem;
 }
 
-
 .post-analytics-big .likes small {
   margin-left: 0.5rem;
 }
@@ -1186,7 +1185,7 @@ tr {
 }
 
 .offcanvas-body .table a {
-  color: var(--grey) ;
+  color: var(--grey);
   font-weight: 400 !important;
   text-decoration: none !important;
 }
@@ -1596,7 +1595,7 @@ li.list-group-item {
   color: var(--dark);
 }
 
-.menucollapse[aria-expanded="true"] .col-text span{
+.menucollapse[aria-expanded='true'] .col-text span {
   transform: rotate(180deg);
   color: #dc0000d3;
 }
@@ -1614,12 +1613,12 @@ li.list-group-item {
   text-decoration: none;
 }
 
-.input-search.expanded.sidebar{
+.input-search.expanded.sidebar {
   width: 100% !important;
 }
 
 .shr.dropdown-toggle::after {
-    display: none !important;
+  display: none !important;
 }
 
 .disliked.pressed {
@@ -2082,6 +2081,10 @@ li.list-group-item {
     width: 150px !important;
     height: 30px;
   }
+
+  .top.reco .post-mid {
+    width: 100% !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2164,7 +2167,6 @@ li.list-group-item {
 }
 
 @media (max-width: 705px) {
-
   .dropdown-menu .bookmarkbtn span {
     font-size: clamp(8px, 15px, 15px) !important;
   }

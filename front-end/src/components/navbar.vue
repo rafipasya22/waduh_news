@@ -75,7 +75,12 @@
     </div>
 
     <!-- Offcanvas Desktop -->
-    <div class="offcanvas offcanvas-top px-5" tabindex="-1" id="sidebardesktop">
+    <div
+      class="offcanvas offcanvas-top px-5"
+      data-bs-scroll="true"
+      tabindex="-1"
+      id="sidebardesktop"
+    >
       <div class="offcanvas-header">
         <h5 class="offcanvas-title">More <span>Menu</span></h5>
         <button
@@ -94,9 +99,7 @@
             <tr
               class="keyword-links d-flex align-items-start justify-content-start flex-column me-4"
             >
-              <th>
-                Route
-              </th>
+              <th>Route</th>
               <td>
                 <router-link to="/"> Home </router-link>
               </td>
@@ -154,7 +157,12 @@
     </div>
 
     <!-- Offcanvas Mobile -->
-    <div class="offcanvas offcanvas-start pt-2 px-3" tabindex="-1" id="sidebarmobile">
+    <div
+      class="offcanvas offcanvas-start pt-2 px-3"
+      data-bs-scroll="true"
+      tabindex="-1"
+      id="sidebarmobile"
+    >
       <div class="offcanvas-header">
         <h3>Side<span style="color: #dc0000d3; font-weight: 600">Menu</span></h3>
         <button
@@ -166,6 +174,11 @@
       </div>
       <div class="offcanvas-body d-flex justify-content-between align-items-start flex-column">
         <div class="sidebar-menu" style="width: 100%">
+          <router-link
+            to="/"
+            class="sidemenu item d-flex justify-content-between align-items-center flex-row"
+            >Home
+          </router-link>
           <p class="d-inline-flex pb-2 my-2 gap-1" style="width: 100%">
             <a
               class="menucollapse"
