@@ -81,14 +81,11 @@
       tabindex="-1"
       id="sidebardesktop"
     >
-      <div class="offcanvas-header">
+      <div class="offcanvas-header d-flex align-items-center justify-content-between flex-row">
         <h5 class="offcanvas-title">More <span>Menu</span></h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="offcanvas"
-          aria-label="Close"
-        ></button>
+        <a type="button" class="closebtn" data-bs-dismiss="offcanvas" aria-label="Close">
+          <span style="font-size: 1.8rem" class="material-symbols-outlined"> close </span>
+        </a>
       </div>
       <div class="offcanvas-body py-0 pb-4" style="height: fit-content !important">
         <table class="table mb-0" style="width: 100%">
@@ -163,14 +160,11 @@
       tabindex="-1"
       id="sidebarmobile"
     >
-      <div class="offcanvas-header">
+      <div class="offcanvas-header d-flex align-items-center justify-content-between flex-row">
         <h3>Side<span style="color: #dc0000d3; font-weight: 600">Menu</span></h3>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="offcanvas"
-          aria-label="Close"
-        ></button>
+        <a type="button" class="closebtn" data-bs-dismiss="offcanvas" aria-label="Close">
+          <span style="font-size: 1.6rem" class="material-symbols-outlined"> close </span>
+        </a>
       </div>
       <div class="offcanvas-body d-flex justify-content-between align-items-start flex-column">
         <div class="sidebar-menu" style="width: 100%">
@@ -324,15 +318,12 @@
   >
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center flex-row">
           <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
 
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
+          <a type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">
+            <span class="material-symbols-outlined"> close </span>
+          </a>
         </div>
         <div class="modal-body">
           <div class="switch d-flex align-items-center justify-content-between flex-row">
@@ -475,6 +466,7 @@ async function logout() {
   try {
     const res = await fetch('/api/logout')
     if (!res.ok) throw new Error('Logout Failed')
+    
     alert('Logout Success')
     await router.push('/auth')
   } catch (error) {

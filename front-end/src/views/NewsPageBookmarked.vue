@@ -7,6 +7,7 @@ import Noti from '@/components/noti.vue'
 import Skel_title from '@/components/newspage_skeleton/title_container_skeleton.vue'
 import Skel_content from '@/components/newspage_skeleton/news_content_skeleton.vue'
 import Skel_mid from '@/components/post_mid_skeleton.vue'
+import Share_mod from '@/components/sharemodal.vue'
 import { likepost } from '@/composables/like_btn.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
@@ -48,6 +49,12 @@ const activeSort = ref('newest')
 const width = ref(window.innerWidth)
 
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
+const postData = ref(null)
+
+function openShareModal(post) {
+  postData.value = post
+  console.log('sko: ', postData.value)
+}
 
 async function fetchNxtNews() {
   const res = await fetch(`/api/ambil_nxtnews/${encodeURIComponent(query)}`)
@@ -419,6 +426,7 @@ onBeforeUnmount(() => {
           :post="nxtNews[0]"
           :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
           @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti)"
+          @opensharemodal="openShareModal"
         />
       </div>
     </div>
@@ -784,4 +792,5 @@ onBeforeUnmount(() => {
   </div>
 
   <Footer />
+  <Share_mod :postData="postData"/>
 </template>

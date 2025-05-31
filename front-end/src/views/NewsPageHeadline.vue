@@ -4,16 +4,17 @@ import Navbar from '@/components/navbar.vue'
 import Footer from '@/components/footer.vue'
 import Comment_container from '@/components/comment_container.vue'
 import Noti from '@/components/noti.vue'
-import { likepost } from '@/composables/like_btn.vue'
 import Skel_title from '@/components/newspage_skeleton/title_container_skeleton.vue'
 import Skel_content from '@/components/newspage_skeleton/news_content_skeleton.vue'
 import Skel_mid from '@/components/post_mid_skeleton.vue'
+import Share_mod from '@/components/sharemodal.vue'
+import { likepost } from '@/composables/like_btn.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { useRoute } from 'vue-router'
-import { watch, ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
@@ -40,14 +41,20 @@ const nxtNews = ref([])
 const isUserLoggedIn = ref(false)
 const newsList = ref([])
 const comment = ref('')
-const postComments = ref([])
 const isSuccess = ref(false)
 let isLoading = ref(true)
 const taskMsg = ref(null)
+const postComments = ref([])
 const activeSort = ref('newest')
 const width = ref(window.innerWidth)
 
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
+const postData = ref(null)
+
+function openShareModal(post) {
+  postData.value = post
+  console.log('sko: ', postData.value)
+}
 
 async function fetchNxtNews() {
   const res = await fetch(`/api/ambil_nxtnews/${encodeURIComponent(query)}`)
@@ -78,9 +85,15 @@ async function fetchComments(title) {
 }
 
 function updateCharCount() {
-  const textarea = document.getElementById("comment");
-  const remaining = 1000 - textarea.value.length;
-  document.getElementById("charRemaining").textContent = remaining;
+  const textarea = document.getElementById('comment')
+  const remaining = 1000 - textarea.value.length
+  document.getElementById('charRemaining').textContent = remaining
+}
+
+function resetCharCount() {
+  const textarea = document.getElementById('comment')
+  const remaining = 1000
+  document.getElementById('charRemaining').textContent = remaining
 }
 
 async function fetchCommentsNewest(title) {
@@ -122,6 +135,16 @@ const getNewsSource = (news) => {
     return `Reported via ${news.source_name}`
   } else {
     return 'No Source'
+  }
+}
+
+async function handleRemovedComment(comment) {
+  try {
+    postComments.value = postComments.value.filter((c) => c.comment == comment.comment)
+    await(fetchComments(title))
+    taskNoti({ message: 'Comment deleted!', success: true })
+  } catch (error) {
+    taskNoti({ message: error, success: false })
   }
 }
 
@@ -210,10 +233,13 @@ const send_comment = async (post) => {
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`)
     }
-    alert('comment sent')
-    window.location.reload()
+
+    await fetchComments(post.title)
+    comment.value = ''
+    resetCharCount()
+    taskNoti({ message: 'Comment sent!', success: true })
   } catch (err) {
-    console.error('Checking Bookmarks Failed:', err)
+    taskNoti({ message: 'Failed to send comment', success: false })
   }
 }
 
@@ -247,6 +273,7 @@ function taskNoti({ message, success }) {
 
 function updateSize() {
   width.value = window.innerWidth
+  console.log(width.value)
 }
 
 function copyLink(event) {
@@ -277,11 +304,12 @@ watch(
 
 onMounted(async () => {
   window.addEventListener('resize', updateSize)
+  console.log("comment data:", postComments)
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
   await getNews()
-  console.log(newsList.value[0])
+  console.log("news:",newsList.value)
   await fetchLikes(newsList.value[0].title)
   await fetchDislikes(newsList.value[0].title)
   await fetchCommentsNewest(newsList.value[0].title)
@@ -405,6 +433,7 @@ onBeforeUnmount(() => {
           :post="nxtNews[0]"
           :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
           @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti)"
+          @opensharemodal="openShareModal"
         />
       </div>
     </div>
@@ -752,6 +781,7 @@ onBeforeUnmount(() => {
           :comment="comment"
           :user-email="userData.Email"
           :post-title="newsList[0].title"
+          @comment-removed="handleRemovedComment"
         />
       </div>
       <div
@@ -767,5 +797,7 @@ onBeforeUnmount(() => {
     </div>
     <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
+
   <Footer />
+  <Share_mod :postData="postData"/>
 </template>

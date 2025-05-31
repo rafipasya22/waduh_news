@@ -7,6 +7,7 @@ import Post_mid from '@/components/post_mid.vue'
 import Noti from '@/components/noti.vue'
 import Skel from '@/components/post_big_skeleton.vue'
 import Skel_mid from '@/components/post_mid_skeleton.vue'
+import Share_mod from '@/components/sharemodal.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
@@ -24,8 +25,13 @@ const recoPosts2 = ref([])
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 let isLoading = ref(true)
-
 const isUserLoggedIn = ref(false)
+const postData = ref(null)
+
+function openShareModal(post) {
+  postData.value = post
+  console.log('sko: ', postData.value)
+}
 
 async function fetchHeadlineNews() {
   const res = await fetch('/api/ambil_news')
@@ -148,6 +154,7 @@ onMounted(async () => {
           :post="headlinePost[0]"
           :bookmarked="bookmarkedTitles.includes(headlinePost[0].title)"
           @toggleBookmark="() => toggleBookmark(headlinePost[0], taskNoti)"
+          @opensharemodal="openShareModal"
         />
         <div class="sports mt-2">
           <div class="title-sports d-flex flex-row justify-content-between align-items-start">
@@ -161,6 +168,7 @@ onMounted(async () => {
               :post="post"
               :bookmarked="bookmarkedTitles.includes(post.title)"
               @toggleBookmark="toggleBookmark(post, taskNoti)"
+              @opensharemodal="openShareModal"
             />
           </div>
         </div>
@@ -184,6 +192,7 @@ onMounted(async () => {
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
             @toggleBookmark="() => toggleBookmark(post, taskNoti)"
+            @opensharemodal="openShareModal"
           />
         </div>
         <Post_big
@@ -191,6 +200,7 @@ onMounted(async () => {
           :post="popularPosts[0]"
           :bookmarked="bookmarkedTitles.includes(popularPosts[0].title)"
           @toggleBookmark="() => toggleBookmark(popularPosts[0], taskNoti)"
+          @opensharemodal="openShareModal"
         />
       </div>
     </div>
@@ -199,16 +209,21 @@ onMounted(async () => {
         <h3 class="Headline-top">Based</h3>
         <h2 class="Headline-bottom">on your activities</h2>
       </div>
-      <div v-if="isLoading" class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll;">
-        <Skel_mid v-for="x in 5" :key="x"/>
+      <div
+        v-if="isLoading"
+        class="top reco d-flex flex-row align-items-start"
+        style="overflow-x: scroll"
+      >
+        <Skel_mid v-for="x in 5" :key="x" />
       </div>
-      <div v-else class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll;">
+      <div v-else class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll">
         <Post_mid
           v-for="(post, index) in recoPosts2.slice(0, 5)"
           :key="index"
           :post="post"
           :bookmarked="bookmarkedTitles.includes(post.title)"
           @toggleBookmark="toggleBookmark(post, taskNoti)"
+          @opensharemodal="openShareModal"
         />
       </div>
     </div>
@@ -231,6 +246,7 @@ onMounted(async () => {
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
             @toggleBookmark="() => toggleBookmark(post, taskNoti)"
+            @opensharemodal="openShareModal"
           />
         </div>
         <Post_big
@@ -238,10 +254,12 @@ onMounted(async () => {
           :post="recoPosts[0]"
           :bookmarked="bookmarkedTitles.includes(recoPosts[0].title)"
           @toggleBookmark="() => toggleBookmark(recoPosts[0], taskNoti)"
+          @opensharemodal="openShareModal"
         />
       </div>
     </div>
     <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
+    <Share_mod :postData="postData" />
   </div>
 
   <Footer></Footer>

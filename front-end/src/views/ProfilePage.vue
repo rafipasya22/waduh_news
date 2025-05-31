@@ -7,6 +7,7 @@ import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import Skel_mid from '@/components/post_mid_skeleton.vue'
+import Share_mod from '@/components/sharemodal.vue'
 import { useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 
@@ -38,6 +39,30 @@ let isLoading = ref(true)
 const previewSrc = ref('/static/Assets/ProfileImg/default.jpg')
 const location = ref('')
 const fileInput = ref(null)
+const postData = ref(null)
+
+function openShareModal(post) {
+  postData.value = post
+  console.log("sko: ", postData.value)
+}
+
+function copyLink(event) {
+  const btn = event.currentTarget
+  const input_container = btn.closest('.input-group')
+  const input = input_container.querySelector('#copyLinkInput').value
+  navigator.clipboard.writeText(input)
+
+  const msg_container = input_container.closest('.copy-link-container')
+  const msg = msg_container.querySelector('.text-success')
+  if (!msg) {
+    console.log('gaada')
+  } else {
+    msg.classList.remove('d-none')
+    setTimeout(() => {
+      msg.classList.add('d-none')
+    }, 3000)
+  }
+}
 
 async function get_total_likes() {
   try {
@@ -56,8 +81,6 @@ async function get_total_likes() {
     total_likes.value = 0
   }
 }
-
-
 
 async function get_total_bookmarks() {
   try {
@@ -135,7 +158,7 @@ async function handleSubmitPassword() {
 }
 
 async function handleUploadPhoto() {
-  console.log("location input:", location.value)
+  console.log('location input:', location.value)
   const formData = new FormData()
 
   const file = fileInput.value?.files[0]
@@ -144,7 +167,7 @@ async function handleUploadPhoto() {
   }
 
   formData.append('Location', location.value)
-  console.log("formdata: ", formData.get("Location"))
+  console.log('formdata: ', formData.get('Location'))
 
   try {
     const response = await fetch('/api/edit', {
@@ -249,7 +272,7 @@ onMounted(async () => {
 
   const allTitles = [...bookmarkedPosts.value].map((p) => p.title)
   await fetchBookmarks(allTitles)
-  isLoading.value=false
+  isLoading.value = false
 
   console.log(userData.value)
 })
@@ -370,7 +393,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
-      <Skel_mid v-for="x in 2" :key="x"/>
+      <Skel_mid v-for="x in 2" :key="x" />
     </div>
     <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
       <Post_mid
@@ -379,10 +402,11 @@ onMounted(async () => {
         :post="post"
         :bookmarked="bookmarkedTitles.includes(post.title)"
         @toggleBookmark="() => toggleBookmark(post)"
+        @opensharemodal="openShareModal"
       />
     </div>
     <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
-      <Skel_mid v-for="x in 2" :key="x"/>
+      <Skel_mid v-for="x in 2" :key="x" />
     </div>
     <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
       <Post_mid
@@ -391,6 +415,7 @@ onMounted(async () => {
         :post="post"
         :bookmarked="bookmarkedTitles.includes(post.title)"
         @toggleBookmark="() => toggleBookmark(post)"
+        @opensharemodal="openShareModal"
       />
     </div>
   </div>
@@ -406,15 +431,12 @@ onMounted(async () => {
   >
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center flex-row">
           <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
 
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
+          <a type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">
+            <span class="material-symbols-outlined"> close </span>
+          </a>
         </div>
         <div class="modal-body">
           <div class="switch d-flex align-items-center justify-content-between flex-row">
@@ -442,14 +464,11 @@ onMounted(async () => {
   >
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center flex-row">
           <h2 class="modal-title" id="prefmodallabel"><span>Edit</span> Preferences</h2>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
+          <a type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">
+            <span class="material-symbols-outlined"> close </span>
+          </a>
         </div>
         <div class="modal-body">
           <div class="edit-prefs">
@@ -532,15 +551,12 @@ onMounted(async () => {
   >
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center flex-row">
           <h5 class="modal-title" id="editModalLabel">Edit Personal Info</h5>
-          <button
-            id="editpersonal"
-            type="button"
-            class="btn-close"
-            data-bs-toggle="modal"
-            data-bs-target="#profilemodal"
-          ></button>
+
+          <a type="button" class="closebtn" data-bs-toggle="modal" data-bs-target="#profilemodal">
+            <span class="material-symbols-outlined"> close </span>
+          </a>
         </div>
         <div class="modal-body">
           <form @submit.prevent="submitPersonalInfo">
@@ -585,14 +601,11 @@ onMounted(async () => {
   >
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center flex-row">
           <h5 class="modal-title" id="updatePasswordModalLabel">Update Password</h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-toggle="modal"
-            data-bs-target="#profilemodal"
-          ></button>
+          <a type="button" class="closebtn" data-bs-toggle="modal" data-bs-target="#profilemodal">
+            <span class="material-symbols-outlined"> close </span>
+          </a>
         </div>
         <div class="modal-body">
           <form @submit.prevent="handleSubmitPassword" id="passform">
@@ -655,14 +668,11 @@ onMounted(async () => {
   >
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex justify-content-between align-items-center flex-row">
           <h2 class="modal-title" id="profilemodallabel"><span>Edit</span> Profile</h2>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
+          <a type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">
+            <span class="material-symbols-outlined"> close </span>
+          </a>
         </div>
         <div class="modal-body">
           <div class="editprofile-container">
@@ -773,6 +783,7 @@ onMounted(async () => {
     </div>
   </div>
   <Footer />
+  <Share_mod :postData="postData"/>
 </template>
 
 <script>

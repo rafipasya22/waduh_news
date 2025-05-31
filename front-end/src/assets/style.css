@@ -857,6 +857,18 @@ tr {
   color: white !important;
 }
 
+.closebtn{
+  color: var(--grey) !important;
+}
+
+.closebtn span{
+  font-size: 1.8rem;
+}
+
+.closebtn:hover{
+  color: #dc0000b4 !important;
+}
+
 .btn-save-changes:hover {
   background-color: #7f0000 !important;
   color: white !important;

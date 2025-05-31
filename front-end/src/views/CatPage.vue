@@ -10,6 +10,7 @@ import Skel_mid from '@/components/post_mid_skeleton.vue'
 import Noti from '@/components/noti.vue'
 import Post_mv from '@/components/post_most_viewed.vue'
 import Skel_mv from '@/components/post_most_viewed_skeleton.vue'
+import Share_mod from '@/components/sharemodal.vue'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
@@ -34,6 +35,13 @@ const isSuccess = ref(false)
 const taskMsg = ref(null)
 const route = useRoute()
 let isLoading = ref(true)
+
+const postData = ref(null)
+
+function openShareModal(post) {
+  postData.value = post
+  console.log('sko: ', postData.value)
+}
 
 const cat = computed(() => route.params.cat || route.path.split('/').pop())
 
@@ -138,12 +146,12 @@ onMounted(async () => {
 
   const allTitles = [...catNewsHeadline.value].map((p) => p.title)
   fetchBookmarks(allTitles)
-  isLoading.value=false
+  isLoading.value = false
 })
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
   <div class="content news-index mb-5">
     <div class="todays-headline">
       <div class="headline-title">
@@ -155,9 +163,9 @@ onMounted(async () => {
     <div class="popular">
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <div class="popular-mid">
-          <Skel_mid v-for="x in 2" :key="x"/>
+          <Skel_mid v-for="x in 2" :key="x" />
         </div>
-        <Skel/>
+        <Skel />
       </div>
       <div v-else class="top d-flex flex-row align-items-start">
         <div class="popular-mid">
@@ -167,6 +175,7 @@ onMounted(async () => {
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
             @toggleBookmark="() => toggleBookmark(post, taskNoti)"
+            @opensharemodal="openShareModal"
           />
         </div>
         <Post_big
@@ -174,6 +183,7 @@ onMounted(async () => {
           :post="catNewsHeadline[0]"
           :bookmarked="bookmarkedTitles.includes(catNewsHeadline[0].title)"
           @toggleBookmark="() => toggleBookmark(catNewsHeadline[0], taskNoti)"
+          @opensharemodal="openShareModal"
         />
       </div>
     </div>
@@ -190,11 +200,17 @@ onMounted(async () => {
         <div
           class="recent-posts-profile d-flex justify-content-between align-items-start flex-column mt-2 me-3"
         >
-          <div v-if="isLoading" class="container-post d-flex justify-content-center align-items-start flex-column">
-            <Skel_long v-for="x in 5" :key="x"/>
+          <div
+            v-if="isLoading"
+            class="container-post d-flex justify-content-center align-items-start flex-column"
+          >
+            <Skel_long v-for="x in 5" :key="x" />
           </div>
 
-          <div v-else class="container-post d-flex justify-content-center align-items-start flex-column">
+          <div
+            v-else
+            class="container-post d-flex justify-content-center align-items-start flex-column"
+          >
             <div
               v-for="(news, index) in newsList"
               :key="news.title"
@@ -231,10 +247,11 @@ onMounted(async () => {
           </div>
 
           <div class="d-flex justify-content-between align-items-center mt-4" style="width: 100%">
-            <div v-if="isLoading" class="pagination-container d-flex justify-content-center flex-grow-1">
-              <nav>
-                
-              </nav>
+            <div
+              v-if="isLoading"
+              class="pagination-container d-flex justify-content-center flex-grow-1"
+            >
+              <nav></nav>
             </div>
             <div v-else class="pagination-container d-flex justify-content-center flex-grow-1">
               <nav>
@@ -250,8 +267,7 @@ onMounted(async () => {
         <div class="most-viewed justify-content-center align-items-start flex-column mt-2">
           <h2 class="px-3 pt-3">Most Viewed</h2>
           <div v-if="isLoading" class="popular-island px-4 py-0">
-            <Skel_mv v-for="x in 7" :key="x"/>
-            
+            <Skel_mv v-for="x in 7" :key="x" />
           </div>
           <div v-else class="popular-island px-4 py-0">
             <Post_mv
@@ -267,4 +283,5 @@ onMounted(async () => {
     <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
   </div>
   <Footer></Footer>
+  <Share_mod :postData="postData" />
 </template>
