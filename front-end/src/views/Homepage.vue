@@ -27,10 +27,30 @@ const taskMsg = ref(null)
 let isLoading = ref(true)
 const isUserLoggedIn = ref(false)
 const postData = ref(null)
+const preferredTopics = ref([])
+const userBookmarkCount = ref(null)
 
 function openShareModal(post) {
   postData.value = post
   console.log('sko: ', postData.value)
+}
+
+async function fetchUserPref() {
+  const res = await fetch('/api/user-preferences')
+  const data = await res.json()
+  if(!data.preferred_topics & data.preferred_topics.length == 0){
+    preferredTopics.value = []
+  }
+  preferredTopics.value = data.preferred_topics || []
+}
+
+async function getUserbookmarksCount() {
+  const res = await fetch('/api/user-bookmarks')
+  const data = await res.json()
+  if(!data.total_items & data.total_items.length == 0){
+    userBookmarkCount.value = ''
+  }
+  userBookmarkCount.value = data.total_items || ''
 }
 
 async function fetchHeadlineNews() {
@@ -116,6 +136,8 @@ onMounted(async () => {
   popularPosts.value = await fetchPopularNews()
   recoPosts.value = await fetchReco()
   recoPosts2.value = await getq()
+  await fetchUserPref()
+  await getUserbookmarksCount()
   console.log('Fetched headl posts:', headlinePost.value)
   console.log('Nothing:', popularPosts.value)
 
@@ -123,6 +145,7 @@ onMounted(async () => {
     (p) => p.title,
   )
   await fetchBookmarks(allTitles)
+  console.log('prefs', userBookmarkCount.value)
   isLoading.value = false
 })
 </script>
@@ -204,7 +227,7 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="recomended mt-5" :class="isUserLoggedIn ? 'show' : 'd-none'">
+    <div class="recomended mt-5" :class="userBookmarkCount > 0 ? 'show' : 'd-none'">
       <div class="headline-title">
         <h3 class="Headline-top">Based</h3>
         <h2 class="Headline-bottom">on your activities</h2>
@@ -227,7 +250,7 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="popular mt-5" :class="isUserLoggedIn ? 'show' : 'd-none'">
+    <div class="popular mt-5" :class="preferredTopics.length > 0 ? 'show' : 'd-none'">
       <div class="headline-title">
         <h3 class="Headline-top">Based</h3>
         <h2 class="Headline-bottom">On your preferences</h2>

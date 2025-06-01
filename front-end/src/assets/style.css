@@ -857,15 +857,19 @@ tr {
   color: white !important;
 }
 
-.closebtn{
+.closebtn {
   color: var(--grey) !important;
 }
 
-.closebtn span{
+.closebtn span {
   font-size: 1.8rem;
 }
 
-.closebtn:hover{
+.bookmarkscontainer {
+  width: 100%;
+}
+
+.closebtn:hover {
   color: #dc0000b4 !important;
 }
 

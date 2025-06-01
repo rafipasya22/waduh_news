@@ -569,6 +569,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
 
         news_list.append(news_item)
+        print(news_list)
 
     return JSONResponse(content={"news": news_list})
 
@@ -631,8 +632,8 @@ async def baca_news(query: str, title: str):
             "title": title,
             "author": article.get("author"),
             "category": decoded_query,
-            "publishedAt": article_date,
-            "imageUrl": image_url,
+            "published_at": article_date,
+            "image_url": image_url,
             "content": full_text,
             "source_url": url,
             "source_name": article.get('source', {}).get('name', '')
@@ -694,8 +695,8 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             "title": title,
             "author": article.get("author"),
             "category": decoded_query,
-            "publishedAt": article_date,
-            "imageUrl": image_url,
+            "published_at": article_date,
+            "image_url": image_url,
             "content": full_text,
             "source_url": url,
             "source_name": article.get('source', {}).get('name', '')
@@ -1112,8 +1113,8 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             "title": title,
             "author": article.get("author"),
             "category": decoded_query,
-            "publishedAt": article_date,
-            "imageUrl": image_url,
+            "published_at": article_date,
+            "image_url": image_url,
             "content": full_text,
             "source_url": url,
             "source_name": article.get('source', {}).get('name', '')
@@ -1279,8 +1280,8 @@ async def baca_bookmark(request: Request, title:str, db: Session = Depends(get_d
                 "title": bookmark_query.title,
                 "author": bookmark_query.author,
                 "category": bookmark_query.category,
-                "publishedAt": bookmark_query.published_at,
-                "imageUrl": bookmark_query.image_url,
+                "published_at": bookmark_query.published_at,
+                "image_url": bookmark_query.image_url,
                 "content": bookmark_query.content,
                 "source_url": bookmark_query.source_url,
                 "source_name": bookmark_query.source_name,

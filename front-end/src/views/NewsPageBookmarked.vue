@@ -111,6 +111,11 @@ async function fetchCommentsNewest(title) {
   }
 }
 
+async function handleBookmark(Post) {
+  await toggleBookmark(Post, taskNoti)
+  console.log("postdata", Post)
+}
+
 async function fetchCommentsMostLiked(title) {
   try {
     const res = await fetch('/api/get_comments/sorted-most-liked', {
@@ -160,7 +165,7 @@ async function getNews() {
       console.error(data.error)
       return
     }
-    newsList.value = data.news ? [data.news] : []
+    newsList.value = data.news ? [data.news].map(news =>({...news, sourceType: 'bookmarks'})) : []
   } catch (error) {
     console.error('Gagal fetch berita:', error)
   }
@@ -302,7 +307,7 @@ onMounted(async () => {
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
   await getNews()
-  console.log(newsList.value[0])
+  console.log("sourcetype:", newsList.value[0].sourceType)
   await fetchLikes(newsList.value[0].title)
   await fetchDislikes(newsList.value[0].title)
   await fetchCommentsNewest(newsList.value[0].title)
@@ -414,7 +419,7 @@ onBeforeUnmount(() => {
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
         <a href="#" class="news-image"
-          ><img :src="newsList[0]?.imageUrl || '/image-assets/default.jpeg'" alt=""
+          ><img :src="newsList[0]?.image_url || '/image-assets/default.jpeg'" alt=""
         /></a>
       </div>
       <div class="sports nxt-stories np mt-2">
@@ -440,7 +445,7 @@ onBeforeUnmount(() => {
       <div class="title-bottom d-flex justify-content-between align-items-center flex-row mt-2">
         <div class="news-details d-flex justify-content-start align-items-start flex-column">
           <h5 style="margin-bottom: 0 !important; color: var(--dark)">
-            Uploaded {{ formatDate(newsList[0].publishedAt) }}
+            Uploaded {{ formatDate(newsList[0].published_at) }}
           </h5>
           <small style="color: var(--dark)">
             <i>{{ getNewsSource(newsList[0]) }}</i>
@@ -486,7 +491,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3 me-2">
             <a
-              @click="toggleBookmark(newsList[0], taskNoti)"
+              @click="handleBookmark(newsList[0])"
               :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-center`"
               role="button"
               data-bs-toggle="button"

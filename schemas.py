@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
@@ -44,7 +44,7 @@ class CheckLikeResponse(BaseModel):
 
 class BookmarkRequest(BaseModel):
     Title: str
-    Author: str
+    Author: Optional[str] = None 
     Category: str
     Published_at: str
     Image_url: str

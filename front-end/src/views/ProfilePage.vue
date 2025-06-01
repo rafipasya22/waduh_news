@@ -43,7 +43,7 @@ const postData = ref(null)
 
 function openShareModal(post) {
   postData.value = post
-  console.log("sko: ", postData.value)
+  console.log('sko: ', postData.value)
 }
 
 function copyLink(event) {
@@ -114,7 +114,7 @@ async function getBookmarkedPosts() {
     const slicedNews = data.bookmarks.slice(0, 4)
     await getlike(slicedNews)
     await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post }))
+    return slicedNews.map((post) => ({ ...post, sourceType: 'bookmarks' }))
   }
   return []
 }
@@ -127,6 +127,20 @@ function previewImage(event) {
       previewSrc.value = reader.result
     }
     reader.readAsDataURL(file)
+  }
+}
+
+async function handleBookmark(post) {
+  try {
+    await toggleBookmark(post)
+    bookmarkedPosts.value = bookmarkedPosts.value.filter((p) => p.title !== post.title)
+    taskMsg.value = 'Bookmark deleted'
+    isSuccess.value = true
+    await taskNoti()
+  } catch (error) {
+    taskMsg.value = error || 'Deleting bookmark failed'
+    isSuccess.value = false
+    await taskNoti()
   }
 }
 
@@ -280,7 +294,7 @@ onMounted(async () => {
 
 <template>
   <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
-  <div class="content mb-5 d-flex justify-content-between align-items-start flex-column">
+  <div class="content mb-5 d-flex justify-content-start align-items-start flex-column">
     <div class="content-top d-flex justify-content-between align-items-end w-100">
       <div class="profile-container d-flex justify-content-start align-center flex-row p-3">
         <div class="profile-picture m-3">
@@ -383,40 +397,51 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div
-      class="bookmarked-top d-flex justify-content-between align-items-center flex-row mt-4 w-100"
-    >
-      <div class="bookmarked-posts-title">
-        <h3>Bookmarked <span>Posts</span></h3>
+    <div class="bookmarkscontainer d-flex justify-content-start align-items-start flex-column">
+      <div
+        class="bookmarked-top d-flex justify-content-between align-items-center flex-row mt-4 w-100"
+      >
+        <div class="bookmarked-posts-title">
+          <h3>Bookmarked <span>Posts</span></h3>
+        </div>
+        <router-link to="/profile/bookmarks/seeall" class="seeall">See all</router-link>
       </div>
-      <router-link to="/profile/bookmarks/seeall" class="seeall">See all</router-link>
-    </div>
 
-    <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
-      <Skel_mid v-for="x in 2" :key="x" />
-    </div>
-    <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
-      <Post_mid
-        v-for="(post, index) in bookmarkedPosts.slice(0, 2)"
-        :key="index"
-        :post="post"
-        :bookmarked="bookmarkedTitles.includes(post.title)"
-        @toggleBookmark="() => toggleBookmark(post)"
-        @opensharemodal="openShareModal"
-      />
-    </div>
-    <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
-      <Skel_mid v-for="x in 2" :key="x" />
-    </div>
-    <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
-      <Post_mid
-        v-for="(post, index) in bookmarkedPosts.slice(2, 4)"
-        :key="index"
-        :post="post"
-        :bookmarked="bookmarkedTitles.includes(post.title)"
-        @toggleBookmark="() => toggleBookmark(post)"
-        @opensharemodal="openShareModal"
-      />
+      <div v-if="bookmarkedPosts" class="bookmarkedpostscontainer">
+        <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
+          <Skel_mid v-for="x in 2" :key="x" />
+        </div>
+        <div v-else class="bookmarked-posts-profile d-flex flex-row align-items-start mt-2">
+          <Post_mid
+            v-for="(post, index) in bookmarkedPosts.slice(0, 2)"
+            :key="index"
+            :post="post"
+            :bookmarked="bookmarkedTitles.includes(post.title)"
+            @toggleBookmark="() => handleBookmark(post)"
+            @opensharemodal="openShareModal"
+          />
+        </div>
+        <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
+          <Skel_mid v-for="x in 2" :key="x" />
+        </div>
+        <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
+          <Post_mid
+            v-for="(post, index) in bookmarkedPosts.slice(2, 4)"
+            :key="index"
+            :post="post"
+            :bookmarked="bookmarkedTitles.includes(post.title)"
+            @toggleBookmark="() => handleBookmark(post)"
+            @opensharemodal="openShareModal"
+          />
+        </div>
+      </div>
+      <div
+        v-else
+        class="bookmarkedpostscontainer d-flex justify-content-center align-items-center flex-column"
+      >
+        <span class="material-symbols-outlined" style="font-size: 8rem"> bookmark_remove </span>
+        <small>You haven't bookmarked any post yet</small>
+      </div>
     </div>
   </div>
 
@@ -783,7 +808,7 @@ onMounted(async () => {
     </div>
   </div>
   <Footer />
-  <Share_mod :postData="postData"/>
+  <Share_mod :postData="postData" />
 </template>
 
 <script>

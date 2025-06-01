@@ -421,7 +421,7 @@ onBeforeUnmount(() => {
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
         <a href="#" class="news-image"
-          ><img :src="newsList[0]?.imageUrl || '/image-assets/default.jpeg'" alt=""
+          ><img :src="newsList[0]?.image_url || '/image-assets/default.jpeg'" alt=""
         /></a>
       </div>
       <div class="sports nxt-stories np mt-2">
@@ -447,7 +447,7 @@ onBeforeUnmount(() => {
       <div class="title-bottom d-flex justify-content-between align-items-center flex-row mt-2">
         <div class="news-details d-flex justify-content-start align-items-start flex-column">
           <h5 style="margin-bottom: 0 !important; color: var(--dark)">
-            Uploaded {{ formatDate(newsList[0].publishedAt) }}
+            Uploaded {{ formatDate(newsList[0].published_at) }}
           </h5>
           <small style="color: var(--dark)">
             <i>{{ getNewsSource(newsList[0]) }}</i>

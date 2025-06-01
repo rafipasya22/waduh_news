@@ -1,3 +1,7 @@
+<script setup>
+import Noti from '@/components/noti.vue'
+</script>
+
 <template>
   <div class="auth-wrapper">
     <div class="container" :class="{ active: isSignUp }" id="container">
@@ -50,7 +54,6 @@
           </div>
 
           <button type="submit" class="button signup">Sign <span class="UP">Up</span></button>
-          <div v-if="signupError" class="msg-error">{{ signupError }}</div>
         </form>
 
         <div class="btn-center">
@@ -145,6 +148,8 @@
       </div>
     </div>
   </div>
+
+  <Noti :taskStatus="isSuccess" :taskMsg="taskMsg" />
 </template>
 
 <script>
@@ -158,6 +163,8 @@ export default {
   },
   data() {
     return {
+      isSuccess: false,
+      taskMsg: '',
       isSignUp: false,
       signupError: '',
       signup: {
@@ -186,6 +193,7 @@ export default {
     async submitSignUp() {
       if (this.signup.Password !== this.signup.Confirm_Password) {
         this.signupError = 'Passwords do not match'
+        this.taskNoti({ message: this.signupError || 'An unknown error occurred', success: false })
         return
       }
 
@@ -221,8 +229,9 @@ export default {
 
       if (!response.ok) {
         this.signupError = data.detail || 'An unknown error occurred'
+        this.taskNoti({ message: this.signupError || 'An unknown error occurred', success: false })
       } else {
-        alert('Account created successfully!')
+        this.taskNoti({ message: 'Account created successfully!', success: true })
         this.resetForm()
       }
     },
@@ -243,13 +252,16 @@ export default {
         if (!response.ok) {
           console.error(data.detail || 'Login failed')
           this.loginError = data.detail || 'Login failed'
+          await this.taskNoti({ message: data.detail || 'Login failed', success: false })
         } else {
-          alert('Login successful!')
+          await this.taskNoti({ message: 'Login Success!', success: true })
           this.$router.push('/')
         }
       } catch (err) {
         console.error('Login error:', err)
         this.loginError = 'Something went wrong.'
+
+        this.taskNoti({ message: 'Something went wrong.', success: false })
       }
     },
     resetForm() {
@@ -281,8 +293,22 @@ export default {
         }
       } catch (err) {
         console.error('Error:', err)
-        this.loginError = 'Something went wrong.'
       }
+    },
+    taskNoti({ message, success }) {
+      return new Promise((resolve) => {
+        this.taskMsg = message
+        this.isSuccess = success
+        const noti = document.querySelector('.noti')
+        noti.classList.add('show')
+
+        setTimeout(() => {
+          noti.classList.remove('show')
+          setTimeout(() => {
+            resolve()
+          }, 300)
+        }, 2000)
+      })
     },
   },
 }

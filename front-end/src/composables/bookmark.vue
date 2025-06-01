@@ -15,6 +15,7 @@ export function bookmarkpost() {
   }
 
   async function toggleBookmark(post, onNotify) {
+    console.log(post)
     const isBookmarked = bookmarkedTitles.value.includes(post.title)
     async function fetchArticleDetail(post) {
       const endpoint =
@@ -28,8 +29,16 @@ export function bookmarkpost() {
       return data.news?.find((item) => item.title === post.title)
     }
     try {
-      const postData = await fetchArticleDetail(post)
-      if (!postData) throw new Error('Data tidak ditemukan')
+      let postData
+      if (post.sourceType == 'bookmarks') {
+        postData = post
+      } else {
+        postData = await fetchArticleDetail(post)
+      }
+
+      if (!postData) {
+        throw new Error('Data tidak ditemukan')
+      }
 
       const endpoint = isBookmarked ? '/api/remove-bookmark' : '/api/bookmark'
       const method = isBookmarked ? 'DELETE' : 'POST'
