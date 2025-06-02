@@ -34,6 +34,9 @@ export function bookmarkpost() {
         postData = post
       } else {
         postData = await fetchArticleDetail(post)
+        if(!postData || postData.length === 0){
+          postData = post
+        }
       }
 
       if (!postData) {

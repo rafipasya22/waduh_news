@@ -72,7 +72,7 @@ function taskNoti({ message, success }) {
   noti.classList.add('show')
   setTimeout(() => {
     noti.classList.remove('show')
-  }, 10000)
+  }, 3000)
 }
 
 async function fetchSportsNews() {

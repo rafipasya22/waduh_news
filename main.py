@@ -1923,7 +1923,7 @@ def get_newsapi_query(request: Request, db: Session = Depends(get_db)):
             texts.append(l.post_title)
 
     if not texts:
-        return {"query": "", "message": "Tidak ada data relevan untuk user ini."}
+        return {"query": "", "message": "No news articles found for extracted topics."}
     q_list = get_reco(texts)
 
     news_list = []
