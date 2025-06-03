@@ -1414,6 +1414,12 @@ input[type='checkbox']:checked {
   width: fit-content !important;
 }
 
+.sharebtn.mdl{
+  border-radius: 100% !important;
+  font-size: 1.5rem !important;
+  padding: 0.5rem !important;
+}
+
 .sharebtn:hover {
   background-color: #b50000d3 !important;
 }
@@ -1746,6 +1752,19 @@ li.list-group-item {
 }
 .whatsapp .sharebtn {
   width: 100px !important;
+}
+
+.facebook .sharebtn.mdl {
+  width: 60px !important;
+  height: 60px !important;
+}
+.twitter .sharebtn.mdl {
+  width: 60px !important;
+  height: 60px !important;
+}
+.whatsapp .sharebtn.mdl {
+  width: 60px !important;
+  height: 60px !important;
 }
 
 .news-details h5 {

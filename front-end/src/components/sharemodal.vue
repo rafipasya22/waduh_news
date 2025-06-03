@@ -20,7 +20,6 @@ function copyLink(event) {
     }, 3000)
   }
 }
-
 </script>
 
 <template>
@@ -42,33 +41,32 @@ function copyLink(event) {
         </div>
         <div class="modal-body">
           <div class="d-flex justify-content-between align-items-start">
-            <div class="d-flex justify-content-between align-items-start flex-column">
-              <div class="facebook me-3 mb-3" style="width: 50%">
-                <a
-                  class="sharebtn btn d-flex justify-content-start align-items-center"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
-                </a>
-              </div>
-              <div class="whatsapp me-3" style="width: 50%">
-                <a
-                  class="sharebtn btn d-flex justify-content-start align-items-center"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
-                </a>
-              </div>
+            <div class="facebook d-flex justify-content-center align-items-center flex-column" style="width: 50%">
+              <a
+                class="sharebtn d-flex justify-content-center align-items-center mdl btn"
+                role="button"
+                data-bs-toggle="dropdown"
+                ><i class="fa-brands fa-facebook-f"> </i>
+              </a>
+              <p>Facebook</p>
             </div>
-            <div class="d-flex justify-content-between align-items-start flex-column">
-              <div class="twitter" style="width: 50%">
-                <a
-                  class="sharebtn btn d-flex justify-content-start align-items-center mb-3"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  ><i class="fa-brands fa-x-twitter me-2"></i>X
-                </a>
-              </div>
+            <div class="whatsapp d-flex justify-content-start align-items-center flex-column" style="width: 50%">
+              <a
+                class="sharebtn d-flex justify-content-center align-items-center mdl btn"
+                role="button"
+                data-bs-toggle="dropdown"
+                ><i class="fa-brands fa-whatsapp"></i>
+              </a>
+              <p>WhatsApp</p>
+            </div>
+            <div class="twitter d-flex justify-content-start align-items-center flex-column" style="width: 50%">
+              <a
+                class="sharebtn d-flex justify-content-center align-items-center mdl btn"
+                role="button"
+                data-bs-toggle="dropdown"
+                ><i class="fa-brands fa-x-twitter"></i>
+              </a>
+              <p>X</p>
             </div>
           </div>
           <div class="copy-link-container mt-2">
