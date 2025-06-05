@@ -1,3 +1,4 @@
+import asyncio
 from math import ceil
 import random
 from fastapi import FastAPI, Depends, Form, HTTPException, Query, Request, UploadFile, File, requests
@@ -343,8 +344,9 @@ async def remove_preference(topic_name: str, request: Request, db: Session = Dep
 
     return {"status": "removed", "topic": topic_name}
 
-@app.get("/api/ambil_news")
-async def ambilnews(category: str = 'general'):
+
+#fetch news
+async def ambil_headline(category:str = 'general'):
     try:
         response = newsapi.get_top_headlines(category=category)
     except Exception as e:
@@ -369,10 +371,9 @@ async def ambilnews(category: str = 'general'):
 
     return {"news": news_list}
 
-@app.get("/api/ambil_nxtnews/{cat}")
-async def ambilnews(cat: str):
+async def ambil_popular(category: str = 'general'):
     try:
-        response = newsapi.get_top_headlines(category = cat)
+        response = newsapi.get_everything(q="category", sort_by="popularity")
     except Exception as e:
         return {"error": f"Error fetching news: {str(e)}"}
 
@@ -389,13 +390,12 @@ async def ambilnews(cat: str):
                 "imageUrl": article.get("urlToImage"),
                 "content": article.get("content"),
                 "url": article.get("url"),
-                "category": cat  
+                "category": category 
             }
             news_list.append(news_item)
 
     return {"news": news_list}
 
-@app.get("/api/ambil_news/sports")
 async def ambilnews_sports(category: str = "sports"):
     try:
         response = newsapi.get_top_headlines(category="sports")
@@ -421,10 +421,88 @@ async def ambilnews_sports(category: str = "sports"):
 
     return {"news": news_list}
 
-@app.get("/api/ambil_news/popular")
-async def ambilnews(category: str = 'general'):
+async def ambil_reco_actv(bookmarks, likes):
+    texts = []
+
+    for b in bookmarks:
+        if b.title:
+            texts.append(b.title)
+        if b.content:
+            texts.append(b.content)
+
+    for l in likes:
+        if l.post_title:
+            texts.append(l.post_title)
+
+    if not texts:
+        return {"query": "", "message": "No news articles found for extracted topics."}
+    q_list = get_reco(texts)
+
+    news_list = []
+
+    for que in q_list:
+        try:
+            response = newsapi.get_everything(q = que, page_size=10)
+        except Exception as e:
+            continue
+
+        if response['status'] != 'ok':
+            return {"error": "Failed to fetch news"}
+
+        for article in response.get('articles', []):
+            if article.get("urlToImage") and article.get("content"):
+                news_item = {
+                    "title": article.get("title"),
+                    "publishedAt": article.get("publishedAt"),
+                    "author": article.get("author"),
+                    "imageUrl": article.get("urlToImage"),
+                    "content": article.get("content"),
+                    "url": article.get("url"),
+                    "category": "general"  
+                }
+                news_list.append(news_item)
+        
+        if not news_list:
+            return {"news": [], "message": "No news articles found for extracted topics."}
+
+    random.shuffle(news_list)
+    return {"news": news_list}
+
+async def ambil_reco(getPref):
+    catList = [cat[0] for cat in getPref]
+
+    news_list = []
+
+    for cat in catList:
+        cat = cat.lower()
+        print(cat)
+        try:
+            response = newsapi.get_top_headlines(category = cat)
+        except Exception as e:
+            return {"error": f"Error fetching news: {str(e)}"}
+
+        if response['status'] != 'ok':
+            return {"error": "Failed to fetch news"}
+
+        for article in response.get('articles', []):
+            if article.get("urlToImage") and article.get("content"):
+                news_item = {
+                    "title": article.get("title"),
+                    "publishedAt": article.get("publishedAt"),
+                    "author": article.get("author"),
+                    "imageUrl": article.get("urlToImage"),
+                    "content": article.get("content"),
+                    "url": article.get("url"),
+                    "category": cat  
+                }
+                news_list.append(news_item)
+
+    random.shuffle(news_list)
+    return {"news": news_list}
+
+async def ambilnews_category(cat):
     try:
-        response = newsapi.get_everything(q="category", sort_by="popularity")
+        response = newsapi.get_top_headlines(category = cat)
     except Exception as e:
         return {"error": f"Error fetching news: {str(e)}"}
 
@@ -441,7 +519,148 @@ async def ambilnews(category: str = 'general'):
                 "imageUrl": article.get("urlToImage"),
                 "content": article.get("content"),
                 "url": article.get("url"),
-                "category": category 
+                "category": cat  
+            }
+            news_list.append(news_item)
+
+    return {"news": news_list}
+
+async def ambilnews_newest(cat, page, page_size):
+    try:
+        response = newsapi.get_top_headlines(category=cat)
+    except Exception as e:
+        return {"error": f"Error fetching news: {str(e)}"}
+
+    if response['status'] != 'ok':
+        return {"error": "Failed to fetch news"}
+
+    news_list = []
+    for article in response.get('articles', []):
+        if article.get("urlToImage") and article.get("content") and article.get("publishedAt"):
+            try:
+                published_date = datetime.strptime(article["publishedAt"], "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                continue
+
+            news_list.append({
+                "title": article.get("title"),
+                "publishedAt": article.get("publishedAt"),
+                "publishedAt_dt": published_date,
+                "author": article.get("author"),
+                "source_name": article.get("source", {}).get("name"),
+                "imageUrl": article.get("urlToImage"),
+                "content": article.get("content"),
+                "url": article.get("url"),
+                "category": cat
+            })
+
+    news_list.sort(key=lambda x: x["publishedAt_dt"], reverse=True)
+
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated = news_list[start:end]
+
+    for item in paginated:
+        del item["publishedAt_dt"]
+
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_items": len(news_list),
+        "total_pages": (len(news_list) + page_size - 1) // page_size,
+        "news": paginated
+    }
+
+@app.get("/api/homepage_news")
+async def ambilhomepagenews(request: Request, db: Session = Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    bookmarks = db.query(models.Bookmark).filter(models.Bookmark.Bookmarked_by == email).limit(20).all()
+    likes = db.query(models.Likes).filter(models.Likes.liked_by == email).limit(20).all()
+    getPref = db.query(models.Topics.Topic_Name).join(models.user_preferences, models.Topics.id == models.user_preferences.c.topic_id).join(models.Akun, models.Akun.id == models.user_preferences.c.user_id).filter(models.Akun.Email == email).all()
+
+    news_headline, news_popular, news_sports, reco_actv, news_reco = await asyncio.gather(
+        ambil_headline(),
+        ambil_popular(),
+        ambilnews_sports(),
+        ambil_reco_actv(bookmarks, likes),
+        ambil_reco(getPref)
+    )
+
+    return {
+            "headlineNews": news_headline,
+            "popularNews": news_popular,
+            "sportsNews": news_sports,
+            "newsRecoActv": reco_actv,
+            "newsReco": news_reco
+        }
+
+@app.get("/api/catpage/{cat}")
+async def ambilcatpagenews(cat:str, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=50)):
+    cat_headline, cat_news = await asyncio.gather(
+        ambilnews_category(cat),
+        ambilnews_newest(cat, page, page_size)
+    )
+    cat_news_all = cat_news.get("news", [])
+
+    newest_page_size = 5
+    newest_start = (page - 1) * newest_page_size
+    newest_end = newest_start + newest_page_size
+    newest_paginated = cat_news_all[newest_start:newest_end]
+
+    cat_newest = {
+        "news": newest_paginated,
+        "page": page,
+        "page_size": newest_page_size,
+        "total_items": len(cat_news_all),
+        "total_pages": (len(cat_news_all) + newest_page_size - 1) // newest_page_size,
+    }
+
+    mv_page_size = 10
+    mv_start = (page - 1) * mv_page_size
+    mv_end = mv_start + mv_page_size
+    mv_paginated = cat_news_all[mv_start:mv_end]
+
+    cat_mostviewed = {
+        "news": mv_paginated,
+        "page": page,
+        "page_size": mv_page_size,
+        "total_items": len(cat_news_all),
+        "total_pages": (len(cat_news_all) + mv_page_size - 1) // mv_page_size,
+    }
+
+    return {
+            "catHeadline": cat_headline,
+            "catNewest": cat_newest,
+            "catMostViewed": cat_mostviewed
+        }
+
+@app.get("/api/ambil_nxtnews/{cat}")
+async def ambilnews(cat: str):
+    try:
+        response = newsapi.get_top_headlines(category = cat)
+    except Exception as e:
+        return {"error": f"Error fetching news: {str(e)}"}
+
+    if response['status'] != 'ok':
+        return {"error": "Failed to fetch news"}
+
+    news_list = []
+    for article in response.get('articles', []):
+        if article.get("urlToImage") and article.get("content"):
+            news_item = {
+                "title": article.get("title"),
+                "publishedAt": article.get("publishedAt"),
+                "author": article.get("author"),
+                "imageUrl": article.get("urlToImage"),
+                "content": article.get("content"),
+                "url": article.get("url"),
+                "category": cat  
             }
             news_list.append(news_item)
 
@@ -641,8 +860,6 @@ async def baca_news(query: str, title: str):
         news_list.append(news_item)
 
     return JSONResponse(content={"news": news_list})
-
-
         
 @app.get("/api/baca-news/headline/{query}/{title}", response_class=HTMLResponse)
 async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
@@ -1123,6 +1340,8 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
 
     return JSONResponse(content={"news": news_list})
 
+#bookmarks & likes
+
 @app.post("/api/check-bookmarks")
 def check_bookmarks(request: Request, data: schemas.BookmarkBatchRequest, db: Session = Depends(get_db)):
     print("test")
@@ -1182,7 +1401,6 @@ def save_bookmark(request: Request, data: schemas.BookmarkRequest, db=Depends(ge
     db.add(bookmark)
     db.commit()
     return {"message": "Bookmark saved"}
-    
 
 @app.delete("/api/remove-bookmark")
 async def remove_bookmark(request: Request, data: schemas.DeleteBookmarkRequest, db=Depends(get_db)):
@@ -1291,7 +1509,6 @@ async def baca_bookmark(request: Request, title:str, db: Session = Depends(get_d
             print(f"Failed Fetching Article {e}")
             raise HTTPException(status_code=404, detail="No complete article found")
         
-
 @app.get("/api/profile/get_total_bookmarks")
 async def get_total_profile_bookmarks(request: Request, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
@@ -1549,7 +1766,6 @@ def add_comment(request: Request, data: schemas.CommentResponse, db: Session = D
     db.add(comments)
     db.commit()
     return {"message": "Comment Sent"}
-
 
 @app.post("/api/total_comments")
 async def get_total_comments(

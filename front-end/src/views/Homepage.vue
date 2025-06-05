@@ -38,7 +38,7 @@ function openShareModal(post) {
 async function fetchUserPref() {
   const res = await fetch('/api/user-preferences')
   const data = await res.json()
-  if(!data.preferred_topics & data.preferred_topics.length == 0){
+  if (!data.preferred_topics & (data.preferred_topics.length == 0)) {
     preferredTopics.value = []
   }
   preferredTopics.value = data.preferred_topics || []
@@ -47,22 +47,62 @@ async function fetchUserPref() {
 async function getUserbookmarksCount() {
   const res = await fetch('/api/user-bookmarks')
   const data = await res.json()
-  if(!data.total_items & data.total_items.length == 0){
+  if (!data.total_items & (data.total_items.length == 0)) {
     userBookmarkCount.value = ''
   }
   userBookmarkCount.value = data.total_items || ''
 }
 
-async function fetchHeadlineNews() {
-  const res = await fetch('/api/ambil_news')
+async function fetchNews() {
+  const res = await fetch('/api/homepage_news')
   const data = await res.json()
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news.slice(0, 1)
-    await getlike(slicedNews)
-    await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
-  }
-  return []
+  if (!res.ok) throw new Error('Failed to fetch news')
+  const HeadlineNews = data.headlineNews.news.slice(0, 1)
+  const PopularNews = data.popularNews.news.slice(0, 3)
+  const SportsNews = data.sportsNews.news.slice(0, 2)
+  const RecoNews = data.newsReco.news.slice(0, 3)
+  const RecoActv = data.newsRecoActv.news.slice(0, 5)
+
+  const homeNews = [
+    ...HeadlineNews.map((post) => ({ ...post, sourceType: 'headline' })),
+    ...PopularNews.map((post) => ({ ...post, sourceType: 'not_headline' })),
+    ...SportsNews.map((post) => ({ ...post, sourceType: 'headline' })),
+    ...RecoNews.map((post) => ({ ...post, sourceType: 'headline' })),
+    ...RecoActv.map((post) => ({ ...post, sourceType: 'not_headline' }))
+  ]
+
+  await Promise.all([getlike(homeNews), getcomments(homeNews)])
+
+  headlinePost.value = HeadlineNews.map((post) => ({
+    ...post,
+    sourceType: 'headline',
+    total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
+  }))
+  popularPosts.value = PopularNews.map((post) => ({
+    ...post,
+    sourceType: 'not_headline',
+    total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+  }))
+  sportsPosts.value = SportsNews.map((post) => ({
+    ...post,
+    sourceType: 'headline',
+    total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+  }))
+  recoPosts.value = RecoNews.map((post)=>({
+    ...post,
+    sourceType: 'headline',
+    total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+  }))
+  recoPosts2.value = RecoActv.map((post)=>({
+    ...post,
+    sourceType: 'not_headline',
+    total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+  }))
 }
 
 function taskNoti({ message, success }) {
@@ -75,67 +115,18 @@ function taskNoti({ message, success }) {
   }, 3000)
 }
 
-async function fetchSportsNews() {
-  const res = await fetch('/api/ambil_news/sports')
-  const data = await res.json()
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news.slice(0, 2)
-    await getlike(slicedNews)
-    await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
-  }
-  return []
-}
-
-async function fetchPopularNews() {
-  const res = await fetch('/api/ambil_news/popular')
-  const data = await res.json()
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news.slice(0, 3)
-    await getlike(slicedNews)
-    await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
-  }
-  return []
-}
-
-async function fetchReco() {
-  const res = await fetch('/api/recommended')
-  const data = await res.json()
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news.slice(0, 3)
-    await getlike(slicedNews)
-    await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
-  }
-  return []
-}
-
-async function getq() {
-  const res = await fetch('/api/user-query')
-  const data = await res.json()
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news
-    await getlike(slicedNews)
-    await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'not_headline' }))
-  }
-  return []
-}
-
 onMounted(async () => {
   isUserLoggedIn.value = await getUserInfo()
   console.log(recoPosts2.value)
   const isloggedin = isUserLoggedIn.value
   await getUserData()
   console.log(isloggedin)
-  headlinePost.value = await fetchHeadlineNews()
-  console.log('post', headlinePost.value)
-  sportsPosts.value = await fetchSportsNews()
-
-  popularPosts.value = await fetchPopularNews()
-  recoPosts.value = await fetchReco()
-  recoPosts2.value = await getq()
+  await fetchNews()
+  console.log("headline:", headlinePost.value)
+  console.log("sports: ", sportsPosts.value)
+  console.log("popular: ", popularPosts.value)
+  console.log("reco: ", recoPosts.value)
+  console.log("recoActv: ", recoPosts2.value)
   await fetchUserPref()
   await getUserbookmarksCount()
   console.log('Fetched headl posts:', headlinePost.value)

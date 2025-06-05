@@ -49,28 +49,45 @@ const capCat = computed(() => {
   return cat.value.charAt(0).toUpperCase() + cat.value.slice(1).toLowerCase()
 })
 
-async function fetchCatHeadline() {
-  const res = await fetch(`/api/news/category/${encodeURIComponent(cat.value)}`)
+async function fetchCatNews(page = 1) {
+  const res = await fetch(`/api/catpage/${encodeURIComponent(cat.value)}`)
   const data = await res.json()
+  if (!res.ok) throw new Error('Failed to fetch news')
+  const CatHeadline = data.catHeadline.news.slice(0, 3)
+  const CatNewest = data.catNewest.news
+  const CatMV = data.catMostViewed.news.slice(0, 10)
 
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news.slice(0, 3)
-    await getlike(slicedNews)
-    await getcomments(slicedNews)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
-  }
-  return []
-}
+  console.log(CatMV)
 
-async function fetchMostViewed() {
-  const res = await fetch(`/api/news/category/newest/${encodeURIComponent(cat.value)}?page_size=10`)
-  const data = await res.json()
+  const catNews = [
+    ...CatHeadline.map((post) => ({ ...post, sourceType: 'headline' })),
+    ...CatNewest.map((post) => ({ ...post, sourceType: 'headline' })),
+    ...CatMV.map((post) => ({ ...post, sourceType: 'headline' })),
+  ]
 
-  if (data.news && data.news.length > 0) {
-    const slicedNews = data.news.slice(0, 10)
-    return slicedNews.map((post) => ({ ...post, sourceType: 'headline' }))
-  }
-  return []
+  await Promise.all([getlike(catNews), getcomments(catNews)])
+  newsList.value = CatNewest.map((post) => ({
+    ...post,
+    sourceType: 'headline',
+    total_likes: CatHeadline.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: CatHeadline.find((p) => p.title === post.title)?.total_comments || 0,
+  }))
+  totalPages.value = data.catNewest.total_pages
+  currentPage.value = page
+
+  catNewsHeadline.value = CatHeadline.map((post) => ({
+    ...post,
+    sourceType: 'headline',
+    total_likes: CatHeadline.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: CatHeadline.find((p) => p.title === post.title)?.total_comments || 0,
+  }))
+
+  mostViewed.value = CatMV.map((post) => ({
+    ...post,
+    sourceType: 'headline',
+    total_likes: CatHeadline.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: CatHeadline.find((p) => p.title === post.title)?.total_comments || 0,
+  }))
 }
 
 function taskNoti({ message, success }) {
@@ -83,7 +100,7 @@ function taskNoti({ message, success }) {
   }, 10000)
 }
 
-const fetchNews = async (page = 1) => {
+const changePage = async (page = 1) => {
   try {
     const response = await fetch(
       `/api/news/category/newest/${encodeURIComponent(cat.value)}?page=${page}&page_size=5`,
@@ -106,10 +123,7 @@ const capitalize = (text) => {
 }
 
 watch(cat, async () => {
-  newsList.value = []
-  catNewsHeadline.value = await fetchCatHeadline()
-  mostViewed.value = await fetchMostViewed()
-  fetchNews()
+  fetchCatNews()
 })
 
 const getNewsSource = (news) => {
@@ -138,9 +152,8 @@ onMounted(async () => {
   console.log(typeof cat.value)
   await getUserData()
   isUserLoggedIn.value = await getUserInfo()
-  catNewsHeadline.value = await fetchCatHeadline()
-  mostViewed.value = await fetchMostViewed()
-  fetchNews()
+  await fetchCatNews()
+  console.log("mv: ", mostViewed.value)
 
   console.log(catNewsHeadline.value)
 
@@ -258,7 +271,7 @@ onMounted(async () => {
                 <pagination
                   :totalPages="totalPages"
                   :currentPage="currentPage"
-                  @page-changed="fetchNews"
+                  @page-changed="changePage"
                 />
               </nav>
             </div>
