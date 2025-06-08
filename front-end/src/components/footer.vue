@@ -17,8 +17,8 @@
         <h2>News</h2>
         <p>Stay Informed, Stay Ahead—Bringing You the News That Matters.</p>
       </div>
-      <div class="explore-footer">
-        <table class="table mx-2 mb-0">
+      <div class="explore-footer mb-5">
+        <table class="table mx-2 mb-5">
           <thead>
             <tr>
               <th scope="col">Explore</th>
@@ -26,26 +26,37 @@
           </thead>
           <tbody>
             <tr>
-              <th><a class="" href="#">Sports</a></th>
-              <td><a class="" href="#">Politics</a></td>
-              <td><a class="" href="#">Lifestyle</a></td>
-            </tr>
-            <tr>
               <th>
-                <a class="" href="#">Workout Tips</a>
+                <router-link to="/news/category/sports" class="nav-link" aria-current="page"
+                  >Sports</router-link
+                >
               </th>
               <td>
-                <a class="" href="#">International</a>
+                <router-link to="/news/category/technology" class="nav-link" aria-current="page"
+                  >Technology</router-link
+                >
               </td>
-              <td><a class="" href="#">Local</a></td>
+              <td>
+                <router-link to="/news/category/health" class="nav-link" aria-current="page"
+                  >Health</router-link
+                >
+              </td>
             </tr>
             <tr>
               <th>
-                <a class="" href="#">Automobile</a>
+                <router-link to="/news/category/science" class="nav-link" aria-current="page"
+                  >Science</router-link
+                >
               </th>
-              <td><a class="" href="#">Techology</a></td>
               <td>
-                <a class="" href="#">Stock Market</a>
+                <router-link to="/news/category/entertainment" class="nav-link" aria-current="page"
+                  >Entertainment</router-link
+                >
+              </td>
+              <td>
+                <router-link to="/news/category/business" class="nav-link" aria-current="page"
+                  >Business</router-link
+                >
               </td>
             </tr>
           </tbody>
@@ -56,7 +67,7 @@
     <div class="footer-bottom d-flex justify-content-between align-items-start">
       <div class="copyright mb-3">© Waduh News 2025</div>
       <div class="links-footer mb-3">
-        <a href="">Terms of Service</a>
+        <a class="me-3" href="">Terms of Service</a>
         <a href="">Privacy Policy</a>
       </div>
     </div>
