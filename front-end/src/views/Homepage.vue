@@ -12,8 +12,11 @@ import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
+import { useRouter } from 'vue-router'
 
-const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+const router = useRouter()
+
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(router)
 const { userData, getUserData } = userdata()
 const { getlike, getcomments, getUserInfo } = analytics()
 
@@ -68,7 +71,7 @@ async function fetchNews() {
     ...PopularNews.map((post) => ({ ...post, sourceType: 'not_headline' })),
     ...SportsNews.map((post) => ({ ...post, sourceType: 'headline' })),
     ...RecoNews.map((post) => ({ ...post, sourceType: 'headline' })),
-    ...RecoActv.map((post) => ({ ...post, sourceType: 'not_headline' }))
+    ...RecoActv.map((post) => ({ ...post, sourceType: 'not_headline' })),
   ]
 
   await Promise.all([getlike(homeNews), getcomments(homeNews)])
@@ -83,25 +86,25 @@ async function fetchNews() {
     ...post,
     sourceType: 'not_headline',
     total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
-    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
   }))
   sportsPosts.value = SportsNews.map((post) => ({
     ...post,
     sourceType: 'headline',
     total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
-    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
   }))
-  recoPosts.value = RecoNews.map((post)=>({
+  recoPosts.value = RecoNews.map((post) => ({
     ...post,
     sourceType: 'headline',
     total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
-    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
   }))
-  recoPosts2.value = RecoActv.map((post)=>({
+  recoPosts2.value = RecoActv.map((post) => ({
     ...post,
     sourceType: 'not_headline',
     total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
-    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
   }))
 }
 
@@ -122,21 +125,23 @@ onMounted(async () => {
   await getUserData()
   console.log(isloggedin)
   await fetchNews()
-  console.log("headline:", headlinePost.value)
-  console.log("sports: ", sportsPosts.value)
-  console.log("popular: ", popularPosts.value)
-  console.log("reco: ", recoPosts.value)
-  console.log("recoActv: ", recoPosts2.value)
-  await fetchUserPref()
-  await getUserbookmarksCount()
+  console.log('headline:', headlinePost.value)
+  console.log('sports: ', sportsPosts.value)
+  console.log('popular: ', popularPosts.value)
+  console.log('reco: ', recoPosts.value)
+  console.log('recoActv: ', recoPosts2.value)
+  if (isloggedin) {
+    await fetchUserPref()
+    await getUserbookmarksCount()
+    const allTitles = [...headlinePost.value, ...sportsPosts.value, ...popularPosts.value].map(
+      (p) => p.title,
+    )
+    await fetchBookmarks(allTitles)
+    console.log('prefs', userBookmarkCount.value)
+  }
+
   console.log('Fetched headl posts:', headlinePost.value)
   console.log('Nothing:', popularPosts.value)
-
-  const allTitles = [...headlinePost.value, ...sportsPosts.value, ...popularPosts.value].map(
-    (p) => p.title,
-  )
-  await fetchBookmarks(allTitles)
-  console.log('prefs', userBookmarkCount.value)
   isLoading.value = false
 })
 </script>

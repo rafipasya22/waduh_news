@@ -18,7 +18,7 @@ import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
-const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(route)
 const {
   likedtitle,
   dislikedtitle,

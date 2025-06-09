@@ -15,10 +15,13 @@ import { bookmarkpost } from '@/composables/bookmark.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import { watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
-const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(router)
 
 import '@/assets/style.css'
 import { onMounted, ref } from 'vue'

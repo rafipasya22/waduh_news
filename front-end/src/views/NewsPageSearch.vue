@@ -15,10 +15,11 @@ import { userdata } from '@/composables/get_userdata.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { useRoute } from 'vue-router'
 import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
+const route = useRoute()
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
-const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(route)
 const {
   likedtitle,
   dislikedtitle,
@@ -32,7 +33,6 @@ const {
   removeDislike,
 } = likepost()
 
-const route = useRoute()
 
 const query = route.params.query
 const title = route.params.title

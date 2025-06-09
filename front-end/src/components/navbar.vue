@@ -100,9 +100,6 @@
               <td>
                 <router-link to="/"> Home </router-link>
               </td>
-              <td>
-                <router-link to="/"> About </router-link>
-              </td>
             </tr>
 
             <tr
@@ -466,7 +463,7 @@ async function logout() {
   try {
     const res = await fetch('/api/logout')
     if (!res.ok) throw new Error('Logout Failed')
-    
+
     alert('Logout Success')
     await router.push('/auth')
   } catch (error) {

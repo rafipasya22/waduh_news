@@ -571,11 +571,29 @@ async def ambilnews_newest(cat, page, page_size):
         "news": paginated
     }
 
+async def emptylist():
+    news_list = []
+    return {"news": news_list}
+
 @app.get("/api/homepage_news")
 async def ambilhomepagenews(request: Request, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
     if not user_session:
-        raise HTTPException(status_code=401, detail="User not logged in")
+        news_headline, news_popular, news_sports, reco_actv, news_reco = await asyncio.gather(
+            ambil_headline(),
+            ambil_popular(),
+            ambilnews_sports(),
+            emptylist(),
+            emptylist()
+        )
+
+        return {
+                "headlineNews": news_headline,
+                "popularNews": news_popular,
+                "sportsNews": news_sports,
+                "newsRecoActv": reco_actv,
+                "newsReco": news_reco
+            }
 
     email = user_session.get("email")
     if not email:

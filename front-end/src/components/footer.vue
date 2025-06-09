@@ -66,10 +66,6 @@
     <hr class="divider-footer mt-3 mb-2" />
     <div class="footer-bottom d-flex justify-content-between align-items-start">
       <div class="copyright mb-3">© Waduh News 2025</div>
-      <div class="links-footer mb-3">
-        <a class="me-3" href="">Terms of Service</a>
-        <a href="">Privacy Policy</a>
-      </div>
     </div>
   </div>
 </template>

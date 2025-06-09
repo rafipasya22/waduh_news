@@ -1,7 +1,7 @@
 <script>
 import { ref } from 'vue'
 
-export function bookmarkpost() {
+export function bookmarkpost(router) {
   const bookmarkedTitles = ref([])
 
   async function fetchBookmarks(titles) {
@@ -25,6 +25,7 @@ export function bookmarkpost() {
 
       const res = await fetch(endpoint)
       if (!res.ok) throw new Error('Gagal ambil artikel')
+        
       const data = await res.json()
       return data.news?.find((item) => item.title === post.title)
     }
@@ -34,7 +35,7 @@ export function bookmarkpost() {
         postData = post
       } else {
         postData = await fetchArticleDetail(post)
-        if(!postData || postData.length === 0){
+        if (!postData || postData.length === 0) {
           postData = post
         }
       }
@@ -77,6 +78,8 @@ export function bookmarkpost() {
     } catch (err) {
       console.error('Gagal toggle bookmark:', err)
       onNotify?.({ message: 'Failed to bookmark post', success: false })
+      
+      router.push('/auth')
     }
   }
 

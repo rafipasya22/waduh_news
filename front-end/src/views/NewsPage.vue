@@ -13,12 +13,14 @@ import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import { analytics } from '@/composables/post_analytics.vue'
-import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
+
+const router = useRouter()
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
-const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost()
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(router)
 const {
   likedtitle,
   dislikedtitle,
@@ -31,8 +33,6 @@ const {
   removeLike,
   removeDislike,
 } = likepost()
-
-const route = useRoute()
 
 const query = route.params.query
 const title = route.params.title
