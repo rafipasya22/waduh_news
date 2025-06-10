@@ -1,13 +1,15 @@
 <script setup>
 import { watch, ref } from 'vue'
+import { defineEmits } from 'vue'
 
 const props = defineProps({
   comment: Object,
   userEmail: String,
   postTitle: String,
+  isLoggedin: Boolean,
 })
 
-const emit = defineEmits(['comment-removed'])
+const emit = defineEmits(['comment-removed'], ['notify'])
 
 const likedcomment = ref([])
 const dislikedcomment = ref([])
@@ -36,14 +38,14 @@ async function removeComment(title, comment, commented_by) {
   })
 
   if (res.ok) {
-    if (iscommliked(title,comment)) {
+    if (iscommliked(title, comment)) {
       try {
         unlikeComment(title, comment, commented_by)
       } catch (error) {
         console.log('ga di like')
       }
     }
-    if (iscommdisliked(title,comment)) {
+    if (iscommdisliked(title, comment)) {
       try {
         removeCommentDislike(title, comment, commented_by)
       } catch (error) {
@@ -202,38 +204,46 @@ function iscommdisliked(title, comment) {
 }
 
 const handleLikeClick = async (title, comment, commented_by) => {
-  try {
-    if (iscommliked(title, comment)) {
-      unlikeComment(title, comment, commented_by)
-      console.log('Comment Unliked!')
-    } else {
-      likeComment(title, comment, commented_by)
-      if (iscommdisliked(title, comment)) {
-        removeCommentDislike(title, comment, commented_by)
+  if (props.isLoggedin == true) {
+    try {
+      if (iscommliked(title, comment)) {
+        unlikeComment(title, comment, commented_by)
+        emit('notify', { message: 'Comment unliked!', success: true })
+      } else {
+        likeComment(title, comment, commented_by)
+        if (iscommdisliked(title, comment)) {
+          removeCommentDislike(title, comment, commented_by)
+        }
+        emit('notify', { message: 'Comment liked!', success: true })
       }
-      console.log('Comment liked!')
+    } catch (err) {
+      console.error(err)
+      emit('notify', { message: 'Cannot like comment, unexpected error', success: false })
     }
-  } catch (err) {
-    console.error(err)
-    alert('Error processing your request')
+  } else {
+    emit('notify', { message: 'Cannot like comment, please log in first!', success: false })
   }
 }
 
 const handleDisLikeClick = async (title, comment, commented_by) => {
-  try {
-    if (iscommdisliked(title, comment)) {
-      removeCommentDislike(title, comment, commented_by)
-      console.log('Dislike Removed!')
-    } else {
-      dislikeComment(title, comment, commented_by)
-      if (iscommliked(title, comment)) {
-        unlikeComment(title, comment, commented_by)
+  if (props.isLoggedin) {
+    try {
+      if (iscommdisliked(title, comment)) {
+        removeCommentDislike(title, comment, commented_by)
+        emit('notify', { message: 'Comment removed!', success: true })
+      } else {
+        dislikeComment(title, comment, commented_by)
+        if (iscommliked(title, comment)) {
+          unlikeComment(title, comment, commented_by)
+        }
+        emit('notify', { message: 'Comment disliked!', success: true })
       }
-      console.log('Comment disliked!')
+    } catch (err) {
+      console.error(err)
+      emit('notify', { message: err, success: false })
     }
-  } catch (err) {
-    console.error(err)
-    alert('Error processing your request')
+  }else{
+    emit('notify', { message: 'Cannot dislike comment, please log in first!', success: false })
   }
 }
 

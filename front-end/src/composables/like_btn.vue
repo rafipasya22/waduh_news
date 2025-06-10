@@ -1,7 +1,7 @@
 <script>
 import { ref } from 'vue'
 
-export function likepost() {
+export function likepost(isloggedin) {
   const likedtitle = ref(null)
   const dislikedtitle = ref(null)
 
@@ -44,34 +44,42 @@ export function likepost() {
   }
 
   async function addLike(post) {
-    const res = await fetch('/api/addlike', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post),
-    })
+    if (isloggedin) {
+      const res = await fetch('/api/addlike', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post),
+      })
 
-    if (res.ok) {
-      if (likedtitle.value !== post.post_title) {
-        likedtitle.value = post.post_title
+      if (res.ok) {
+        if (likedtitle.value !== post.post_title) {
+          likedtitle.value = post.post_title
+        }
+      } else {
+        throw new Error('Failed to like post')
       }
     } else {
-      throw new Error('Failed to like post')
+      throw new Error('Cannot like post, please log in or sign up first!')
     }
   }
 
   async function add_Dislike(post) {
-    const res = await fetch('/api/add-dislike', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post),
-    })
+    if (isloggedin) {
+      const res = await fetch('/api/add-dislike', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post),
+      })
 
-    if (res.ok) {
-      if (dislikedtitle.value !== post.post_title) {
-        dislikedtitle.value = post.post_title
+      if (res.ok) {
+        if (dislikedtitle.value !== post.post_title) {
+          dislikedtitle.value = post.post_title
+        }
+      } else {
+        throw new Error('Failed to like post')
       }
     } else {
-      throw new Error('Failed to like post')
+      throw new Error('Cannot dislike post, please log in or sign up first!')
     }
   }
 

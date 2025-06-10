@@ -416,6 +416,8 @@ defineProps({
   profilephoto: String,
 })
 
+const emit = defineEmits(['notify'])
+
 const categories = ref(['Sports', 'Technology', 'Health', 'Science', 'Entertainment', 'Business'])
 
 const navbar = ref(null)
@@ -463,8 +465,8 @@ async function logout() {
   try {
     const res = await fetch('/api/logout')
     if (!res.ok) throw new Error('Logout Failed')
-
-    alert('Logout Success')
+    emit('notify', { message: 'Logout Success!', success: true })
+    await new Promise(resolve => setTimeout(resolve, 3500))
     await router.push('/auth')
   } catch (error) {
     console.error('Logout error:', error)

@@ -18,7 +18,6 @@ import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
-const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(route)
 const {
   likedtitle,
   dislikedtitle,
@@ -48,6 +47,8 @@ const postComments = ref([])
 const activeSort = ref('newest')
 const width = ref(window.innerWidth)
 
+
+const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(isUserLoggedIn.value)
 const isBookmarked = computed(() => bookmarkedTitles.value.includes(title))
 const postData = ref(null)
 
@@ -112,8 +113,8 @@ async function fetchCommentsNewest(title) {
 }
 
 async function handleBookmark(Post) {
-  await toggleBookmark(Post, taskNoti)
-  console.log("postdata", Post)
+  await toggleBookmark(Post, taskNoti, isUserLoggedIn)
+  console.log('postdata', Post)
 }
 
 async function fetchCommentsMostLiked(title) {
@@ -146,7 +147,7 @@ const getNewsSource = (news) => {
 async function handleRemovedComment(comment) {
   try {
     postComments.value = postComments.value.filter((c) => c.comment == comment.comment)
-    await(fetchComments(title))
+    await fetchComments(title)
     taskNoti({ message: 'Comment deleted!', success: true })
   } catch (error) {
     taskNoti({ message: error, success: false })
@@ -165,51 +166,61 @@ async function getNews() {
       console.error(data.error)
       return
     }
-    newsList.value = data.news ? [data.news].map(news =>({...news, sourceType: 'bookmarks'})) : []
+    newsList.value = data.news
+      ? [data.news].map((news) => ({ ...news, sourceType: 'bookmarks' }))
+      : []
   } catch (error) {
     console.error('Gagal fetch berita:', error)
   }
 }
 
 const handleLikeClick = async (post) => {
-  try {
-    if (isPostLiked(post.post_title)) {
-      removeLike(post.post_title)
-      console.log('Post Unliked!')
-      taskNoti({ message: 'Post Unliked', success: true })
-    } else {
-      addLike(post)
+  if (isUserLoggedIn.value) {
+    try {
+      if (isPostLiked(post.post_title)) {
+        removeLike(post.post_title)
+        console.log('Post Unliked!')
+        taskNoti({ message: 'Post Unliked', success: true })
+      } else {
+        addLike(post)
 
-      if (isPostDisliked(post.post_title)) {
-        await removeDislike(post.post_title)
-        console.log('Dislike Removed!')
+        if (isPostDisliked(post.post_title)) {
+          await removeDislike(post.post_title)
+          console.log('Dislike Removed!')
+        }
+        taskNoti({ message: 'Post liked', success: true })
       }
-      taskNoti({ message: 'Post liked', success: true })
+    } catch (err) {
+      console.error(err)
+      taskNoti({ message: 'Error processing your request', success: false })
     }
-  } catch (err) {
-    console.error(err)
-    taskNoti({ message: 'Error processing your request', success: false })
+  } else {
+    taskNoti({ message: 'Cannot like post, please log in or sign up first!', success: false })
   }
 }
 
 const handleDisLikeClick = async (post) => {
-  try {
-    if (isPostDisliked(post.post_title)) {
-      removeDislike(post.post_title)
-      console.log('Dislike removed!')
-      taskNoti({ message: 'Dislike removed!', success: true })
-    } else {
-      add_Dislike(post)
+  if (isUserLoggedIn.value) {
+    try {
+      if (isPostDisliked(post.post_title)) {
+        removeDislike(post.post_title)
+        console.log('Dislike removed!')
+        taskNoti({ message: 'Dislike removed!', success: true })
+      } else {
+        add_Dislike(post)
 
-      if (isPostLiked(post.post_title)) {
-        await removeLike(post.post_title)
-        console.log('Like Removed!')
+        if (isPostLiked(post.post_title)) {
+          await removeLike(post.post_title)
+          console.log('Like Removed!')
+        }
+        taskNoti({ message: 'Post disliked!', success: true })
       }
-      taskNoti({ message: 'Post disliked!', success: true })
+    } catch (err) {
+      console.error(err)
+      taskNoti({ message: 'Error processing your request', success: false })
     }
-  } catch (err) {
-    console.error(err)
-    taskNoti({ message: 'Error processing your request', success: false })
+  } else {
+    taskNoti({ message: 'Cannot dislike post, please log in or sign up first!', success: false })
   }
 }
 
@@ -237,7 +248,13 @@ const send_comment = async (post) => {
     resetCharCount()
     taskNoti({ message: 'Comment sent!', success: true })
   } catch (err) {
-    taskNoti({ message: 'Failed to send comment', success: false })
+    comment.value = ''
+    resetCharCount()
+    if (isUserLoggedIn.value) {
+      taskNoti({ message: 'Failed to send comment', success: false })
+    } else {
+      taskNoti({ message: 'Failed to send comment, please log in first!', success: false })
+    }
   }
 }
 
@@ -302,12 +319,12 @@ watch(
 
 onMounted(async () => {
   window.addEventListener('resize', updateSize)
-  console.log("comment data:", postComments)
+  console.log('comment data:', postComments)
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
   await getNews()
-  console.log("sourcetype:", newsList.value[0].sourceType)
+  console.log('sourcetype:', newsList.value[0].sourceType)
   await fetchLikes(newsList.value[0].title)
   await fetchDislikes(newsList.value[0].title)
   await fetchCommentsNewest(newsList.value[0].title)
@@ -323,7 +340,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
   <div v-if="isLoading" class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
@@ -430,7 +447,7 @@ onBeforeUnmount(() => {
           v-if="nxtNews"
           :post="nxtNews[0]"
           :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
-          @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti)"
+          @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti, isUserLoggedIn)"
           @opensharemodal="openShareModal"
         />
       </div>
@@ -643,7 +660,7 @@ onBeforeUnmount(() => {
                       class="bookmark-btn-big d-flex justify-content-start align-items-start me-2"
                     >
                       <a
-                        @click="toggleBookmark(newsList[0], taskNoti)"
+                        @click="toggleBookmark(newsList[0], taskNoti, isUserLoggedIn)"
                         :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-start`"
                         role="button"
                         data-bs-toggle="button"
@@ -779,7 +796,9 @@ onBeforeUnmount(() => {
           :comment="comment"
           :user-email="userData.Email"
           :post-title="newsList[0].title"
-          @comment-removed="handleRemovedComment"
+          :isLoggedIn="isUserLoggedIn"
+          @comment-removed="handleRemovedComment"       
+          @notify="taskNoti"
         />
       </div>
       <div
@@ -797,5 +816,5 @@ onBeforeUnmount(() => {
   </div>
 
   <Footer />
-  <Share_mod :postData="postData"/>
+  <Share_mod :postData="postData" />
 </template>

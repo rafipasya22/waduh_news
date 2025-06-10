@@ -293,7 +293,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
   <div class="content mb-5 d-flex justify-content-start align-items-start flex-column">
     <div class="content-top d-flex justify-content-between align-items-end w-100">
       <div class="profile-container d-flex justify-content-start align-center flex-row p-3">

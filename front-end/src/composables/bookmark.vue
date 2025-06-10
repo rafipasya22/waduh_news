@@ -1,7 +1,7 @@
 <script>
 import { ref } from 'vue'
 
-export function bookmarkpost(router) {
+export function bookmarkpost() {
   const bookmarkedTitles = ref([])
 
   async function fetchBookmarks(titles) {
@@ -14,7 +14,7 @@ export function bookmarkpost(router) {
     bookmarkedTitles.value = data.bookmarked || []
   }
 
-  async function toggleBookmark(post, onNotify) {
+  async function toggleBookmark(post, onNotify, isloggedin) {
     console.log(post)
     const isBookmarked = bookmarkedTitles.value.includes(post.title)
     async function fetchArticleDetail(post) {
@@ -25,7 +25,7 @@ export function bookmarkpost(router) {
 
       const res = await fetch(endpoint)
       if (!res.ok) throw new Error('Gagal ambil artikel')
-        
+
       const data = await res.json()
       return data.news?.find((item) => item.title === post.title)
     }
@@ -76,10 +76,17 @@ export function bookmarkpost(router) {
         onNotify?.({ message: `Bookmarked: "${post.title}"`, success: true })
       }
     } catch (err) {
-      console.error('Gagal toggle bookmark:', err)
-      onNotify?.({ message: 'Failed to bookmark post', success: false })
-      
-      router.push('/auth')
+      console.log(isloggedin)
+      if (!isloggedin) {
+        console.error('Gagal toggle bookmark:', err)
+        onNotify?.({
+          message: 'Failed to bookmark post, please log in or sign up first!',
+          success: false,
+        })
+      } else {
+        console.error('Gagal toggle bookmark:', err)
+        onNotify?.({ message: 'Failed to bookmark post', success: false })
+      }
     }
   }
 

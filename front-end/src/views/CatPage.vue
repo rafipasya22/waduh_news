@@ -167,7 +167,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" />
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
   <div class="content news-index mb-5">
     <div class="todays-headline">
       <div class="headline-title">

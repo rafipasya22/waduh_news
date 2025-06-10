@@ -16,15 +16,11 @@ from starlette.middleware.sessions import SessionMiddleware
 import os
 from fastapi import FastAPI
 from newsapi import NewsApiClient
-from newspaper import Article
+from newspaper import Article, Config
 import urllib.parse
 from dateutil.parser import parse as parse_date
 from datetime import datetime
 from collections import Counter
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-import string
 from sqlalchemy.orm import joinedload
 import spacy
 from collections import Counter
@@ -34,9 +30,6 @@ load_dotenv()
 
 app = FastAPI()
 nlp = spacy.load("en_core_web_sm") 
-
-nltk.download('punkt_tab')
-nltk.download("stopwords")
 
 app.add_middleware(SessionMiddleware, secret_key= os.getenv("SESSION_MIDDLEWARE_CLIENT_SECRET"))
 
@@ -685,7 +678,7 @@ async def ambilnews(cat: str):
     return {"news": news_list}
 
 @app.get("/api/ambil-news2/{query}/{title}", response_class=JSONResponse)
-async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
+async def ambil_news2(request: Request, query: str, title: str):
     decoded_query = urllib.parse.unquote(query)
     decoded_title = urllib.parse.unquote(title)
 
@@ -748,7 +741,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
     return JSONResponse(content={"news": news_list})
 
 @app.get("/api/ambil-news2/headline/{query}/{title}", response_class=JSONResponse)
-async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
+async def ambil_news2_headline(request: Request, query: str, title: str):
     decoded_query = urllib.parse.unquote(query)
     decoded_title = urllib.parse.unquote(title)
 
@@ -815,7 +808,6 @@ async def baca_news(query: str, title: str):
     
     decoded_query = urllib.parse.unquote(query)
     decoded_title = urllib.parse.unquote(title)
-    print("Menerima permintaan:", decoded_query, decoded_title)
 
 
     try:
@@ -832,6 +824,12 @@ async def baca_news(query: str, title: str):
     articles = response.get("articles", [])
     news_list = []
 
+    config = Config()
+    config.browser_user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+
     for article in articles:
         raw_image_url = article.get("urlToImage")
         image_url = raw_image_url.strip() if raw_image_url else ""
@@ -847,14 +845,12 @@ async def baca_news(query: str, title: str):
             title = article["title"]
             image_url = article["urlToImage"].strip()
 
-            news_article = Article(url)
+            news_article = Article(url, config=config)
             news_article.download()
             news_article.parse()
             full_text = (
                 news_article.text
-                or article.get("content")
                 or article.get("description")
-                or article.get("title")
             )
 
             date = article["publishedAt"]
@@ -863,7 +859,13 @@ async def baca_news(query: str, title: str):
 
         except Exception as e:
             print(f"Failed Parsing Article: {e}")
-            full_text = article.get("content") or "Unable to load content"
+            url = article["url"]
+            title = article["title"]
+            image_url = article["urlToImage"].strip()
+            full_text = article.get("description") or "Unable to load content"
+            date = article["publishedAt"]
+            date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
+            article_date = date_format.strftime("%d %B %Y")
 
         news_item = {
             "title": title,
@@ -880,9 +882,10 @@ async def baca_news(query: str, title: str):
     return JSONResponse(content={"news": news_list})
         
 @app.get("/api/baca-news/headline/{query}/{title}", response_class=HTMLResponse)
-async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
+async def baca_news_headline(query: str, title: str):
     decoded_query = urllib.parse.unquote(query)
     decoded_title = urllib.parse.unquote(title)
+
 
     try:
         response = newsapi.get_top_headlines(
@@ -891,40 +894,53 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
         )
     except Exception as e:
         print("Fetching news failed:", e)
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=503, detail=str(e))
 
     articles = response.get("articles", [])
     news_list = []
 
+    config = Config()
+    config.browser_user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+
     for article in articles:
-        if not all([
-            article.get("urlToImage"),
-            article.get("url"),
-            article.get("title"),
-            article.get("publishedAt"),
-            article.get("content") or article.get("description") or article.get("title")
-        ]):
+        raw_image_url = article.get("urlToImage")
+        image_url = raw_image_url.strip() if raw_image_url else ""
+        if not image_url:
             continue
+
+        url = article.get("url")
+        title = article.get("title")
+        article_date = "Unknown"  
 
         try:
             url = article["url"]
             title = article["title"]
             image_url = article["urlToImage"].strip()
 
-            news_article = Article(url)
+            news_article = Article(url, config=config)
             news_article.download()
             news_article.parse()
-            full_text = news_article.text or article.get("content") or article.get("description") or article.get("title")
+            full_text = (
+                news_article.text
+                or article.get("description")
+            )
 
             date = article["publishedAt"]
             date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
             article_date = date_format.strftime("%d %B %Y")
 
-            author = article.get("author") or "Unknown"
-            source_name = article.get("source", {}).get("name") or "Unknown"
         except Exception as e:
             print(f"Failed Parsing Article: {e}")
-            continue  
+            url = article["url"]
+            title = article["title"]
+            image_url = article["urlToImage"].strip()
+            full_text = article.get("description") or "Unable to load content"
+            date = article["publishedAt"]
+            date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
+            article_date = date_format.strftime("%d %B %Y")
 
         news_item = {
             "title": title,
@@ -941,7 +957,7 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
     return JSONResponse(content={"news": news_list})
 
 @app.get("/api/news/category/{cat}")
-async def ambilnews(cat: str):
+async def ambilnews_cat(cat: str):
     try:
         response = newsapi.get_top_headlines(category = cat)
     except Exception as e:
@@ -967,7 +983,7 @@ async def ambilnews(cat: str):
     return {"news": news_list}
 
 @app.get("/api/news/category/newest/{cat}")
-async def ambilnews(cat: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50)):
+async def ambilnews_cat_newest(cat: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50)):
     try:
         response = newsapi.get_top_headlines(category=cat)
     except Exception as e:
@@ -1014,7 +1030,7 @@ async def ambilnews(cat: str, page: int = Query(1, ge=1), page_size: int = Query
     }
 
 @app.get("/api/news/search/{query}")
-async def ambilnews(query: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
+async def ambilnews_search(query: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
     try:
         url = f"https://newsapi.org/v2/top-headlines?q={query}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
@@ -1080,7 +1096,7 @@ async def ambilnews(query: str, page: int = Query(1, ge=1), page_size: int = Que
     }
 
 @app.get("/api/news/search/{query}/{cat}")
-async def ambilnews(query: str, cat: str = "general", page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50)):
+async def ambilnews_search_cat(query: str, cat: str = "general", page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50)):
     try:
         url = f"https://newsapi.org/v2/top-headlines?q={query}&category={cat}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
@@ -1145,7 +1161,7 @@ async def ambilnews(query: str, cat: str = "general", page: int = Query(1, ge=1)
     }
 
 @app.get("/api/news/advsearch/{query}/{cat}")
-async def ambilnews(
+async def ambilnews_advsearch(
     query: str,
     from_date: str,
     to_date: str,
@@ -1222,7 +1238,7 @@ async def ambilnews(
     }
 
 @app.get("/api/news/advsearch/{query}")
-async def ambilnews(query: str, from_date: str, to_date: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
+async def ambilnews_advsearch_date(query: str, from_date: str, to_date: str, page: int = Query(1, ge=1), page_size: int = Query(5, ge=1, le=50), cat = "general"):
     try:
         url = f"https://newsapi.org/v2/top-headlines?q={query}&apiKey={newsapi_client_key}"
         async with httpx.AsyncClient() as client:
@@ -1297,10 +1313,11 @@ async def ambilnews(query: str, from_date: str, to_date: str, page: int = Query(
         "news": paginated
     }
 
-@app.get("/api/search/baca-news/{query}/{title}", response_class=HTMLResponse)
-async def baca_news(request: Request, query: str, title: str, db: Session = Depends(get_db)):
+@app.get("/api/search/baca-news/{query}/{title:path}", response_class=HTMLResponse)
+async def baca_news_search(query: str, title: str):
     decoded_query = urllib.parse.unquote(query)
     decoded_title = urllib.parse.unquote(title)
+    print(title)
 
     try:
         url = f"https://newsapi.org/v2/top-headlines?q={decoded_title}&apiKey={newsapi_client_key}"
@@ -1314,6 +1331,12 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
     articles = response.get("articles", [])
     news_list = []
 
+    config = Config()
+    config.browser_user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+
     for article in articles:
         if not all([
             article.get("urlToImage"),
@@ -1321,7 +1344,8 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             article.get("title"),
             article.get("publishedAt"),
             article.get("content") or article.get("description") or article.get("title")
-        ]):
+        ]): 
+            print("konten ga lengkap")
             continue
 
         try:
@@ -1329,10 +1353,13 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             title = article["title"]
             image_url = article["urlToImage"].strip()
 
-            news_article = Article(url)
+            news_article = Article(url, config=config)
             news_article.download()
             news_article.parse()
-            full_text = news_article.text or article.get("content") or article.get("description") or article.get("title")
+            full_text = (
+                news_article.text
+                or article.get("description")
+            )
 
             date = article["publishedAt"]
             date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
@@ -1342,7 +1369,13 @@ async def baca_news(request: Request, query: str, title: str, db: Session = Depe
             source_name = article.get("source", {}).get("name") or "Unknown"
         except Exception as e:
             print(f"Failed Parsing Article: {e}")
-            continue  
+            url = article["url"]
+            title = article["title"]
+            image_url = article["urlToImage"].strip()
+            full_text = article.get("description") or "Unable to load content"
+            date = article["publishedAt"]
+            date_format = datetime.fromisoformat(date.replace("Z", "+00:00")).replace(tzinfo=None)
+            article_date = date_format.strftime("%d %B %Y")
 
         news_item = {
             "title": title,
@@ -1488,7 +1521,7 @@ async def get_user_bookmarks(
         "current_page": page
     }
 
-@app.get("/api/baca-news/article/bookmarks/{title}")
+@app.get("/api/baca-news/article/bookmarks/{title:path}")
 async def baca_bookmark(request: Request, title:str, db: Session = Depends(get_db)):
         decode_title = urllib.parse.unquote(title)
         print(decode_title)
