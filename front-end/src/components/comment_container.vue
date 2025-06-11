@@ -9,7 +9,7 @@ const props = defineProps({
   isLoggedin: Boolean,
 })
 
-const emit = defineEmits(['comment-removed'], ['notify'])
+const emit = defineEmits(['comment-removed', 'notify'])
 
 const likedcomment = ref([])
 const dislikedcomment = ref([])
@@ -204,7 +204,7 @@ function iscommdisliked(title, comment) {
 }
 
 const handleLikeClick = async (title, comment, commented_by) => {
-  if (props.isLoggedin == true) {
+  if (props.isLoggedin) {
     try {
       if (iscommliked(title, comment)) {
         unlikeComment(title, comment, commented_by)
@@ -221,6 +221,7 @@ const handleLikeClick = async (title, comment, commented_by) => {
       emit('notify', { message: 'Cannot like comment, unexpected error', success: false })
     }
   } else {
+    console.log("hahaha")
     emit('notify', { message: 'Cannot like comment, please log in first!', success: false })
   }
 }

@@ -178,14 +178,14 @@ const handleLikeClick = async (post) => {
   if (isUserLoggedIn.value) {
     try {
       if (isPostLiked(post.post_title)) {
-        removeLike(post.post_title)
+        removeLike(post.post_title, isUserLoggedIn.value)
         console.log('Post Unliked!')
         taskNoti({ message: 'Post Unliked', success: true })
       } else {
-        addLike(post)
+        addLike(post, isUserLoggedIn.value)
 
         if (isPostDisliked(post.post_title)) {
-          await removeDislike(post.post_title)
+          await removeDislike(post.post_title, isUserLoggedIn.value)
           console.log('Dislike Removed!')
         }
         taskNoti({ message: 'Post liked', success: true })
@@ -200,17 +200,18 @@ const handleLikeClick = async (post) => {
 }
 
 const handleDisLikeClick = async (post) => {
+  console.log("account status: ", isUserLoggedIn.value)
   if (isUserLoggedIn.value) {
     try {
       if (isPostDisliked(post.post_title)) {
-        removeDislike(post.post_title)
+        removeDislike(post.post_title, isUserLoggedIn.value)
         console.log('Dislike removed!')
         taskNoti({ message: 'Dislike removed!', success: true })
       } else {
-        add_Dislike(post)
+        add_Dislike(post, isUserLoggedIn.value)
 
         if (isPostLiked(post.post_title)) {
-          await removeLike(post.post_title)
+          await removeLike(post.post_title, isUserLoggedIn.value)
           console.log('Like Removed!')
         }
         taskNoti({ message: 'Post disliked!', success: true })
@@ -219,8 +220,8 @@ const handleDisLikeClick = async (post) => {
       console.error(err)
       taskNoti({ message: 'Error processing your request', success: false })
     }
-  } else {
-    taskNoti({ message: 'Cannot like post, please log in or sign up first!', success: false })
+  }else{
+    taskNoti({ message: 'Cannot dislike post, please log in or sign up first!', success: false })
   }
 }
 
@@ -797,7 +798,7 @@ onBeforeUnmount(() => {
           :comment="comment"
           :user-email="userData.Email"
           :post-title="newsList[0].title"
-          :isLoggedIn="isUserLoggedIn"
+          :isLoggedin="isUserLoggedIn"
           @comment-removed="handleRemovedComment"
           @notify="taskNoti"
         />

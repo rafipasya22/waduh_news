@@ -1,7 +1,7 @@
 <script>
 import { ref } from 'vue'
 
-export function likepost(isloggedin) {
+export function likepost() {
   const likedtitle = ref(null)
   const dislikedtitle = ref(null)
 
@@ -43,7 +43,7 @@ export function likepost(isloggedin) {
     return dislikedtitle.value === title
   }
 
-  async function addLike(post) {
+  async function addLike(post, isloggedin) {
     if (isloggedin) {
       const res = await fetch('/api/addlike', {
         method: 'POST',
@@ -63,7 +63,7 @@ export function likepost(isloggedin) {
     }
   }
 
-  async function add_Dislike(post) {
+  async function add_Dislike(post, isloggedin) {
     if (isloggedin) {
       const res = await fetch('/api/add-dislike', {
         method: 'POST',
@@ -83,31 +83,39 @@ export function likepost(isloggedin) {
     }
   }
 
-  async function removeLike(title) {
-    const res = await fetch('/api/remove-like', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post_title: title }),
-    })
+  async function removeLike(title, isloggedin) {
+    if (isloggedin) {
+      const res = await fetch('/api/remove-like', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_title: title }),
+      })
 
-    if (res.ok) {
-      likedtitle.value = null
+      if (res.ok) {
+        likedtitle.value = null
+      } else {
+        throw new Error('Failed to unlike post')
+      }
     } else {
-      throw new Error('Failed to unlike post')
+      throw new Error('Cannot unlike post, please log in or sign up first!')
     }
   }
 
-  async function removeDislike(title) {
-    const res = await fetch('/api/remove-dislike', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post_title: title }),
-    })
+  async function removeDislike(title, isloggedin) {
+    if (isloggedin) {
+      const res = await fetch('/api/remove-dislike', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_title: title }),
+      })
 
-    if (res.ok) {
-      dislikedtitle.value = null
+      if (res.ok) {
+        dislikedtitle.value = null
+      } else {
+        throw new Error('Failed to unlike post')
+      }
     } else {
-      throw new Error('Failed to unlike post')
+      throw new Error('Cannot remove dislike, please log in or sign up first!')
     }
   }
   return {
