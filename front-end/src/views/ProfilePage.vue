@@ -136,11 +136,11 @@ async function handleBookmark(post) {
     bookmarkedPosts.value = bookmarkedPosts.value.filter((p) => p.title !== post.title)
     taskMsg.value = 'Bookmark deleted'
     isSuccess.value = true
-    await taskNoti()
+    taskNoti()
   } catch (error) {
     taskMsg.value = error || 'Deleting bookmark failed'
     isSuccess.value = false
-    await taskNoti()
+    taskNoti()
   }
 }
 
@@ -194,11 +194,12 @@ async function handleUploadPhoto() {
     if (!response.ok) {
       taskMsg.value = result.message || 'Upload failed'
       isSuccess.value = false
-      await taskNoti()
+      taskNoti()
     } else {
       taskMsg.value = result.message || 'Profile updated successfully'
       isSuccess.value = true
-      await taskNoti()
+      taskNoti()
+      await new Promise((resolve) => setTimeout(resolve, 3500))
       window.location.reload()
     }
   } catch (err) {
@@ -217,12 +218,14 @@ const deletephoto = async () => {
     if (!response.ok) {
       taskMsg.value = result.message || 'Upload failed'
       isSuccess.value = false
-      await taskNoti()
+      taskNoti()
     } else {
       taskMsg.value = result.message || 'Profile updated successfully'
       isSuccess.value = true
-      await taskNoti()
+      taskNoti()
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 3500))
     window.location.reload()
   } catch (err) {
     alert('An error occurred while uploading')
@@ -248,27 +251,24 @@ const submitPersonalInfo = async () => {
     console.log('Success:', data.message)
     taskMsg.value = data.message || 'Profile updated successfully'
     isSuccess.value = true
-    await taskNoti()
+    taskNoti()
+    await new Promise(resolve => setTimeout(resolve, 3500))
     window.location.reload()
   } catch (err) {
     console.error('Error:', err)
     isSuccess.value = false
-    await taskNoti()
+    taskNoti()
   }
 }
 
-const taskNoti = () => {
-  return new Promise((resolve) => {
-    const noti = document.querySelector('.noti')
-    noti.classList.add('show')
-
-    setTimeout(() => {
-      noti.classList.remove('show')
-      setTimeout(() => {
-        resolve()
-      }, 300)
-    }, 3000)
-  })
+function taskNoti({ message, success }) {
+  taskMsg.value = message
+  isSuccess.value = success
+  const noti = document.querySelector('.noti')
+  noti.classList.add('show')
+  setTimeout(() => {
+    noti.classList.remove('show')
+  }, 3000)
 }
 
 onMounted(async () => {
@@ -293,7 +293,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti" />
   <div class="content mb-5 d-flex justify-content-start align-items-start flex-column">
     <div class="content-top d-flex justify-content-between align-items-end w-100">
       <div class="profile-container d-flex justify-content-start align-center flex-row p-3">
