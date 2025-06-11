@@ -134,13 +134,9 @@ async function handleBookmark(post) {
   try {
     await toggleBookmark(post)
     bookmarkedPosts.value = bookmarkedPosts.value.filter((p) => p.title !== post.title)
-    taskMsg.value = 'Bookmark deleted'
-    isSuccess.value = true
-    taskNoti()
+    taskNoti({ message: 'Bookmark deleted', success: true })
   } catch (error) {
-    taskMsg.value = error || 'Deleting bookmark failed'
-    isSuccess.value = false
-    taskNoti()
+    taskNoti({ message: error || 'Deleting bookmark failed', success: false })
   }
 }
 
@@ -192,18 +188,14 @@ async function handleUploadPhoto() {
     const result = await response.json()
 
     if (!response.ok) {
-      taskMsg.value = result.message || 'Upload failed'
-      isSuccess.value = false
-      taskNoti()
+      taskNoti({ message: result.message || 'Upload failed', success: false })
     } else {
-      taskMsg.value = result.message || 'Profile updated successfully'
-      isSuccess.value = true
-      taskNoti()
+      taskNoti({ message: result.message || 'Profile updated successfully', success: true })
       await new Promise((resolve) => setTimeout(resolve, 3500))
       window.location.reload()
     }
   } catch (err) {
-    alert('An error occurred while uploading')
+    taskNoti({ message: err || 'Upload failed', success: false })
   }
 }
 
@@ -216,19 +208,15 @@ const deletephoto = async () => {
     const result = await response.json()
 
     if (!response.ok) {
-      taskMsg.value = result.message || 'Upload failed'
-      isSuccess.value = false
-      taskNoti()
+      taskNoti({ message: result.message || 'Upload failed', success: false })
     } else {
-      taskMsg.value = result.message || 'Profile updated successfully'
-      isSuccess.value = true
-      taskNoti()
+      taskNoti({ message: result.message || 'Profile updated successfully', success: true })
     }
 
     await new Promise((resolve) => setTimeout(resolve, 3500))
     window.location.reload()
   } catch (err) {
-    alert('An error occurred while uploading')
+    taskNoti({ message: err || 'Upload failed', success: false })
   }
 }
 
@@ -248,16 +236,11 @@ const submitPersonalInfo = async () => {
 
     const data = await res.json()
 
-    console.log('Success:', data.message)
-    taskMsg.value = data.message || 'Profile updated successfully'
-    isSuccess.value = true
-    taskNoti()
-    await new Promise(resolve => setTimeout(resolve, 3500))
+    taskNoti({ message: data.message || 'Profile updated successfully', success: true })
+    await new Promise((resolve) => setTimeout(resolve, 3500))
     window.location.reload()
   } catch (err) {
-    console.error('Error:', err)
-    isSuccess.value = false
-    taskNoti()
+    taskNoti({ message: err || 'Unknown error', success: false })
   }
 }
 
