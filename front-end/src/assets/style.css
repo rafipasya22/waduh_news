@@ -344,13 +344,31 @@ tr {
   font-weight: 700 !important;
 }
 
+.popular-bottom {
+  font-weight: 400 !important;
+  color: var(--dark);
+}
+
 .post-big {
   background-color: var(--light);
-  width: 60vw !important;
+  width: 65vw !important;
   margin-right: 1rem;
   border-radius: 20px;
   position: relative;
   transition: transform 0.4s ease;
+}
+
+.post-big.headline{
+  width: 100% !important;
+  height: 100%;
+}
+
+.post-big.headline .container-img img{
+  height: 80vh !important;
+}
+
+.post-big-container{
+  width: 100% !important;
 }
 
 .post-analytics-big {

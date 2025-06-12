@@ -25,6 +25,7 @@ const sportsPosts = ref([])
 const popularPosts = ref([])
 const recoPosts = ref([])
 const recoPosts2 = ref([])
+const thisWeekPosts = ref([])
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 let isLoading = ref(true)
@@ -60,11 +61,12 @@ async function fetchNews() {
   const res = await fetch('/api/homepage_news')
   const data = await res.json()
   if (!res.ok) throw new Error('Failed to fetch news')
-  const HeadlineNews = data.headlineNews.news.slice(0, 1)
+  const HeadlineNews = data.headlineNews.news.slice(0, 10)
   const PopularNews = data.popularNews.news.slice(0, 3)
-  const SportsNews = data.sportsNews.news.slice(0, 2)
+  const SportsNews = data.sportsNews.news.slice(0, 3)
   const RecoNews = data.newsReco.news.slice(0, 3)
   const RecoActv = data.newsRecoActv.news.slice(0, 5)
+  const ThisweekNews = data.newsThisWeek.news.slice(0, 7)
 
   const homeNews = [
     ...HeadlineNews.map((post) => ({ ...post, sourceType: 'headline' })),
@@ -72,6 +74,7 @@ async function fetchNews() {
     ...SportsNews.map((post) => ({ ...post, sourceType: 'headline' })),
     ...RecoNews.map((post) => ({ ...post, sourceType: 'headline' })),
     ...RecoActv.map((post) => ({ ...post, sourceType: 'not_headline' })),
+    ...ThisweekNews.map((post) => ({ ...post, sourceType: 'not_headline' })),
   ]
 
   await Promise.all([getlike(homeNews), getcomments(homeNews)])
@@ -101,6 +104,12 @@ async function fetchNews() {
     total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
   }))
   recoPosts2.value = RecoActv.map((post) => ({
+    ...post,
+    sourceType: 'not_headline',
+    total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
+    total_comments: homeNews.find((p) => p.title === post.title)?.total_comments || 0,
+  }))
+  thisWeekPosts.value = ThisweekNews.map((post) => ({
     ...post,
     sourceType: 'not_headline',
     total_likes: homeNews.find((p) => p.title === post.title)?.total_likes || 0,
@@ -147,42 +156,38 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti" />
   <div class="content mb-5">
     <div class="todays-headline">
       <div class="headline-title">
         <h3 class="Headline-top">Todays</h3>
-        <h2 class="Headline-bottom">Headline</h2>
+        <h2 class="Headline-bottom">Headlines</h2>
       </div>
-      <div v-if="isLoading" class="top d-flex flex-row align-items-start">
-        <Skel />
-        <div class="sports mt-2">
-          <div class="title-sports d-flex flex-row justify-content-between align-items-start">
-            <h3>Sports News</h3>
-            <a class="seeall" href="/news/category/sports">See all</a>
-          </div>
-          <div class="sports-container d-flex justify-content-start align-items-center">
-            <Skel_mid />
-            <Skel_mid />
+      <div v-if="isLoading" class="top d-flex flex-column align-items-start">
+        <div class="post-big-container">
+          <Skel class="headline" />
+        </div>
+        <div class="top reco" style="overflow-x: auto; width: 100%">
+          <div class="d-flex flex-row align-items-start" style="min-width: max-content">
+            <Skel_mid v-for="x in 5" :key="x" />
           </div>
         </div>
       </div>
-      <div v-else class="top d-flex flex-row align-items-start">
-        <Post_big
-          v-if="headlinePost"
-          :post="headlinePost[0]"
-          :bookmarked="bookmarkedTitles.includes(headlinePost[0].title)"
-          @toggleBookmark="() => toggleBookmark(headlinePost[0], taskNoti)"
-          @opensharemodal="openShareModal"
-        />
-        <div class="sports mt-2">
-          <div class="title-sports d-flex flex-row justify-content-between align-items-start">
-            <h3>Sports News</h3>
-            <a class="seeall" href="/news/category/sports">See all</a>
-          </div>
-          <div class="sports-container d-flex justify-content-start align-items-center">
+      <div v-else class="top d-flex flex-column align-items-start" style="overflow-x: hidden">
+        <div class="post-big-container">
+          <Post_big
+            v-if="headlinePost"
+            class="headline"
+            :post="headlinePost[0]"
+            :bookmarked="bookmarkedTitles.includes(headlinePost[0].title)"
+            @toggleBookmark="() => toggleBookmark(headlinePost[0], taskNoti)"
+            @opensharemodal="openShareModal"
+          />
+        </div>
+        <div class="top reco" style="overflow-x: auto; width: 100%">
+          <div class="d-flex flex-row align-items-start" style="min-width: max-content">
             <Post_mid
-              v-for="(post, index) in sportsPosts.slice(0, 2)"
+              v-for="(post, index) in headlinePost.slice(1, 6)"
               :key="index"
               :post="post"
               :bookmarked="bookmarkedTitles.includes(post.title)"
@@ -193,9 +198,13 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
     <div class="popular mt-5">
       <div class="popular-title d-flex">
-        <h3 class="popular-top">Popular</h3>
+        <div class="headline-title">
+          <h3 class="popular-top" style="text-align: right">Popular</h3>
+          <h2 class="popular-bottom" style="text-align: right">Headliners</h2>
+        </div>
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <div class="popular-mid mt-2">
@@ -223,21 +232,22 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="recomended mt-5" :class="userBookmarkCount > 0 ? 'show' : 'd-none'">
+    <div class="thisweek mt-5">
       <div class="headline-title">
-        <h3 class="Headline-top">Based</h3>
-        <h2 class="Headline-bottom">on your activities</h2>
+        <h3 class="Headline-top">What Happened</h3>
+        <h2 class="Headline-bottom">This Week?</h2>
       </div>
+
       <div
         v-if="isLoading"
         class="top reco d-flex flex-row align-items-start"
         style="overflow-x: scroll"
       >
-        <Skel_mid v-for="x in 5" :key="x" />
+        <Skel_mid v-for="x in 7" :key="x" />
       </div>
       <div v-else class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll">
         <Post_mid
-          v-for="(post, index) in recoPosts2.slice(0, 5)"
+          v-for="(post, index) in thisWeekPosts.slice(0, 7)"
           :key="index"
           :post="post"
           :bookmarked="bookmarkedTitles.includes(post.title)"
@@ -246,7 +256,42 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="popular mt-5" :class="preferredTopics.length > 0 ? 'show' : 'd-none'">
+    <div class="sports-headline mt-5">
+      <div class="headline-title">
+        <h3 class="popular-top" style="text-align: right">Sports News</h3>
+        <h2 class="popular-bottom" style="text-align: right">Headliners</h2>
+      </div>
+      <div v-if="isLoading" class="top d-flex flex-column align-items-start">
+        <Skel />
+        <div class="sports mt-2">
+          <div class="sports-container d-flex justify-content-start align-items-center">
+            <Skel_mid v-for="x in 2" :key="x" />
+          </div>
+        </div>
+      </div>
+      <div v-else class="top d-flex flex-row align-items-start">
+        <Post_big
+          v-if="sportsPosts"
+          :post="sportsPosts[0]"
+          :bookmarked="bookmarkedTitles.includes(sportsPosts[0].title)"
+          @toggleBookmark="() => toggleBookmark(sportsPosts[0], taskNoti)"
+          @opensharemodal="openShareModal"
+        />
+        <div class="sports mt-2">
+          <div class="sports-container d-flex justify-content-start align-items-center">
+            <Post_mid
+              v-for="(post, index) in sportsPosts.slice(1, 3)"
+              :key="index"
+              :post="post"
+              :bookmarked="bookmarkedTitles.includes(post.title)"
+              @toggleBookmark="toggleBookmark(post, taskNoti)"
+              @opensharemodal="openShareModal"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="prefnews popular mt-5" :class="preferredTopics.length > 0 ? 'show' : 'd-none'">
       <div class="headline-title">
         <h3 class="Headline-top">Based</h3>
         <h2 class="Headline-bottom">On your preferences</h2>
@@ -273,6 +318,30 @@ onMounted(async () => {
           :post="recoPosts[0]"
           :bookmarked="bookmarkedTitles.includes(recoPosts[0].title)"
           @toggleBookmark="() => toggleBookmark(recoPosts[0], taskNoti)"
+          @opensharemodal="openShareModal"
+        />
+      </div>
+    </div>
+    <div class="recomended mt-5" :class="userBookmarkCount > 0 ? 'show' : 'd-none'">
+      <div class="headline-title">
+        <h3 class="Headline-top">Based</h3>
+        <h2 class="Headline-bottom">on your activities</h2>
+      </div>
+
+      <div
+        v-if="isLoading"
+        class="top reco d-flex flex-row align-items-start"
+        style="overflow-x: scroll"
+      >
+        <Skel_mid v-for="x in 5" :key="x" />
+      </div>
+      <div v-else class="top reco d-flex flex-row align-items-start" style="overflow-x: scroll">
+        <Post_mid
+          v-for="(post, index) in recoPosts2.slice(0, 5)"
+          :key="index"
+          :post="post"
+          :bookmarked="bookmarkedTitles.includes(post.title)"
+          @toggleBookmark="toggleBookmark(post, taskNoti)"
           @opensharemodal="openShareModal"
         />
       </div>

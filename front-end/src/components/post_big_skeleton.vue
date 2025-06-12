@@ -5,7 +5,7 @@
       <p class="px-1"></p>
     </div>
     <div
-      class="container-post-big d-flex flex-column justify-content-start align-items-start mx-2 mt-2 mb-3"
+      class="container-post-big skel d-flex flex-column justify-content-start align-items-start mx-2 mt-2 mb-3"
     >
       <div class="text-area-post-biog pulse">
         <a class="post-text-big skel pe-2 ps-3 justify-content-start"></a>
@@ -21,6 +21,11 @@
 </template>
 
 <style scoped>
+
+.container-post-big.skel{
+  padding-bottom: 2rem;
+}
+
 .news-cat.skel {
   background-color: var(--skel);
   height: 2vh;

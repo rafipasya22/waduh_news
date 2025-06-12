@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import delete, desc, func
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 import urllib
 import models, schemas, crud, utilities
 from database import engine, Base, get_db
@@ -143,7 +143,6 @@ def get_user_info(request: Request, db: Session = Depends(get_db)):
         "user": user
     }
 
-
 @app.get("/index/profile")
 async def home(request: Request, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
@@ -157,7 +156,6 @@ async def home(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url=f"/index/profile/{user.Username}", status_code=303)
     
     return RedirectResponse(url="/login", status_code=303)
-
 
 @app.get("/api/auth")
 async def auth(token: str = Query(None)):
@@ -218,7 +216,6 @@ def signup(
     new_user = crud.create_akun(db, user)
     return {"message": "User created successfully", "user_id": new_user.id}
 
-
 @app.get("/api/session")
 def get_session(request: Request):
     user = request.session.get("user")
@@ -241,7 +238,6 @@ def upload_profile_picture(
     crud.upload_photo(db, request, file)
     crud.update_loc(request, db, Location)
     return JSONResponse(content={"message": "Profile updated successfully"})
-
 
 @app.post("/api/delete-photo")
 def delete_profile_picture(
@@ -273,8 +269,6 @@ def editpass(
     crud.updatepass(request, db, Old_pass, New_pass, Confirm_pass)
     utilities.logout(request)
     return JSONResponse(content={"message": "Profile updated successfully"})
-
-    
 
 @app.post("/api/save-preferences")
 async def save_preferences(
@@ -568,16 +562,45 @@ async def emptylist():
     news_list = []
     return {"news": news_list}
 
+async def ambilnews_thisweek(category: str = 'general'):
+    now = datetime.today()
+    aweekago = now - timedelta(days=7)
+
+    try:
+        response = newsapi.get_everything(q="category", sort_by="popularity", from_param=aweekago.strftime('%Y-%m-%d'), to=now.strftime('%Y-%m-%d'))
+    except Exception as e:
+        return {"error": f"Error fetching news: {str(e)}"}
+
+    if response['status'] != 'ok':
+        return {"error": "Failed to fetch news"}
+
+    news_list = []
+    for article in response.get('articles', []):
+        if article.get("urlToImage") and article.get("content"):
+            news_item = {
+                "title": article.get("title"),
+                "publishedAt": article.get("publishedAt"),
+                "author": article.get("author"),
+                "imageUrl": article.get("urlToImage"),
+                "content": article.get("content"),
+                "url": article.get("url"),
+                "category": category 
+            }
+            news_list.append(news_item)
+
+    return {"news": news_list}
+
 @app.get("/api/homepage_news")
 async def ambilhomepagenews(request: Request, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
     if not user_session:
-        news_headline, news_popular, news_sports, reco_actv, news_reco = await asyncio.gather(
+        news_headline, news_popular, news_sports, reco_actv, news_reco, news_thisweek = await asyncio.gather(
             ambil_headline(),
             ambil_popular(),
             ambilnews_sports(),
             emptylist(),
-            emptylist()
+            emptylist(),
+            ambilnews_thisweek()
         )
 
         return {
@@ -585,7 +608,8 @@ async def ambilhomepagenews(request: Request, db: Session = Depends(get_db)):
                 "popularNews": news_popular,
                 "sportsNews": news_sports,
                 "newsRecoActv": reco_actv,
-                "newsReco": news_reco
+                "newsReco": news_reco, 
+                "newsThisWeek": news_thisweek
             }
 
     email = user_session.get("email")
@@ -595,12 +619,13 @@ async def ambilhomepagenews(request: Request, db: Session = Depends(get_db)):
     likes = db.query(models.Likes).filter(models.Likes.liked_by == email).limit(20).all()
     getPref = db.query(models.Topics.Topic_Name).join(models.user_preferences, models.Topics.id == models.user_preferences.c.topic_id).join(models.Akun, models.Akun.id == models.user_preferences.c.user_id).filter(models.Akun.Email == email).all()
 
-    news_headline, news_popular, news_sports, reco_actv, news_reco = await asyncio.gather(
+    news_headline, news_popular, news_sports, reco_actv, news_reco, news_thisweek = await asyncio.gather(
         ambil_headline(),
         ambil_popular(),
         ambilnews_sports(),
         ambil_reco_actv(bookmarks, likes),
-        ambil_reco(getPref)
+        ambil_reco(getPref), 
+        ambilnews_thisweek()
     )
 
     return {
@@ -608,7 +633,8 @@ async def ambilhomepagenews(request: Request, db: Session = Depends(get_db)):
             "popularNews": news_popular,
             "sportsNews": news_sports,
             "newsRecoActv": reco_actv,
-            "newsReco": news_reco
+            "newsReco": news_reco,
+            "newsThisWeek": news_thisweek
         }
 
 @app.get("/api/catpage/{cat}")
