@@ -261,7 +261,7 @@ onMounted(async () => {
         <h3 class="popular-top" style="text-align: right">Sports News</h3>
         <h2 class="popular-bottom" style="text-align: right">Headliners</h2>
       </div>
-      <div v-if="isLoading" class="top d-flex flex-column align-items-start">
+      <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <Skel />
         <div class="sports mt-2">
           <div class="sports-container d-flex justify-content-start align-items-center">
