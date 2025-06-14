@@ -198,12 +198,11 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
     <div class="popular mt-5">
       <div class="popular-title d-flex">
         <div class="headline-title">
-          <h3 class="popular-top" style="text-align: right">Popular</h3>
-          <h2 class="popular-bottom" style="text-align: right">Headliners</h2>
+          <h3 class="Headline-top">Popular</h3>
+          <h2 class="Headline-bottom">Headliners</h2>
         </div>
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
@@ -258,8 +257,8 @@ onMounted(async () => {
     </div>
     <div class="sports-headline mt-5">
       <div class="headline-title">
-        <h3 class="popular-top" style="text-align: right">Sports News</h3>
-        <h2 class="popular-bottom" style="text-align: right">Headliners</h2>
+        <h3 class="Headline-top">Sports</h3>
+        <h2 class="Headline-bottom">Headliners</h2>
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <Skel />

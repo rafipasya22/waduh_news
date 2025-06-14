@@ -358,16 +358,16 @@ tr {
   transition: transform 0.4s ease;
 }
 
-.post-big.headline{
+.post-big.headline {
   width: 100% !important;
   height: 100%;
 }
 
-.post-big.headline .container-img img{
+.post-big.headline .container-img img {
   height: 80vh !important;
 }
 
-.post-big-container{
+.post-big-container {
   width: 100% !important;
 }
 
@@ -488,6 +488,7 @@ tr {
 
 .bookmarked-posts-profile {
   width: 100% !important;
+  flex-direction: row;
 }
 
 .bookmarked-posts-profile .post-mid {
@@ -1648,6 +1649,22 @@ li.list-group-item {
   color: var(--grey);
 }
 
+.login-sidebar {
+  color: var(--dark);
+}
+
+.login-sidebar span {
+  color: var(--grey);
+}
+
+.login-sidebar span:hover {
+  color: #b30000;
+}
+
+.keyword-links.profile.hide {
+  display: none !important;
+}
+
 .settingbtn-sidebar {
   color: var(--dark);
   text-decoration: none;
@@ -1976,11 +1993,19 @@ li.list-group-item {
     width: 100% !important;
     margin-top: 1rem;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
   }
 
-  .sports-container {
-    flex-direction: row;
+  .sports-headline .top {
+    flex-direction: column !important;
+  }
+
+  .sports-headline .top .post-big {
+    width: 100% !important;
+  }
+
+  .sports {
+    width: 100% !important;
   }
 
   .content {
@@ -2103,8 +2128,38 @@ li.list-group-item {
     margin-right: 0 !important;
   }
 
+  .post-big.headline .container-img img {
+    height: 40vh !important;
+  }
+
+  .post-big.headline {
+    height: fit-content;
+    padding-bottom: 0.25rem;
+  }
+
+  .post-big-container {
+    height: fit-content;
+    width: 100% !important;
+  }
+
   .adv-search.not-modal {
     display: none;
+  }
+
+  .content .popular {
+    margin-top: 1rem !important;
+  }
+  .content .thisweek {
+    margin-top: 1rem !important;
+  }
+  .content .sports-headline {
+    margin-top: 1rem !important;
+  }
+  .content .prefnews.popular {
+    margin-top: 1rem !important;
+  }
+  .content .recomended {
+    margin-top: 1rem !important;
   }
 }
 
@@ -2136,7 +2191,11 @@ li.list-group-item {
   }
 
   .top.reco .post-mid {
-    width: 100% !important;
+    width: 85vw !important;
+  }
+
+  .bookmarked-posts-profile {
+    flex-direction: column;
   }
 }
 

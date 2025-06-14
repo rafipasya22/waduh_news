@@ -226,7 +226,7 @@
               </router-link>
             </div>
           </div>
-          <p class="d-inline-flex pb-2 my-2 gap-1" style="width: 100%">
+          <p class="d-inline-flex pb-2 my-2 gap-1" :class="loggedIn ? `show` : `d-none`" style="width: 100%">
             <a
               class="menucollapse"
               data-bs-toggle="collapse"
@@ -294,6 +294,7 @@
             </a>
           </div>
           <a
+            v-if="loggedIn"
             class="logout-sidebar d-flex justify-content-between align-items-center flex-row mt-3"
             style="width: 100%; text-decoration: none; cursor: pointer"
             @click.prevent="logout"
@@ -301,6 +302,15 @@
             Log out
             <span class="material-symbols-outlined" style="color: var(--grey)"> logout </span>
           </a>
+          <router-link
+            v-else
+            class="login-sidebar d-flex justify-content-between align-items-center flex-row mt-3"
+            style="width: 100%; text-decoration: none; cursor: pointer"
+            to="/auth"
+          >
+            Login / Signup
+            <span class="material-symbols-outlined" style="color: var(--grey)"> login </span>
+          </router-link>
         </div>
       </div>
     </div>
@@ -466,7 +476,7 @@ async function logout() {
     const res = await fetch('/api/logout')
     if (!res.ok) throw new Error('Logout Failed')
     emit('notify', { message: 'Logout Success!', success: true })
-    await new Promise(resolve => setTimeout(resolve, 3500))
+    await new Promise((resolve) => setTimeout(resolve, 3500))
     await router.push('/auth')
   } catch (error) {
     console.error('Logout error:', error)

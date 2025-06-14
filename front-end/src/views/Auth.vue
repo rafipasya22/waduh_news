@@ -330,7 +330,6 @@ export default {
   align-items: center;
   height: 100vh;
   background-color: #d4d4d4;
-  padding: 2rem;
 }
 
 .rember {
@@ -1020,34 +1019,7 @@ form.signup p {
     margin-bottom: 0.6rem;
   }
 
-  @media (max-height: 1024px) {
-    .container {
-      min-height: 60%;
-    }
-  }
-
-  @media (max-height: 910px) {
-    .container {
-      min-height: 65%;
-    }
-  }
-  @media (max-height: 820px) {
-    .container {
-      min-height: 70%;
-    }
-  }
-
-  @media (max-height: 725px) {
-    .container {
-      min-height: 85%;
-    }
-  }
-
-  @media (max-height: 600px) {
-    .container {
-      min-height: 95%;
-    }
-  }
+  
 }
 
 @media (max-width: 768px) {
@@ -1103,34 +1075,7 @@ form.signup p {
     margin-bottom: 0.6rem;
   }
 
-  @media (max-height: 1024px) {
-    .container {
-      min-height: 60%;
-    }
-  }
-
-  @media (max-height: 910px) {
-    .container {
-      min-height: 65%;
-    }
-  }
-  @media (max-height: 820px) {
-    .container {
-      min-height: 70%;
-    }
-  }
-
-  @media (max-height: 725px) {
-    .container {
-      min-height: 85%;
-    }
-  }
-
-  @media (max-height: 600px) {
-    .container {
-      min-height: 95%;
-    }
-  }
+  
 }
 
 @media (max-width: 480px) {

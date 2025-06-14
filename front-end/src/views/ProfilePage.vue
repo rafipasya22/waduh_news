@@ -391,10 +391,10 @@ onMounted(async () => {
       </div>
 
       <div v-if="bookmarkedPosts" class="bookmarkedpostscontainer">
-        <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
+        <div v-if="isLoading" class="bookmarked-posts-profile d-flex mt-2">
           <Skel_mid v-for="x in 2" :key="x" />
         </div>
-        <div v-else class="bookmarked-posts-profile d-flex flex-row align-items-start mt-2">
+        <div v-else class="bookmarked-posts-profile d-flex align-items-start mt-2">
           <Post_mid
             v-for="(post, index) in bookmarkedPosts.slice(0, 2)"
             :key="index"
@@ -404,10 +404,10 @@ onMounted(async () => {
             @opensharemodal="openShareModal"
           />
         </div>
-        <div v-if="isLoading" class="bookmarked-posts-profile d-flex flex-row mt-2">
+        <div v-if="isLoading" class="bookmarked-posts-profile d-flex mt-2">
           <Skel_mid v-for="x in 2" :key="x" />
         </div>
-        <div v-else class="bookmarked-posts-profile d-flex flex-row mt-2">
+        <div v-else class="bookmarked-posts-profile d-flex mt-2">
           <Post_mid
             v-for="(post, index) in bookmarkedPosts.slice(2, 4)"
             :key="index"
