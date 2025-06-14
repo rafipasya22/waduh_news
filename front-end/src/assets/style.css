@@ -2051,6 +2051,10 @@ li.list-group-item {
     font-size: 1.2em !important;
   }
 
+  .Headline-bottom {
+    font-size: calc(1.325rem + 0.9vw) !important;
+  }
+
   .post-big .post-analytics-big .material-symbols-outlined {
     font-size: 1.8rem;
   }
