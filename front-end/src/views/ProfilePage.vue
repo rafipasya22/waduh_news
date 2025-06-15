@@ -8,6 +8,7 @@ import { analytics } from '@/composables/post_analytics.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import Skel_mid from '@/components/post_mid_skeleton.vue'
 import Share_mod from '@/components/sharemodal.vue'
+import Add_article from '@/components/writearticlemodal.vue'
 import { useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 
@@ -317,15 +318,28 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <div class="edit-profile d-flex justify-content-end align-items-end">
-            <a
-              href="#"
-              data-bs-toggle="modal"
-              data-bs-target="#profilemodal"
-              class="btn edit-profile-btn"
-            >
-              Edit Profile
-            </a>
+          <div class="profile-btns d-flex justify-content-end align-items-end flex-row gap-2">
+            <div class="edit-profile d-flex justify-content-end align-items-end">
+              <a
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#profilemodal"
+                class="btn edit-profile-btn"
+              >
+                Edit Profile
+              </a>
+            </div>
+            <div class="edit-profile d-flex justify-content-end align-items-end">
+              <a
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#WriteArticle"
+                data-bs-auto-close="outside"
+                class="btn edit-profile-btn"
+              >
+                Edit Profilew
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -792,6 +806,7 @@ onMounted(async () => {
   </div>
   <Footer />
   <Share_mod :postData="postData" />
+  <Add_article/>
 </template>
 
 <script>

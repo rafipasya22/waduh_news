@@ -1,6 +1,7 @@
 import asyncio
 from math import ceil
 import random
+import shutil
 from fastapi import FastAPI, Depends, Form, HTTPException, Query, Request, UploadFile, File, requests
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
@@ -186,6 +187,57 @@ def login(
     }
 
     return {"message": "Login successful"}
+
+@app.post("/api/add_article")
+def add_article(
+    request: Request,
+    post_title: str = Form(...),
+    post_content: str = Form(...),
+    post_category: str = Form(...),
+    file: UploadFile = File(default=None),
+    db: Session = Depends(get_db)
+):
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/auth", status_code=303)
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+
+    author_name = user.First_name+" "+ user.Last_name
+    url_src =  str(request.url)
+    current_date = datetime.now()
+
+    if file and file.filename.strip():
+        upload_dir = "front-end/public/profile"
+        shortened_dir = "/profile"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        filename = f"{user.id}_{file.filename}"
+        file_location = os.path.join(upload_dir, filename)
+        file_loc_shortened = os.path.join(shortened_dir, filename)
+
+        with open(file_location, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        article = models.Posts(
+            title = post_title,
+            author = author_name,
+            content = post_content,
+            category = post_category,
+            published_at = current_date,
+            image_url = file_loc_shortened,
+            source_url = url_src,
+            source_name = "Waduh News"
+        )
+
+    db.add(article)
+    db.commit()
+    db.refresh(article)
+    return {"message": "Article Created!"}
 
 @app.post("/api/signup")
 def signup(

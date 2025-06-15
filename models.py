@@ -116,3 +116,15 @@ class CommdisLikes(Base):
     __table_args__ = (
         UniqueConstraint('disliked_by', 'comment', 'commented_by', 'post_title', name='unique_comment_user_disliked'),
     )
+
+class Posts(Base):
+    __tablename__ = "user_posts"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), index=True)
+    author = Column(String(255), nullable=True)
+    category = Column(String(255), nullable=True)
+    published_at = Column(DateTime)
+    image_url = Column(String(255), nullable=True)
+    content = Column(Text, nullable=True)
+    source_url = Column(String(255), nullable=True)
+    source_name = Column(String(255), nullable=True)

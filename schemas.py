@@ -105,6 +105,16 @@ class AkunResponse(AkunBase):
         orm_mode = True
 
 
+class ArticleResponse(BaseModel):
+    Title: str
+    Author: str
+    Category: str
+    Published_at: str
+    Image_url: str
+    Content: str
+    Source_url: Optional[str] = None 
+    Source_name: Optional[str] = None 
+
 class UserPreferenceRequest(BaseModel):
     topics: List[str]
 
