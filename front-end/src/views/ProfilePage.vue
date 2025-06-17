@@ -501,7 +501,7 @@ onMounted(async () => {
         <small>You haven't bookmarked any post yet</small>
       </div>
     </div>
-    <div class="bookmarkscontainer d-flex justify-content-start align-items-start flex-column">
+    <div class="bookmarkscontainer d-flex justify-content-start align-items-start flex-column" :class="articlePosted > 0 ? 'show' : 'd-none'">
       <div
         class="bookmarked-top d-flex justify-content-between align-items-center flex-row mt-4 w-100"
       >
