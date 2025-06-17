@@ -2362,16 +2362,6 @@ def edit_article(
 async def baca_originals(request: Request, title:str, post_id: str, db: Session = Depends(get_db)):
         decode_title = urllib.parse.unquote(title)
         print(decode_title)
-
-        user_session = request.session.get("user") 
-        if not user_session:
-            raise HTTPException(status_code=401, detail="User not logged in")
-        
-        email = user_session["email"]
-        user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-        
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
         
         try:
             bookmark_query = db.query(models.Posts).filter(
