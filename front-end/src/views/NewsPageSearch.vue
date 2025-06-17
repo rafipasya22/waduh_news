@@ -32,7 +32,6 @@ const {
   removeDislike,
 } = likepost()
 
-
 const query = route.params.query
 const title = route.params.title
 
@@ -141,7 +140,7 @@ const getNewsSource = (news) => {
 async function handleRemovedComment(comment) {
   try {
     postComments.value = postComments.value.filter((c) => c.comment == comment.comment)
-    await(fetchComments(title))
+    await fetchComments(title)
     taskNoti({ message: 'Comment deleted!', success: true })
   } catch (error) {
     taskNoti({ message: error, success: false })
@@ -199,7 +198,7 @@ const handleLikeClick = async (post) => {
 }
 
 const handleDisLikeClick = async (post) => {
-  console.log("account status: ", isUserLoggedIn.value)
+  console.log('account status: ', isUserLoggedIn.value)
   if (isUserLoggedIn.value) {
     try {
       if (isPostDisliked(post.post_title)) {
@@ -219,7 +218,7 @@ const handleDisLikeClick = async (post) => {
       console.error(err)
       taskNoti({ message: 'Error processing your request', success: false })
     }
-  }else{
+  } else {
     taskNoti({ message: 'Cannot dislike post, please log in or sign up first!', success: false })
   }
 }
@@ -319,12 +318,12 @@ watch(
 
 onMounted(async () => {
   window.addEventListener('resize', updateSize)
-  console.log("comment data:", postComments)
+  console.log('comment data:', postComments)
   nxtNews.value = await fetchNxtNews()
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
   await getNews()
-  console.log("news:",newsList.value)
+  console.log('news:', newsList.value)
   await fetchLikes(newsList.value[0].title)
   await fetchDislikes(newsList.value[0].title)
   await fetchCommentsNewest(newsList.value[0].title)
@@ -340,7 +339,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti" />
   <div v-if="isLoading" class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
@@ -447,6 +446,7 @@ onBeforeUnmount(() => {
           v-if="nxtNews"
           :post="nxtNews[0]"
           :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
+          :userdata="userData"
           @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti, isUserLoggedIn)"
           @opensharemodal="openShareModal"
         />
@@ -816,5 +816,5 @@ onBeforeUnmount(() => {
   </div>
 
   <Footer />
-  <Share_mod :postData="postData"/>
+  <Share_mod :postData="postData" />
 </template>

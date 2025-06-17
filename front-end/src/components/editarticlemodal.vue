@@ -1,9 +1,13 @@
 <script setup>
-import { defineEmits, onMounted, ref } from 'vue'
+import { defineEmits, watch, ref } from 'vue'
 const emit = defineEmits(['notify'])
+const props = defineProps({
+  postData: Object,
+})
 
-const previewSrc = ref('/image-assets/default-image.jpg')
+const previewSrc = ref('')
 const post_title = ref('')
+const old_title = ref('')
 const post_category = ref('')
 const post_content = ref('')
 const fileInput = ref(null)
@@ -31,7 +35,7 @@ function resetCharCount() {
   document.getElementById('charRemaining').textContent = remaining
 }
 
-async function handleuploadarticle() {
+async function handleEditArticle() {
   const formData = new FormData()
 
   const file = fileInput.value?.files[0]
@@ -39,38 +43,50 @@ async function handleuploadarticle() {
     formData.append('file', file)
   }
 
+  formData.append('old_title', old_title.value)
   formData.append('post_title', post_title.value)
   formData.append('post_content', post_content.value)
   formData.append('post_category', post_category.value)
-  console.log('formdata: ', formData.get('Location'))
 
   try {
-    const response = await fetch('/api/add_article', {
+    const response = await fetch('/api/edit_article', {
       method: 'POST',
       body: formData,
     })
 
     if (!response.ok) {
-      emit('notify', { message: `Failed Post Article: ${err}`, success: false })
+      emit('notify', { message: `Failed Edit Post: ${err}`, success: false })
     } else {
-      emit('notify', { message: `Article Posted!`, success: true })
+      emit('notify', { message: `Post Edited!`, success: true })
       await new Promise((resolve) => setTimeout(resolve, 3500))
       window.location.reload()
     }
   } catch (err) {
-    emit('notify', { message: `Failed Post Article: ${err}`, success: false })
+    emit('notify', { message: `Failed Edit Post: ${err}`, success: false })
   }
 }
-onMounted(async () => {
-  previewSrc.value = '/image-assets/default-image.jpg'
-})
+
+watch(
+  () => props.postData,
+  (newPost) => {
+    if (newPost) {
+      console.log('icjaw', newPost)
+      old_title.value = newPost.title || ''
+      previewSrc.value = newPost.imageUrl || newPost.image_url || ''
+      post_title.value = newPost.title || ''
+      post_category.value = newPost.category || ''
+      post_content.value = newPost.content || ''
+    }
+  },
+  { immediate: true },
+)
 </script>
 <template>
   <div
     class="modal fade"
-    id="WriteArticle"
+    id="editArticle"
     tabindex="-1"
-    aria-labelledby="WriteArticleLabel"
+    aria-labelledby="editArticleLabel"
     aria-hidden="true"
   >
     <div class="modal-dialog modal-xl">
@@ -79,7 +95,7 @@ onMounted(async () => {
           class="modal-header d-flex justify-content-between align-items-center"
           style="padding-bottom: 0 !important"
         >
-          <h3 class="modal-title" id="WriteArticleLabel">Write an Article</h3>
+          <h3 class="modal-title" id="editArticleLabel">Edit Article</h3>
 
           <a type="button" class="closebtn" data-bs-dismiss="modal" aria-label="Close">
             <span class="material-symbols-outlined"> close </span>
@@ -88,10 +104,11 @@ onMounted(async () => {
         <div class="modal-body">
           <div class="editprofile-container">
             <form
-              @submit.prevent="handleuploadarticle"
-              id="uploadarticle"
+              @submit.prevent="handleEditArticle"
+              id="editarticle"
               enctype="multipart/form-data"
             >
+              <input type="hidden" name="postid" v-model="postid" />
               <div class="d-flex justify-content-start gap-3 mb-3 flex-row">
                 <img
                   id="preview-img"
@@ -165,7 +182,6 @@ onMounted(async () => {
                   v-model="post_content"
                   placeholder="Report your story....."
                   name="post_content"
-                  required
                   @input="updateCharCount"
                 ></textarea>
               </div>
@@ -186,7 +202,7 @@ onMounted(async () => {
             >
               Cancel
             </button>
-            <button type="submit" name="submit" form="uploadarticle" class="btn btn-save-changes">
+            <button type="submit" name="submit" form="editarticle" class="btn btn-save-changes">
               Post Article
             </button>
           </div>

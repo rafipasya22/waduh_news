@@ -26,6 +26,7 @@ const popularPosts = ref([])
 const recoPosts = ref([])
 const recoPosts2 = ref([])
 const thisWeekPosts = ref([])
+const userMadePosts = ref([])
 const isSuccess = ref(false)
 const taskMsg = ref(null)
 let isLoading = ref(true)
@@ -117,6 +118,18 @@ async function fetchNews() {
   }))
 }
 
+async function getUserMadePosts(){
+  const res = await fetch(`/api/get-user-articles`)
+  const data = await res.json()
+  if (data.posts && data.posts.length > 0) {
+    const slicedNews = data.posts.slice(0,3)
+    await getlike(slicedNews)
+    await getcomments(slicedNews)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'userpost' }))
+  }
+  return []
+}
+
 function taskNoti({ message, success }) {
   taskMsg.value = message
   isSuccess.value = success
@@ -134,11 +147,13 @@ onMounted(async () => {
   await getUserData()
   console.log(isloggedin)
   await fetchNews()
+  userMadePosts.value = await getUserMadePosts()
   console.log('headline:', headlinePost.value)
   console.log('sports: ', sportsPosts.value)
   console.log('popular: ', popularPosts.value)
   console.log('reco: ', recoPosts.value)
   console.log('recoActv: ', recoPosts2.value)
+  console.log('usermade:', userMadePosts.value)
   if (isloggedin) {
     await fetchUserPref()
     await getUserbookmarksCount()
@@ -180,6 +195,7 @@ onMounted(async () => {
             class="headline"
             :post="headlinePost[0]"
             :bookmarked="bookmarkedTitles.includes(headlinePost[0].title)"
+            :userdata="userData"
             @toggleBookmark="() => toggleBookmark(headlinePost[0], taskNoti)"
             @opensharemodal="openShareModal"
           />
@@ -191,6 +207,7 @@ onMounted(async () => {
               :key="index"
               :post="post"
               :bookmarked="bookmarkedTitles.includes(post.title)"
+              :userdata="userData"
               @toggleBookmark="toggleBookmark(post, taskNoti)"
               @opensharemodal="openShareModal"
             />
@@ -218,6 +235,7 @@ onMounted(async () => {
             :key="index"
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
+            :userdata="userData"
             @toggleBookmark="() => toggleBookmark(post, taskNoti)"
             @opensharemodal="openShareModal"
           />
@@ -226,6 +244,7 @@ onMounted(async () => {
           v-if="popularPosts[0]"
           :post="popularPosts[0]"
           :bookmarked="bookmarkedTitles.includes(popularPosts[0].title)"
+          :userdata="userData"
           @toggleBookmark="() => toggleBookmark(popularPosts[0], taskNoti)"
           @opensharemodal="openShareModal"
         />
@@ -250,6 +269,7 @@ onMounted(async () => {
           :key="index"
           :post="post"
           :bookmarked="bookmarkedTitles.includes(post.title)"
+          :userdata="userData"
           @toggleBookmark="toggleBookmark(post, taskNoti)"
           @opensharemodal="openShareModal"
         />
@@ -273,6 +293,7 @@ onMounted(async () => {
           v-if="sportsPosts"
           :post="sportsPosts[0]"
           :bookmarked="bookmarkedTitles.includes(sportsPosts[0].title)"
+          :userdata="userData"
           @toggleBookmark="() => toggleBookmark(sportsPosts[0], taskNoti)"
           @opensharemodal="openShareModal"
         />
@@ -283,6 +304,44 @@ onMounted(async () => {
               :key="index"
               :post="post"
               :bookmarked="bookmarkedTitles.includes(post.title)"
+              :userdata="userData"
+              @toggleBookmark="toggleBookmark(post, taskNoti)"
+              @opensharemodal="openShareModal"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="userpost-headline mt-5">
+      <div class="headline-title">
+        <h3 class="Headline-top">WaduhNews</h3>
+        <h2 class="Headline-bottom">Originals</h2>
+      </div>
+      <div v-if="isLoading" class="top d-flex flex-row align-items-start">
+        <Skel />
+        <div class="sports mt-2">
+          <div class="sports-container d-flex justify-content-start align-items-center">
+            <Skel_mid v-for="x in 2" :key="x" />
+          </div>
+        </div>
+      </div>
+      <div v-else class="top d-flex flex-row align-items-start">
+        <Post_big
+          v-if="userMadePosts"
+          :post="userMadePosts[0]"
+          :bookmarked="bookmarkedTitles.includes(userMadePosts[0].title)"
+          :userdata="userData"
+          @toggleBookmark="() => toggleBookmark(userMadePosts[0], taskNoti)"
+          @opensharemodal="openShareModal"
+        />
+        <div class="sports mt-2">
+          <div class="sports-container d-flex justify-content-start align-items-center">
+            <Post_mid
+              v-for="(post, index) in userMadePosts.slice(1, 3)"
+              :key="index"
+              :post="post"
+              :bookmarked="bookmarkedTitles.includes(post.title)"
+              :userdata="userData"
               @toggleBookmark="toggleBookmark(post, taskNoti)"
               @opensharemodal="openShareModal"
             />
@@ -308,6 +367,7 @@ onMounted(async () => {
             :key="index"
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
+            :userdata="userData"
             @toggleBookmark="() => toggleBookmark(post, taskNoti)"
             @opensharemodal="openShareModal"
           />
@@ -316,6 +376,7 @@ onMounted(async () => {
           v-if="recoPosts[0]"
           :post="recoPosts[0]"
           :bookmarked="bookmarkedTitles.includes(recoPosts[0].title)"
+          :userdata="userData"
           @toggleBookmark="() => toggleBookmark(recoPosts[0], taskNoti)"
           @opensharemodal="openShareModal"
         />
@@ -340,6 +401,7 @@ onMounted(async () => {
           :key="index"
           :post="post"
           :bookmarked="bookmarkedTitles.includes(post.title)"
+          :userdata="userData"
           @toggleBookmark="toggleBookmark(post, taskNoti)"
           @opensharemodal="openShareModal"
         />

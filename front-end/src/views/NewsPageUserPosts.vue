@@ -11,10 +11,12 @@ import Share_mod from '@/components/sharemodal.vue'
 import { likepost } from '@/composables/like_btn.vue'
 import '@/assets/style.css'
 import { bookmarkpost } from '@/composables/bookmark.vue'
+import Edit_mod from '@/components/editarticlemodal.vue'
 import { userdata } from '@/composables/get_userdata.vue'
 import { analytics } from '@/composables/post_analytics.vue'
 import { useRoute } from 'vue-router'
 import { watch, ref, onMounted, computed, onBeforeUnmount } from 'vue'
+import router from '@/router'
 
 const { getcomments, getlike, getUserInfo } = analytics()
 const { userData, getUserData } = userdata()
@@ -35,6 +37,7 @@ const route = useRoute()
 
 const query = route.params.query
 const title = route.params.title
+const post_id = route.params.post_id
 
 const nxtNews = ref([])
 const isUserLoggedIn = ref(false)
@@ -42,9 +45,11 @@ const newsList = ref([])
 const comment = ref('')
 const isSuccess = ref(false)
 let isLoading = ref(true)
+let authorname = ref(``)
 const taskMsg = ref(null)
 const postComments = ref([])
 const activeSort = ref('newest')
+const Datapost = ref(null)
 const width = ref(window.innerWidth)
 
 const { bookmarkedTitles, fetchBookmarks, toggleBookmark } = bookmarkpost(isUserLoggedIn.value)
@@ -57,7 +62,7 @@ function openShareModal(post) {
 }
 
 async function fetchNxtNews() {
-  const res = await fetch(`/api/ambil_nxtnews/${encodeURIComponent(query)}`)
+  const res = await fetch(`/api/ambil_nxtnews/${encodeURIComponent(query.toLowerCase())}`)
   const data = await res.json()
   if (data.news && data.news.length > 0) {
     const randomIndex = Math.floor(Math.random() * data.news.length)
@@ -84,10 +89,32 @@ async function fetchComments(title) {
   }
 }
 
+async function deletePost(post) {
+  try {
+    const res = await fetch(`/api/remove-user-posts`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Title: post.title }),
+    })
+    if (!res.ok) throw new Error('Error deleting post')
+    taskNoti({ message: 'Post deleted', success: true })
+    await new Promise((resolve) => setTimeout(resolve, 3500))
+    router.push('/')
+  } catch (error) {
+    console.error('Error deleting post:', error)
+    taskNoti({ message: 'Failed to delete post', success: false })
+  }
+}
+
 function updateCharCount() {
   const textarea = document.getElementById('comment')
   const remaining = 1000 - textarea.value.length
   document.getElementById('charRemaining').textContent = remaining
+}
+
+function openeditmodal(post) {
+  Datapost.value = post
+  console.log('skow', Datapost)
 }
 
 function resetCharCount() {
@@ -109,6 +136,11 @@ async function fetchCommentsNewest(title) {
     console.error('Error fetching likes:', error)
     postComments.value = []
   }
+}
+
+async function handleBookmark(Post) {
+  await toggleBookmark(Post, taskNoti, isUserLoggedIn)
+  console.log('postdata', Post)
 }
 
 async function fetchCommentsMostLiked(title) {
@@ -155,19 +187,16 @@ const formatDate = (date) => {
 async function getNews() {
   try {
     const res = await fetch(
-      `/api/baca-news/${encodeURIComponent(query)}/${encodeURIComponent(title)}`,
+      `/api/baca-news/article/originals/${post_id}/${decodeURIComponent(title)}`,
     )
     const data = await res.json()
     if (data.error) {
       console.error(data.error)
       return
     }
-    const newsData = data.news.map((post) => ({
-      ...post,
-      sourceType: 'not_headline',
-    }))
-
-    newsList.value = newsData
+    newsList.value = data.news
+      ? [data.news].map((news) => ({ ...news, sourceType: 'userpost' }))
+      : []
   } catch (error) {
     console.error('Gagal fetch berita:', error)
   }
@@ -277,7 +306,6 @@ const sortcomments_mostliked = async (title) => {
 }
 
 function taskNoti({ message, success }) {
-  console.log('tasknoti triggerde')
   taskMsg.value = message
   isSuccess.value = success
   const noti = document.querySelector('.noti')
@@ -325,7 +353,7 @@ onMounted(async () => {
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
   await getNews()
-  console.log('news:', newsList.value)
+  console.log('sourcetype:', newsList.value[0].sourceType)
   await fetchLikes(newsList.value[0].title)
   await fetchDislikes(newsList.value[0].title)
   await fetchCommentsNewest(newsList.value[0].title)
@@ -333,6 +361,7 @@ onMounted(async () => {
   const allTitles = [...newsList.value, ...nxtNews.value].map((p) => p.title)
   fetchBookmarks(allTitles)
   isLoading.value = false
+  authorname.value = `${userData.value.First_name} ${userData.value.Last_name}`
 })
 
 onBeforeUnmount(() => {
@@ -464,234 +493,325 @@ onBeforeUnmount(() => {
       <div class="title-bottom d-flex justify-content-between align-items-center flex-row mt-2">
         <div class="news-details d-flex justify-content-start align-items-start flex-column">
           <h5 style="margin-bottom: 0 !important; color: var(--dark)">
-            Uploaded {{ formatDate(newsList[0].published_at) }}
+            Uploaded {{ formatDate(newsList[0].publishedAt) }}
           </h5>
           <small style="color: var(--dark)">
             <i>{{ getNewsSource(newsList[0]) }}</i>
           </small>
         </div>
-        <div
-          v-if="width > 705"
-          class="news-interactions d-flex justify-content-start align-items-start flex-row"
-        >
-          <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
-            <a
-              @click.prevent="
-                handleLikeClick({
-                  post_title: newsList[0].title,
-                  post_category: newsList[0].category,
-                  post_source: newsList[0].source_name,
-                })
-              "
-              class="likebtn btn d-flex justify-content-center align-items-center"
-              :class="{ pressed: isPostLiked(newsList[0].title) }"
-              role="button"
-              data-bs-toggle="button"
-              ><span class="material-symbols-outlined me-2"> thumb_up </span>
-              {{ isPostLiked(newsList[0].title) ? 'Liked' : 'Like' }}</a
-            >
-          </div>
-          <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
-            <a
-              @click.prevent="
-                handleDisLikeClick({
-                  post_title: newsList[0].title,
-                  post_category: newsList[0].category,
-                  post_source: newsList[0].source_name,
-                })
-              "
-              :class="{ pressed: isPostDisliked(newsList[0].title) }"
-              class="dislikebtn btn d-flex justify-content-center align-items-center"
-              role="button"
-              data-bs-toggle="button"
-              ><span class="material-symbols-outlined me-2"> thumb_down </span>
-              {{ isPostDisliked(newsList[0].title) ? 'Disliked' : 'Dislike' }}</a
-            >
-          </div>
-          <div class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3 me-2">
-            <a
-              @click="toggleBookmark(newsList[0], taskNoti, isUserLoggedIn)"
-              :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-center`"
-              role="button"
-              data-bs-toggle="button"
-            >
-              <span class="material-symbols-outlined me-2">
-                {{ isBookmarked ? 'bookmark_added' : 'bookmark' }}
-              </span>
-              {{ isBookmarked ? 'Post bookmarked!' : 'Bookmark this post' }}
-            </a>
-          </div>
-          <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
-            <div class="dropdown">
+        <div v-if="newsList[0].author === authorname" class="interaction-container">
+          <div class="news-interactions d-flex justify-content-start align-items-start flex-row">
+            <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
               <a
-                class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                class="likebtn btn d-flex justify-content-center align-items-center"
                 role="button"
-                data-bs-toggle="dropdown"
+                style="text-decoration: none; color: var(--dark)"
+                data-bs-toggle="modal"
+                @click="openeditmodal(newsList[0])"
+                data-bs-target="#editArticle"
                 data-bs-auto-close="outside"
-                ><span class="material-symbols-outlined"> share </span></a
-              >
-              <div class="dropdown-menu p-4">
-                <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
-                <div class="d-flex justify-content-between align-items-start flex-row mt-3">
-                  <div class="d-flex justify-content-between align-items-start flex-column">
-                    <div class="facebook me-3 mb-3" style="width: 50%">
-                      <a
-                        class="sharebtn btn d-flex justify-content-start align-items-center"
-                        role="button"
-                        data-bs-toggle="dropdown"
-                        ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
-                      </a>
-                    </div>
-                    <div class="whatsapp me-3" style="width: 50%">
-                      <a
-                        class="sharebtn btn d-flex justify-content-start align-items-center"
-                        role="button"
-                        data-bs-toggle="dropdown"
-                        ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
-                      </a>
-                    </div>
-                  </div>
-                  <div class="twitter" style="width: 50%">
-                    <a
-                      class="sharebtn btn d-flex justify-content-start align-items-center"
-                      role="button"
-                      data-bs-toggle="dropdown"
-                      ><i class="fa-brands fa-x-twitter me-2"></i>X
-                    </a>
-                  </div>
-                </div>
-                <div class="copy-link-container mt-2">
-                  <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
-                    Or copy the link:
-                  </label>
-                  <div class="input-group">
-                    <input
-                      type="text"
-                      class="form-control"
-                      id="copyLinkInput"
-                      value="{{ source_url }}"
-                      readonly
-                    />
-                    <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
-                      Copy
-                    </button>
-                  </div>
-                  <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
-                </div>
-              </div>
+                ><span class="material-symbols-outlined me-2"> edit </span>
+                Edit
+              </a>
             </div>
-          </div>
-        </div>
-        <div
-          v-else
-          class="news-interactions-lite d-flex justify-content-start align-items-start flex-row"
-        >
-          <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
-            <a
-              @click.prevent="
-                handleLikeClick({
-                  post_title: newsList[0].title,
-                  post_category: newsList[0].category,
-                  post_source: newsList[0].source_name,
-                })
-              "
-              class="likebtn btn d-flex justify-content-center align-items-center"
-              :class="{ pressed: isPostLiked(newsList[0].title) }"
-              role="button"
-              data-bs-toggle="button"
-              ><span class="material-symbols-outlined"> thumb_up </span></a
-            >
-          </div>
-          <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
-            <a
-              @click.prevent="
-                handleDisLikeClick({
-                  post_title: newsList[0].title,
-                  post_category: newsList[0].category,
-                  post_source: newsList[0].source_name,
-                })
-              "
-              :class="{ pressed: isPostDisliked(newsList[0].title) }"
-              class="dislikebtn btn d-flex justify-content-center align-items-center"
-              role="button"
-              data-bs-toggle="button"
-              ><span class="material-symbols-outlined"> thumb_down </span></a
-            >
-          </div>
-
-          <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
-            <div class="dropdown">
+            <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
               <a
-                class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                class="dislikebtn btn d-flex justify-content-center align-items-center"
                 role="button"
-                data-bs-toggle="dropdown"
-                data-bs-auto-close="outside"
-                ><span class="material-symbols-outlined"> share </span></a
-              >
-              <div class="dropdown-menu p-4">
-                <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
-                <div class="d-flex justify-content-between align-items-start flex-row mt-3">
-                  <div class="d-flex justify-content-between align-items-start flex-column">
-                    <div class="facebook me-3 mb-3" style="width: 50%">
-                      <a
-                        class="sharebtn btn d-flex justify-content-start align-items-center"
-                        role="button"
-                        data-bs-toggle="dropdown"
-                        ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
-                      </a>
+                style="text-decoration: none; color: var(--dark)"
+                @click="deletePost(newsList[0])"
+                ><span class="material-symbols-outlined"> delete </span>
+                <small>Delete</small>
+              </a>
+            </div>
+            <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
+              <div class="dropdown">
+                <a
+                  class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside"
+                  ><span class="material-symbols-outlined"> share </span></a
+                >
+                <div class="dropdown-menu p-4">
+                  <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
+                  <div class="d-flex justify-content-between align-items-start flex-row mt-3">
+                    <div class="d-flex justify-content-between align-items-start flex-column">
+                      <div class="facebook me-3 mb-3" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
+                        </a>
+                      </div>
+                      <div class="whatsapp me-3" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                        </a>
+                      </div>
                     </div>
-                    <div class="whatsapp me-3" style="width: 50%">
-                      <a
-                        class="sharebtn btn d-flex justify-content-start align-items-center"
-                        role="button"
-                        data-bs-toggle="dropdown"
-                        ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
-                      </a>
-                    </div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-start flex-column">
                     <div class="twitter" style="width: 50%">
                       <a
-                        class="sharebtn btn d-flex justify-content-start align-items-center mb-3"
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
                         role="button"
                         data-bs-toggle="dropdown"
                         ><i class="fa-brands fa-x-twitter me-2"></i>X
                       </a>
                     </div>
-                    <div
-                      class="bookmark-btn-big d-flex justify-content-start align-items-start me-2"
-                    >
+                  </div>
+                  <div class="copy-link-container mt-2">
+                    <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
+                      Or copy the link:
+                    </label>
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="copyLinkInput"
+                        value="{{ source_url }}"
+                        readonly
+                      />
+                      <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                        Copy
+                      </button>
+                    </div>
+                    <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="interaction-container">
+          <div
+            v-if="width > 705"
+            class="news-interactions d-flex justify-content-start align-items-start flex-row"
+          >
+            <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
+              <a
+                @click.prevent="
+                  handleLikeClick({
+                    post_title: newsList[0].title,
+                    post_category: newsList[0].category,
+                    post_source: newsList[0].source_name,
+                  })
+                "
+                class="likebtn btn d-flex justify-content-center align-items-center"
+                :class="{ pressed: isPostLiked(newsList[0].title) }"
+                role="button"
+                data-bs-toggle="button"
+                ><span class="material-symbols-outlined me-2"> thumb_up </span>
+                {{ isPostLiked(newsList[0].title) ? 'Liked' : 'Like' }}</a
+              >
+            </div>
+            <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
+              <a
+                @click.prevent="
+                  handleDisLikeClick({
+                    post_title: newsList[0].title,
+                    post_category: newsList[0].category,
+                    post_source: newsList[0].source_name,
+                  })
+                "
+                :class="{ pressed: isPostDisliked(newsList[0].title) }"
+                class="dislikebtn btn d-flex justify-content-center align-items-center"
+                role="button"
+                data-bs-toggle="button"
+                ><span class="material-symbols-outlined me-2"> thumb_down </span>
+                {{ isPostDisliked(newsList[0].title) ? 'Disliked' : 'Dislike' }}</a
+              >
+            </div>
+            <div
+              class="bookmark-btn-big d-flex justify-content-center align-items-center pb-3 me-2"
+            >
+              <a
+                @click="handleBookmark(newsList[0])"
+                :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-center`"
+                role="button"
+                data-bs-toggle="button"
+              >
+                <span class="material-symbols-outlined me-2">
+                  {{ isBookmarked ? 'bookmark_added' : 'bookmark' }}
+                </span>
+                {{ isBookmarked ? 'Post bookmarked!' : 'Bookmark this post' }}
+              </a>
+            </div>
+            <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
+              <div class="dropdown">
+                <a
+                  class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside"
+                  ><span class="material-symbols-outlined"> share </span></a
+                >
+                <div class="dropdown-menu p-4">
+                  <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
+                  <div class="d-flex justify-content-between align-items-start flex-row mt-3">
+                    <div class="d-flex justify-content-between align-items-start flex-column">
+                      <div class="facebook me-3 mb-3" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
+                        </a>
+                      </div>
+                      <div class="whatsapp me-3" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                        </a>
+                      </div>
+                    </div>
+                    <div class="twitter" style="width: 50%">
                       <a
-                        @click="toggleBookmark(newsList[0], taskNoti, isUserLoggedIn)"
-                        :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-start`"
+                        class="sharebtn btn d-flex justify-content-start align-items-center"
                         role="button"
-                        data-bs-toggle="button"
-                      >
-                        <span class="material-symbols-outlined me-2">
-                          {{ isBookmarked ? 'bookmark_added' : 'bookmark' }}
-                        </span>
-                        {{ isBookmarked ? 'Saved!' : 'Bookmark this post' }}
+                        data-bs-toggle="dropdown"
+                        ><i class="fa-brands fa-x-twitter me-2"></i>X
                       </a>
                     </div>
                   </div>
-                </div>
-                <div class="copy-link-container mt-2">
-                  <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
-                    Or copy the link:
-                  </label>
-                  <div class="input-group">
-                    <input
-                      type="text"
-                      class="form-control"
-                      id="copyLinkInput"
-                      value="{{ source_url }}"
-                      readonly
-                    />
-                    <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
-                      Copy
-                    </button>
+                  <div class="copy-link-container mt-2">
+                    <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
+                      Or copy the link:
+                    </label>
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="copyLinkInput"
+                        value="{{ source_url }}"
+                        readonly
+                      />
+                      <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                        Copy
+                      </button>
+                    </div>
+                    <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
                   </div>
-                  <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            v-else
+            class="news-interactions-lite d-flex justify-content-start align-items-start flex-row"
+          >
+            <div class="likebutton d-flex justify-content-center align-items-center pb-3 me-2">
+              <a
+                @click.prevent="
+                  handleLikeClick({
+                    post_title: newsList[0].title,
+                    post_category: newsList[0].category,
+                    post_source: newsList[0].source_name,
+                  })
+                "
+                class="likebtn btn d-flex justify-content-center align-items-center"
+                :class="{ pressed: isPostLiked(newsList[0].title) }"
+                role="button"
+                data-bs-toggle="button"
+                ><span class="material-symbols-outlined"> thumb_up </span></a
+              >
+            </div>
+            <div class="dislikebutton d-flex justify-content-center align-items-center pb-3 me-2">
+              <a
+                @click.prevent="
+                  handleDisLikeClick({
+                    post_title: newsList[0].title,
+                    post_category: newsList[0].category,
+                    post_source: newsList[0].source_name,
+                  })
+                "
+                :class="{ pressed: isPostDisliked(newsList[0].title) }"
+                class="dislikebtn btn d-flex justify-content-center align-items-center"
+                role="button"
+                data-bs-toggle="button"
+                ><span class="material-symbols-outlined"> thumb_down </span></a
+              >
+            </div>
+
+            <div class="sharebutton d-flex justify-content-center align-items-center pb-3">
+              <div class="dropdown">
+                <a
+                  class="sharebtn btn d-flex justify-content-center align-items-center dropdown-toggle"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside"
+                  ><span class="material-symbols-outlined"> share </span></a
+                >
+                <div class="dropdown-menu p-4">
+                  <h2 style="font-size: 1.2rem; color: var(--dark)">Share the news!</h2>
+                  <div class="d-flex justify-content-between align-items-start flex-row mt-3">
+                    <div class="d-flex justify-content-between align-items-start flex-column">
+                      <div class="facebook me-3 mb-3" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-facebook-f me-2"> </i>Facebook
+                        </a>
+                      </div>
+                      <div class="whatsapp me-3" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                        </a>
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-start flex-column">
+                      <div class="twitter" style="width: 50%">
+                        <a
+                          class="sharebtn btn d-flex justify-content-start align-items-center mb-3"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          ><i class="fa-brands fa-x-twitter me-2"></i>X
+                        </a>
+                      </div>
+                      <div
+                        class="bookmark-btn-big d-flex justify-content-start align-items-start me-2"
+                      >
+                        <a
+                          @click="toggleBookmark(newsList[0], taskNoti, isUserLoggedIn)"
+                          :class="`bookmarkbtn ${isBookmarked ? 'bookmarked' : ''} btn d-flex justify-content-start`"
+                          role="button"
+                          data-bs-toggle="button"
+                        >
+                          <span class="material-symbols-outlined me-2">
+                            {{ isBookmarked ? 'bookmark_added' : 'bookmark' }}
+                          </span>
+                          {{ isBookmarked ? 'Saved!' : 'Bookmark this post' }}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="copy-link-container mt-2">
+                    <label for="copyLinkInput" style="font-size: 0.9rem; color: var(--dark)">
+                      Or copy the link:
+                    </label>
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="copyLinkInput"
+                        value="{{ source_url }}"
+                        readonly
+                      />
+                      <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                        Copy
+                      </button>
+                    </div>
+                    <small id="copySuccess" class="text-success mt-2 d-none">Link copied!</small>
+                  </div>
                 </div>
               </div>
             </div>
@@ -819,4 +939,5 @@ onBeforeUnmount(() => {
 
   <Footer />
   <Share_mod :postData="postData" />
+  <Edit_mod :postData="Datapost" @notify="taskNoti" />
 </template>

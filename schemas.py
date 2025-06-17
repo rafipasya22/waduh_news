@@ -55,6 +55,9 @@ class BookmarkRequest(BaseModel):
 class DeleteBookmarkRequest(BaseModel):
     Title: str
 
+class DeleteUserPostRequest(BaseModel):
+    Title: str
+
 class ItemBase(BaseModel):
     name: str
     description: str | None = None

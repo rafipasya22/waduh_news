@@ -9,6 +9,8 @@ import { userdata } from '@/composables/get_userdata.vue'
 import Skel_mid from '@/components/post_mid_skeleton.vue'
 import Share_mod from '@/components/sharemodal.vue'
 import Add_article from '@/components/writearticlemodal.vue'
+import Post_big from '@/components/post_big.vue'
+import Edit_article from '@/components/editarticlemodal.vue'
 import { useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 
@@ -41,10 +43,19 @@ const previewSrc = ref('/static/Assets/ProfileImg/default.jpg')
 const location = ref('')
 const fileInput = ref(null)
 const postData = ref(null)
+const articlePosted = ref(null)
+const Datapost = ref(null)
+
+const userPosts = ref([])
 
 function openShareModal(post) {
   postData.value = post
   console.log('sko: ', postData.value)
+}
+
+function openeditmodal(post) {
+  Datapost.value = post
+  console.log('skow', Datapost)
 }
 
 function copyLink(event) {
@@ -62,6 +73,22 @@ function copyLink(event) {
     setTimeout(() => {
       msg.classList.add('d-none')
     }, 3000)
+  }
+}
+
+async function deletePost(post) {
+  try {
+    const res = await fetch(`/api/remove-user-posts`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Title: post.title }),
+    })
+    if (!res.ok) throw new Error('Error deleting post')
+    userPosts.value = userPosts.value.filter((t) => t.title !== post.title)
+    taskNoti({ message: 'Post deleted', success: true })
+  } catch (error) {
+    console.error('Error deleting post:', error)
+    taskNoti({ message: 'Failed to delete post', success: false })
   }
 }
 
@@ -118,6 +145,36 @@ async function getBookmarkedPosts() {
     return slicedNews.map((post) => ({ ...post, sourceType: 'bookmarks' }))
   }
   return []
+}
+
+async function getuserposts() {
+  const res = await fetch('/api/user-posts')
+  const data = await res.json()
+  if (data.posts && data.posts.length > 0) {
+    const slicedNews = data.posts.slice(0, 4)
+    await getlike(slicedNews)
+    await getcomments(slicedNews)
+    return slicedNews.map((post) => ({ ...post, sourceType: 'userpost' }))
+  }
+  return []
+}
+
+async function gettotalarticles() {
+  try {
+    const res = await fetch('/api/user-posts')
+
+    if (!res.ok) throw new Error('Failed to fetch session')
+
+    const data = await res.json()
+    if (data.total_items) {
+      articlePosted.value = data.total_items || 0
+    } else {
+      articlePosted.value = 0
+    }
+  } catch (err) {
+    console.error('Error getting user info:', err)
+    articlePosted.value = 0
+  }
 }
 
 function previewImage(event) {
@@ -259,8 +316,10 @@ onMounted(async () => {
   isUserLoggedIn.value = await getUserInfo()
   await getUserData()
   await get_total_likes()
+  await gettotalarticles()
   await get_total_bookmarks()
   bookmarkedPosts.value = await getBookmarkedPosts()
+  userPosts.value = await getuserposts()
   form.value.First_name = userData.value.First_name || ''
   form.value.Last_name = userData.value.Last_name || ''
   form.value.email_new = userData.value.Email || ''
@@ -307,8 +366,8 @@ onMounted(async () => {
             </div>
             <div class="profile-analytics d-flex justify-content-start align-items-center flex-row">
               <div class="likes d-flex justify-content-start align-items-center flex-row me-2">
-                <p class="like-numbers me-1 mb-0">{{ total_likes }}</p>
-                <small class="small">Posts Liked</small>
+                <p class="like-numbers me-1 mb-0">{{ articlePosted }}</p>
+                <small class="small">Article Posted</small>
               </div>
               <div
                 class="bookmarked-posts d-flex justify-content-start align-items-center flex-row"
@@ -337,7 +396,7 @@ onMounted(async () => {
                 data-bs-auto-close="outside"
                 class="btn edit-profile-btn"
               >
-                Edit Profilew
+                Write Article
               </a>
             </div>
           </div>
@@ -413,6 +472,7 @@ onMounted(async () => {
             v-for="(post, index) in bookmarkedPosts.slice(0, 2)"
             :key="index"
             :post="post"
+            :userdata="userData"
             :bookmarked="bookmarkedTitles.includes(post.title)"
             @toggleBookmark="() => handleBookmark(post)"
             @opensharemodal="openShareModal"
@@ -426,6 +486,7 @@ onMounted(async () => {
             v-for="(post, index) in bookmarkedPosts.slice(2, 4)"
             :key="index"
             :post="post"
+            :userdata="userData"
             :bookmarked="bookmarkedTitles.includes(post.title)"
             @toggleBookmark="() => handleBookmark(post)"
             @opensharemodal="openShareModal"
@@ -438,6 +499,58 @@ onMounted(async () => {
       >
         <span class="material-symbols-outlined" style="font-size: 8rem"> bookmark_remove </span>
         <small>You haven't bookmarked any post yet</small>
+      </div>
+    </div>
+    <div class="bookmarkscontainer d-flex justify-content-start align-items-start flex-column">
+      <div
+        class="bookmarked-top d-flex justify-content-between align-items-center flex-row mt-4 w-100"
+      >
+        <div class="bookmarked-posts-title">
+          <h3>Posted <span>Articles</span></h3>
+        </div>
+        <router-link to="/profile/article/posted/seeall" class="seeall">See all</router-link>
+      </div>
+
+      <div v-if="bookmarkedPosts" class="bookmarkedpostscontainer">
+        <div v-if="isLoading" class="bookmarked-posts-profile d-flex mt-2">
+          <Skel_mid v-for="x in 2" :key="x" />
+        </div>
+        <div v-else class="bookmarked-posts-profile d-flex align-items-start mt-2">
+          <Post_mid
+            v-for="(post, index) in userPosts.slice(0, 2)"
+            :key="index"
+            :post="post"
+            :bookmarked="bookmarkedTitles.includes(post.title)"
+            :userdata="userData"
+            @toggleBookmark="() => handleBookmark(post)"
+            @opensharemodal="openShareModal"
+            @deletepost="deletePost"
+            @openeditmodal="openeditmodal"
+          />
+        </div>
+        <div v-if="isLoading" class="bookmarked-posts-profile d-flex mt-2">
+          <Skel_mid v-for="x in 2" :key="x" />
+        </div>
+        <div v-else class="bookmarked-posts-profile d-flex mt-2">
+          <Post_mid
+            v-for="(post, index) in userPosts.slice(2, 4)"
+            :key="index"
+            :post="post"
+            :bookmarked="bookmarkedTitles.includes(post.title)"
+            :userdata="userData"
+            @toggleBookmark="() => handleBookmark(post)"
+            @opensharemodal="openShareModal"
+            @deletepost="deletePost"
+            @openeditmodal="openeditmodal"
+          />
+        </div>
+      </div>
+      <div
+        v-else
+        class="bookmarkedpostscontainer d-flex justify-content-center align-items-center flex-column"
+      >
+        <span class="material-symbols-outlined" style="font-size: 8rem"> bookmark_remove </span>
+        <small>You haven't posted any articles yet</small>
       </div>
     </div>
   </div>
@@ -806,7 +919,8 @@ onMounted(async () => {
   </div>
   <Footer />
   <Share_mod :postData="postData" />
-  <Add_article/>
+  <Add_article @notify="taskNoti" />
+  <Edit_article :postData="Datapost" @notify="taskNoti" />
 </template>
 
 <script>

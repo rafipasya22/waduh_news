@@ -188,57 +188,6 @@ def login(
 
     return {"message": "Login successful"}
 
-@app.post("/api/add_article")
-def add_article(
-    request: Request,
-    post_title: str = Form(...),
-    post_content: str = Form(...),
-    post_category: str = Form(...),
-    file: UploadFile = File(default=None),
-    db: Session = Depends(get_db)
-):
-    user_session = request.session.get("user")
-    if not user_session:
-        return RedirectResponse(url="/auth", status_code=303)
-
-    email = user_session.get("email")
-    if not email:
-        return {"error": "Email not found in session."}
-
-    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
-
-    author_name = user.First_name+" "+ user.Last_name
-    url_src =  str(request.url)
-    current_date = datetime.now()
-
-    if file and file.filename.strip():
-        upload_dir = "front-end/public/profile"
-        shortened_dir = "/profile"
-        os.makedirs(upload_dir, exist_ok=True)
-
-        filename = f"{user.id}_{file.filename}"
-        file_location = os.path.join(upload_dir, filename)
-        file_loc_shortened = os.path.join(shortened_dir, filename)
-
-        with open(file_location, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-
-        article = models.Posts(
-            title = post_title,
-            author = author_name,
-            content = post_content,
-            category = post_category,
-            published_at = current_date,
-            image_url = file_loc_shortened,
-            source_url = url_src,
-            source_name = "Waduh News"
-        )
-
-    db.add(article)
-    db.commit()
-    db.refresh(article)
-    return {"message": "Article Created!"}
-
 @app.post("/api/signup")
 def signup(
     First_name: str = Form(...),
@@ -1637,7 +1586,8 @@ async def baca_bookmark(request: Request, title:str, db: Session = Depends(get_d
         except Exception as e:
             print(f"Failed Fetching Article {e}")
             raise HTTPException(status_code=404, detail="No complete article found")
-        
+
+    
 @app.get("/api/profile/get_total_bookmarks")
 async def get_total_profile_bookmarks(request: Request, db: Session = Depends(get_db)):
     user_session = request.session.get("user")
@@ -2300,3 +2250,249 @@ def get_newsapi_query(request: Request, db: Session = Depends(get_db)):
 
     random.shuffle(news_list)
     return {"news": news_list}
+
+
+@app.post("/api/add_article")
+def add_article(
+    request: Request,
+    post_title: str = Form(...),
+    post_content: str = Form(...),
+    post_category: str = Form(...),
+    file: UploadFile = File(default=None),
+    db: Session = Depends(get_db)
+):
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/auth", status_code=303)
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+
+    author_name = user.First_name+" "+ user.Last_name
+    url_src =  "https://waduhnews.com/news/baca-news/"+post_category.lower()+"/"+urllib.parse.quote(post_title)
+    current_date = datetime.now()
+
+    if file and file.filename.strip():
+        upload_dir = "front-end/public/posts-assets"
+        shortened_dir = "/posts-assets"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        filename = f"{user.id}_{file.filename}"
+        file_location = os.path.join(upload_dir, filename)
+        file_loc_shortened = os.path.join(shortened_dir, filename)
+
+        with open(file_location, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        article = models.Posts(
+            title = post_title,
+            author = author_name,
+            content = post_content,
+            category = post_category,
+            published_at = current_date,
+            image_url = file_loc_shortened,
+            source_url = url_src,
+            source_name = "Waduh News"
+        )
+
+    db.add(article)
+    db.commit()
+    db.refresh(article)
+    return {"message": "Article Created!"}
+
+@app.post("/api/edit_article")
+def edit_article(
+    request: Request,
+    old_title: str = Form(...),
+    post_title: str = Form(...),
+    post_content: str = Form(...),
+    post_category: str = Form(...),
+    file: UploadFile = File(default=None),
+    db: Session = Depends(get_db)
+):
+    user_session = request.session.get("user")
+    if not user_session:
+        return RedirectResponse(url="/auth", status_code=303)
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found."}
+    
+    author_name = user.First_name+" "+ user.Last_name
+    article = db.query(models.Posts).filter(models.Posts.author == author_name, models.Posts.title == old_title).first()
+    if not article:
+        return {"error": "Article not found."}
+
+    article.title = post_title
+    article.content = post_content
+    article.category = post_category
+    article.author = f"{user.First_name} {user.Last_name}"
+    article.source_url = f"https://waduhnews.com/news/baca-news/{post_category.lower()}/{urllib.parse.quote(post_title)}"
+    article.source_name = "Waduh News"
+    article.published_at = datetime.now()
+
+    if file and file.filename.strip():
+        upload_dir = "front-end/public/posts-assets"
+        shortened_dir = "/posts-assets"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        filename = f"{user.id}_{file.filename}"
+        file_location = os.path.join(upload_dir, filename)
+        file_loc_shortened = os.path.join(shortened_dir, filename)
+
+        with open(file_location, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        article.image_url = file_loc_shortened  
+
+    db.commit()
+    db.refresh(article)
+
+    return {"message": "Article Edited!"}
+
+
+@app.get("/api/baca-news/article/originals/{post_id}/{title:path}")
+async def baca_originals(request: Request, title:str, post_id: str, db: Session = Depends(get_db)):
+        decode_title = urllib.parse.unquote(title)
+        print(decode_title)
+
+        user_session = request.session.get("user") 
+        if not user_session:
+            raise HTTPException(status_code=401, detail="User not logged in")
+        
+        email = user_session["email"]
+        user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        try:
+            bookmark_query = db.query(models.Posts).filter(
+                models.Posts.id == post_id
+            ).first()
+
+            if not bookmark_query:
+                raise HTTPException(status_code=404, detail="No complete article found")
+
+            return JSONResponse(content={"news": {
+                "title": bookmark_query.title,
+                "author": bookmark_query.author,
+                "category": bookmark_query.category,
+                "publishedAt": bookmark_query.published_at.isoformat(),
+                "image_url": bookmark_query.image_url,
+                "content": bookmark_query.content,
+                "source_url": bookmark_query.source_url,
+                "source_name": bookmark_query.source_name,
+            }})
+
+        except Exception as e:
+            print(f"Failed Fetching Article {e}")
+            raise HTTPException(status_code=404, detail="No complete article found")
+    
+
+@app.delete("/api/remove-user-posts")
+async def remove_userposts(request: Request, data: schemas.DeleteUserPostRequest, db=Depends(get_db)):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+
+    email = user_session.get("email")
+    if not email:
+        return {"error": "Email not found in session."}
+    
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    if not user:
+        return {"error": "User not found"}
+    
+    author_name = user.First_name+" "+user.Last_name
+    post = db.query(models.Posts).filter(
+        models.Posts.author == author_name,
+        models.Posts.title == data.Title
+    ).first()
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    db.delete(post)
+    db.commit()
+
+    return {"status": "Post removed"}
+
+@app.get("/api/user-posts")
+async def get_user_posts(
+    request: Request,
+    page: int = Query(1, gt=0),
+    page_size: int = Query(5, gt=0),
+    db: Session = Depends(get_db)
+):
+    user_session = request.session.get("user")
+    if not user_session:
+        raise HTTPException(status_code=401, detail="User not logged in")
+    
+    email = user_session["email"]
+    user = db.query(models.Akun).filter(models.Akun.Email == email).first()
+    
+    if not user:
+        return {"error": "User not found"}
+
+    author_name = user.First_name+" "+user.Last_name
+
+    total_items = db.query(models.Posts).filter(
+        models.Posts.author == author_name
+    ).count()
+    total_pages = ceil(total_items / page_size)
+    posts_query =  db.query(models.Posts).filter(
+        models.Posts.author == author_name
+    ).offset((page - 1) * page_size).limit(page_size).all()
+
+    posts = []
+    for b in posts_query:
+        posts.append({
+            "id": b.id,
+            "title": b.title,
+            "author": b.author,
+            "category": b.category,
+            "publishedAt": b.published_at,  
+            "imageUrl": b.image_url,
+            "content": b.content,
+            "source_url": b.source_url,
+            "source_name": b.source_name
+        })
+
+    return {
+        "posts": posts,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "current_page": page
+    }
+
+@app.get("/api/get-user-articles")
+async def get_user_articles(
+    db: Session = Depends(get_db)
+):
+    posts_query =  db.query(models.Posts).all()
+
+    posts = []
+    for b in posts_query:
+        posts.append({
+            "id": b.id,
+            "title": b.title,
+            "author": b.author,
+            "category": b.category,
+            "publishedAt": b.published_at,  
+            "imageUrl": b.image_url,
+            "content": b.content,
+            "source_url": b.source_url,
+            "source_name": b.source_name
+        })
+
+    return {
+        "posts": posts
+    }

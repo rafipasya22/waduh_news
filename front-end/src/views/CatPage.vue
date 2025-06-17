@@ -156,7 +156,7 @@ onMounted(async () => {
   await getUserData()
   isUserLoggedIn.value = await getUserInfo()
   await fetchCatNews()
-  console.log("mv: ", mostViewed.value)
+  console.log('mv: ', mostViewed.value)
 
   console.log(catNewsHeadline.value)
 
@@ -167,7 +167,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti" />
   <div class="content news-index mb-5">
     <div class="todays-headline">
       <div class="headline-title">
@@ -190,6 +190,7 @@ onMounted(async () => {
             :key="index"
             :post="post"
             :bookmarked="bookmarkedTitles.includes(post.title)"
+            :userdata="userData"
             @toggleBookmark="() => toggleBookmark(post, taskNoti)"
             @opensharemodal="openShareModal"
           />
@@ -198,6 +199,7 @@ onMounted(async () => {
           v-if="catNewsHeadline[0]"
           :post="catNewsHeadline[0]"
           :bookmarked="bookmarkedTitles.includes(catNewsHeadline[0].title)"
+          :userdata="userData"
           @toggleBookmark="() => toggleBookmark(catNewsHeadline[0], taskNoti)"
           @opensharemodal="openShareModal"
         />

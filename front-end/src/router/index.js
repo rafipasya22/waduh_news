@@ -53,6 +53,15 @@ const router = createRouter({
       path: '/news/search/baca/:query/:title',
       name: 'news-page-search',
       component: () => import('@/views/NewsPageSearch.vue')
+    },
+    {
+      path: '/news/baca-news/article/originals/:post_id/:query/:title',
+      name: 'news-page-userpost',
+      component: () => import('@/views/NewsPageUserPosts.vue')
+    },{
+      path: '/profile/article/posted/seeall',
+      name: 'user-posted-article',
+      component: () => import('@/views/PostedArticleSeeall.vue')
     }
   ],
 })

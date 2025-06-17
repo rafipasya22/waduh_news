@@ -200,7 +200,7 @@ const handleLikeClick = async (post) => {
 }
 
 const handleDisLikeClick = async (post) => {
-  console.log("account status: ", isUserLoggedIn.value)
+  console.log('account status: ', isUserLoggedIn.value)
   if (isUserLoggedIn.value) {
     try {
       if (isPostDisliked(post.post_title)) {
@@ -220,7 +220,7 @@ const handleDisLikeClick = async (post) => {
       console.error(err)
       taskNoti({ message: 'Error processing your request', success: false })
     }
-  }else{
+  } else {
     taskNoti({ message: 'Cannot dislike post, please log in or sign up first!', success: false })
   }
 }
@@ -341,7 +341,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti"/>
+  <Navbar :loggedIn="isUserLoggedIn" :profilephoto="userData.ProfilePhoto" @notify="taskNoti" />
   <div v-if="isLoading" class="content mb-5">
     <div class="top d-flex flex-row align-items-start">
       <div class="post-big np mt-2">
@@ -448,6 +448,7 @@ onBeforeUnmount(() => {
           v-if="nxtNews"
           :post="nxtNews[0]"
           :bookmarked="bookmarkedTitles.includes(nxtNews[0].title)"
+          :userdata="userData"
           @toggleBookmark="() => toggleBookmark(nxtNews[0], taskNoti, isUserLoggedIn)"
           @opensharemodal="openShareModal"
         />
