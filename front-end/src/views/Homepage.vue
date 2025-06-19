@@ -252,8 +252,8 @@ onMounted(async () => {
     </div>
     <div class="thisweek mt-5">
       <div class="headline-title">
-        <h3 class="Headline-top">What Happened</h3>
-        <h2 class="Headline-bottom">This Week?</h2>
+        <h3 class="Headline-top">Happening</h3>
+        <h2 class="Headline-bottom">This Week</h2>
       </div>
 
       <div
@@ -282,7 +282,7 @@ onMounted(async () => {
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <Skel />
-        <div class="sports mt-2">
+        <div class="sports">
           <div class="sports-container d-flex justify-content-start align-items-center">
             <Skel_mid v-for="x in 2" :key="x" />
           </div>
@@ -297,7 +297,7 @@ onMounted(async () => {
           @toggleBookmark="() => toggleBookmark(sportsPosts[0], taskNoti)"
           @opensharemodal="openShareModal"
         />
-        <div class="sports mt-2">
+        <div class="sports">
           <div class="sports-container d-flex justify-content-start align-items-center">
             <Post_mid
               v-for="(post, index) in sportsPosts.slice(1, 3)"
@@ -314,12 +314,12 @@ onMounted(async () => {
     </div>
     <div class="userpost-headline mt-5">
       <div class="headline-title">
-        <h3 class="Headline-top">WaduhNews</h3>
-        <h2 class="Headline-bottom">Originals</h2>
+        <h3 class="Headline-top">Made In</h3>
+        <h2 class="Headline-bottom">Waduh News</h2>
       </div>
       <div v-if="isLoading" class="top d-flex flex-row align-items-start">
         <Skel />
-        <div class="sports mt-2">
+        <div class="sports">
           <div class="sports-container d-flex justify-content-start align-items-center">
             <Skel_mid v-for="x in 2" :key="x" />
           </div>
@@ -334,7 +334,7 @@ onMounted(async () => {
           @toggleBookmark="() => toggleBookmark(userMadePosts[0], taskNoti)"
           @opensharemodal="openShareModal"
         />
-        <div class="sports mt-2">
+        <div class="sports">
           <div class="sports-container d-flex justify-content-start align-items-center">
             <Post_mid
               v-for="(post, index) in userMadePosts.slice(1, 3)"

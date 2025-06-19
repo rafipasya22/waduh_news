@@ -2375,10 +2375,6 @@ li.list-group-item {
     width: 100%;
   }
 
-  .Headline-top {
-    font-size: 18px;
-  }
-
   .Headline-bottom {
     font-size: 20px;
   }
@@ -2410,6 +2406,15 @@ li.list-group-item {
 
   .sorty .dropdown .dropdown-menu.show {
     top: 30px !important;
+  }
+
+  .userpost-headline .top{
+    flex-direction: column !important;
+  }
+
+  .userpost-headline .top .post-big{
+    width: 100% !important;
+    margin-bottom: 0 !important;
   }
 
   .liked-top {
@@ -2622,8 +2627,16 @@ li.list-group-item {
   }
 
   .newspage-content p {
-    font-size: 12px;
+    font-size: auto;
     color: var(--dark);
+  }
+
+  .comment-top-right p{
+    font-size: 1rem;
+  }
+
+  .name-comment{
+    font-size: 1rem !important;
   }
 }
 
